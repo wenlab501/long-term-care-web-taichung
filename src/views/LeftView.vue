@@ -27,7 +27,7 @@
   <div class="my-bgcolor-gray-100 h-100 d-flex flex-column overflow-hidden">
     <!-- 📰 頁面標題區域 -->
     <div class="p-3">
-      <h1 class="my-font-size-lg my-letter-spacing-lg text-center m-3">臺北市長照資訊</h1>
+      <h1 class="my-font-size-lg my-letter-spacing-lg text-center m-3">臺中市長照資訊</h1>
     </div>
 
     <!-- 📋 圖層列表分頁內容 -->
