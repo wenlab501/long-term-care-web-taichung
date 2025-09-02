@@ -1,4 +1,128 @@
 
+// 新基準中央服務紀錄
+export async function loadNewStandardCentralServiceData(layer) {
+  try {
+    const layerId = layer.layerId;
+    const colorName = layer.colorName;
+
+    const filePath = `/long-term-care-web-taichung/data/geojson/${layer.fileName}`;
+
+    const response = await fetch(filePath);
+
+    if (!response.ok) {
+      console.error('HTTP 錯誤:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+      });
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const jsonData = await response.json();
+
+    const geoJsonData = {
+      type: 'FeatureCollection',
+      features: [],
+    };
+
+    let id = 1;
+
+    // 遍歷所有服務人員的資料
+    jsonData.forEach((serviceProvider) => {
+      if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
+        serviceProvider.data.forEach((serviceRecord) => {
+          if (serviceRecord.datail && serviceRecord.datail.Lat && serviceRecord.datail.Lon) {
+            const lat = parseFloat(serviceRecord.datail.Lat);
+            const lon = parseFloat(serviceRecord.datail.Lon);
+
+            if (!isNaN(lat) && !isNaN(lon)) {
+              const propertyData = {
+                編號: serviceRecord.datail.編號,
+                姓名: serviceRecord.datail.姓名,
+                性別: serviceRecord.datail.性別,
+                個案戶籍縣市: serviceRecord.datail.個案戶籍縣市,
+                鄉鎮區: serviceRecord.datail.鄉鎮區,
+                里別: serviceRecord.datail.里別,
+                個案戶籍地址: serviceRecord.datail.個案戶籍地址,
+                個案居住縣市: serviceRecord.datail.個案居住縣市,
+                個案居住地址: serviceRecord.datail.個案居住地址,
+              };
+
+              const popupData = {
+                name: serviceRecord.datail.姓名,
+              };
+
+              const tableData = {
+                '#': id,
+                color: getComputedStyle(document.documentElement)
+                  .getPropertyValue(`--my-color-${colorName}`)
+                  .trim(),
+                姓名: serviceRecord.datail.姓名,
+                個案居住地址: serviceRecord.datail.個案居住地址,
+              };
+
+              geoJsonData.features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [lon, lat],
+                },
+                properties: {
+                  id: id,
+                  layerId: layerId,
+                  layerName: layer.layerName,
+                  name: serviceRecord.datail.姓名,
+                  fillColor: getComputedStyle(document.documentElement)
+                    .getPropertyValue(`--my-color-${colorName}`)
+                    .trim(),
+                  propertyData: propertyData,
+                  popupData: popupData,
+                  tableData: tableData,
+                },
+              });
+
+              id++;
+            }
+          }
+        });
+      }
+    });
+
+    // 包含為表格量身打造的數據陣列
+    const tableData = geoJsonData.features.map((feature) => ({
+      ...feature.properties.tableData,
+    }));
+
+    // 統計各行政區的數量
+    const districtCounts = {};
+    geoJsonData.features.forEach((feature) => {
+      const district = feature.properties.propertyData.鄉鎮區;
+      if (district) {
+        districtCounts[district] = (districtCounts[district] || 0) + 1;
+      }
+    });
+
+    // 轉換為陣列格式並排序
+    const districtCount = Object.entries(districtCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count); // 按數量降序排列
+
+    // 包含摘要資訊
+    const summaryData = {
+      totalCount: geoJsonData.features.length,
+      districtCount: districtCount,
+    };
+
+    return {
+      geoJsonData, // 包含原始且完整的 GeoJSON 數據
+      tableData, // 包含為表格量身打造的數據陣列
+      summaryData, // 包含摘要資訊
+    };
+  } catch (error) {
+    console.error('❌ 數據載入失敗:', error);
+    throw error;
+  }
+}
 
 // 社區照顧關懷據點
 export async function loadCommunityCareCenterData(layer) {

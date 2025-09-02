@@ -14,7 +14,7 @@ import {
   load142Data,
   load25Data,
   load41Data,
-
+  loadNewStandardCentralServiceData,
 } from '../utils/dataProcessor.js';
 
 // 主要數據存儲定義 (Main Data Store Definition)
@@ -160,6 +160,23 @@ export const useDataStore = defineStore(
             loader: load142Data,
             fileName:
               '台北市政府衛生局/臺北市政府衛生局長照2.0居家式喘息(GA09)及居家式短照(SC09)服務單位一覽表_142_coord.csv',
+            fieldName: null,
+          },
+          {
+            layerId: '新基準中央服務紀錄',
+            layerName: '新基準中央服務紀錄',
+            visible: false,
+            isLoading: false,
+            isLoaded: false,
+            type: 'point',
+            shape: 'circle',
+            colorName: 'orange',
+            geoJsonData: null,
+            summaryData: null,
+            tableData: null,
+            legendData: null,
+            loader: loadNewStandardCentralServiceData,
+            fileName: '新基準中央服務紀錄_final.json',
             fieldName: null,
           },
         ],
