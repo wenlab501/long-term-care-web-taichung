@@ -390,10 +390,20 @@
               if (feature.properties.routeOrder) {
                 // 新基準中央服務紀錄點位：顯示路線順序
                 const routeOrder = feature.properties.routeOrder;
+                // 優先使用feature.properties中的顏色，如果沒有則使用layer的colorName
+                let pointColor = `var(--my-color-${colorName})`; // 預設使用layer顏色
+
+                if (feature.properties.fillColor) {
+                  // 如果fillColor是顏色名稱，轉換為CSS變數
+                  pointColor = `var(--my-color-${feature.properties.fillColor})`;
+                } else if (feature.properties.routeColor) {
+                  // 如果有routeColor，使用它
+                  pointColor = `var(--my-color-${feature.properties.routeColor})`;
+                }
                 const icon = L.divIcon({
                   html: `
                   <div class="d-flex align-items-center justify-content-center my-font-size-xs fw-bold"
-                       style="background: var(--my-color-${colorName}); color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                       style="background: ${pointColor}; color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                     ${routeOrder}
                   </div>
                   `,
@@ -405,11 +415,21 @@
                 return L.marker(latlng, { icon });
               } else {
                 // 一般點類型
+                // 優先使用feature.properties中的顏色，如果沒有則使用layer的colorName
+                let pointColor = `var(--my-color-${colorName})`; // 預設使用layer顏色
+
+                if (feature.properties.fillColor) {
+                  // 如果fillColor是顏色名稱，轉換為CSS變數
+                  pointColor = `var(--my-color-${feature.properties.fillColor})`;
+                } else if (feature.properties.routeColor) {
+                  // 如果有routeColor，使用它
+                  pointColor = `var(--my-color-${feature.properties.routeColor})`;
+                }
                 const icon = L.divIcon({
                   html: `<div
                   class="rounded-circle"
                   style="
-                     background-color: var(--my-color-${colorName});
+                     background-color: ${pointColor};
                      width: 8px;
                      height: 8px;
                      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -429,8 +449,19 @@
           style: (feature) => {
             // 新基準中央服務紀錄路線的特殊樣式處理
             if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
+              // 優先使用routeColor，如果沒有則使用strokeColor（顏色名稱），否則使用預設色
+              let routeColor = 'var(--my-color-tab20-2)'; // 預設顏色
+
+              if (feature.properties.routeColor) {
+                // 如果有routeColor（顏色名稱），轉換為CSS變數
+                routeColor = `var(--my-color-${feature.properties.routeColor})`;
+              } else if (feature.properties.strokeColor) {
+                // 如果有strokeColor（顏色名稱），轉換為CSS變數
+                routeColor = `var(--my-color-${feature.properties.strokeColor})`;
+              }
+
               return {
-                color: feature.properties.strokeColor || 'var(--my-color-tab20-2)', // 路線顏色
+                color: routeColor,
                 weight: feature.properties.strokeWidth || 3, // 路線粗細
                 opacity: feature.properties.strokeOpacity || 0.8, // 路線透明度
                 lineCap: 'round', // 線條端點樣式
@@ -440,10 +471,13 @@
             }
             // 路徑規劃路線的特殊樣式處理
             if (layer.isRoutePlanningLayer && feature.properties.type === 'route-line') {
-              // 使用與圖層相同的顏色系統
-              const routeColor = feature.properties.routeColor || 'tab20-2'; // 預設使用 tab20-2 (橘色)
+              // 使用圖層的顏色，如果沒有則使用預設色
+              const routeColor =
+                feature.properties.routeColor || feature.properties.strokeColor || 'tab20-2';
               return {
-                color: `var(--my-color-${routeColor})`, // 使用動態顏色
+                color: routeColor.startsWith('--my-color-')
+                  ? routeColor
+                  : `var(--my-color-${routeColor})`,
                 weight: 4, // 路線粗細
                 opacity: 0.8, // 路線透明度
                 lineCap: 'round', // 線條端點樣式
