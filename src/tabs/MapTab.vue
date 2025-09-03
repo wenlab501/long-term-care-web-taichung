@@ -2048,7 +2048,7 @@
         () => dataStore.selectedFeature,
         (newFeature, oldFeature) => {
           console.log('🎯 MapTab: selectedFeature 變化', { newFeature, oldFeature });
-          
+
           // 如果從有選中變為沒有選中，恢復預設視圖
           if (oldFeature && !newFeature) {
             console.log('🎯 MapTab: 清除選取，恢復預設視圖');
