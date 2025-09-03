@@ -31,6 +31,7 @@
       'update:activeBottomTab', // 更新作用中底部分頁
       'highlight-on-map', // 在地圖上高亮顯示
       'show-service-point-detail', // 顯示服務點詳細資訊
+      'feature-selected', // 要素選中事件
       'reset-view', // 重設視圖
     ],
 
@@ -78,6 +79,7 @@
         <DataTableTab
           @highlight-on-map="$emit('highlight-on-map', $event)"
           @show-service-point-detail="$emit('show-service-point-detail', $event)"
+          @feature-selected="$emit('feature-selected', $event)"
         />
       </div>
     </div>

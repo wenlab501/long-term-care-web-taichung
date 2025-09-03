@@ -41,6 +41,7 @@
       'view-analysis', // 查看分析結果
       'delete-analysis', // 刪除分析項目
       'highlight-feature', // 高亮顯示地圖特徵
+      'show-service-point-detail', // 顯示服務點詳細資訊
     ],
 
     /**
@@ -106,7 +107,10 @@
     <div class="flex-grow-1 overflow-auto">
       <!-- 📋 物件屬性分頁內容 -->
       <div v-show="activeRightTab === 'properties'" class="h-100">
-        <PropertiesTab @highlight-feature="$emit('highlight-feature', $event)" />
+        <PropertiesTab
+          @highlight-feature="$emit('highlight-feature', $event)"
+          @show-service-point-detail="$emit('show-service-point-detail', $event)"
+        />
       </div>
     </div>
   </div>

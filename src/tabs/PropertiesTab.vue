@@ -156,11 +156,10 @@
       const isServiceItemsObject = computed(() => {
         const result =
           selectedFeature.value?.properties?.type === 'service-items' &&
-          selectedFeature.value?.properties?.serviceItems;
+          Array.isArray(selectedFeature.value?.properties?.serviceItems);
         console.log('📋 PropertiesTab isServiceItemsObject:', {
-          selectedFeature: selectedFeature.value,
           type: selectedFeature.value?.properties?.type,
-          serviceItems: selectedFeature.value?.properties?.serviceItems,
+          serviceItemsLength: selectedFeature.value?.properties?.serviceItems?.length,
           result: result,
         });
         return result;

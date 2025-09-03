@@ -872,6 +872,89 @@ export const useDataStore = defineStore(
       calculatePolygonInRange, // 計算範圍內的多邊形
       visibleLayers: computed(() => getAllLayers().filter((layer) => layer.visible)),
       loadingLayers: computed(() => getAllLayers().filter((layer) => layer.isLoading)),
+
+      // 創建服務項目資料的工具函數
+      createServiceItemsData: (itemOrFeature, layer) => {
+        const isFeature = itemOrFeature.type === 'Feature';
+        const properties = isFeature ? itemOrFeature.properties : itemOrFeature;
+
+        let serviceItems = [];
+
+        // 首先檢查 properties 中是否已經有 service_items（地圖點擊的情況）
+        if (properties.service_items && Array.isArray(properties.service_items)) {
+          // 如果 properties 中已經包含 service_items，直接使用
+          serviceItems = [...properties.service_items];
+          console.log(
+            '🎯 dataStore: 直接從 feature.properties 獲取 service_items，數量:',
+            serviceItems.length
+          );
+        } else if (layer.geoJsonData && layer.geoJsonData.features) {
+          // 如果沒有，則從圖層中找到對應的服務點及其 service_items（表格點擊的情況）
+          const servicePointFeature = layer.geoJsonData.features.find(
+            (f) =>
+              f.properties &&
+              f.properties.編號 === properties.編號 &&
+              f.properties.姓名 === properties.姓名
+          );
+
+          if (servicePointFeature && servicePointFeature.properties) {
+            // 從 feature.properties 中獲取 service_items
+            // 注意：原始資料中是 service_items（下劃線），而不是 serviceItems（駝峰式）
+            if (servicePointFeature.properties.service_items) {
+              console.log(
+                '🎯 dataStore: 找到對應的 servicePointFeature，service_items 數量:',
+                servicePointFeature.properties.service_items.length
+              );
+              serviceItems.push(...servicePointFeature.properties.service_items);
+            } else {
+              console.warn('⚠️ dataStore: servicePointFeature 存在但沒有 service_items');
+            }
+          } else {
+            console.warn('⚠️ dataStore: 沒有找到對應的 servicePointFeature，檢查匹配條件');
+            console.log('🔍 搜尋條件:', {
+              編號: properties.編號,
+              姓名: properties.姓名,
+            });
+            console.log('🔍 可用特徵數量:', layer.geoJsonData.features.length);
+          }
+        }
+
+        const serviceItemsData = {
+          type: 'service-items',
+          layerId: layer.layerId,
+          layerName: layer.layerName,
+          servicePoint: properties,
+          servicePointInfo: {
+            name: properties.姓名 || properties.name,
+            address: properties.個案居住地址 || properties.address,
+            time: properties.時間 || properties.time,
+            serviceType: properties.服務項目代碼 || properties.serviceType,
+            order: properties.順序 || properties.order,
+            lat: properties.緯度 || properties.lat,
+            lng: properties.經度 || properties.lon,
+          },
+          serviceItems: serviceItems,
+        };
+
+        // 創建一個特殊的 feature 物件來包含 service_items 資料
+        const serviceItemsFeature = {
+          type: 'Feature',
+          properties: {
+            ...properties,
+            serviceItems: serviceItems,
+            servicePointInfo: serviceItemsData.servicePointInfo,
+            type: 'service-items',
+            layerId: layer.layerId,
+            layerName: layer.layerName,
+          },
+        };
+
+        return {
+          serviceItemsData,
+          serviceItemsFeature,
+          serviceItems,
+        };
+      },
     };
   },
   {

@@ -2,7 +2,7 @@
   import { ref, computed, defineEmits, onMounted, watch } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
 
-  const emit = defineEmits(['highlight-on-map', 'show-service-point-detail']);
+  const emit = defineEmits(['highlight-on-map', 'show-service-point-detail', 'feature-selected']);
 
   const dataStore = useDataStore();
 
@@ -235,6 +235,31 @@
   const handleHighlight = (item, layer) => {
     console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
 
+    // 檢查是否已經選取了相同的要素
+    const itemId = item.id || item['#'] || item.編號;
+    const isSameFeature =
+      dataStore.selectedFeature &&
+      dataStore.selectedFeature.properties &&
+      dataStore.selectedFeature.properties.id === itemId;
+
+    if (isSameFeature) {
+      // 如果點擊的是已經選取的要素，清除選取
+      console.log('🎯 DataTableTab: 點擊已選取的要素，清除選取');
+      dataStore.setSelectedFeature(null);
+
+      // 發送地圖高亮清除事件
+      const clearHighlightData = {
+        id: null, // 清除高亮
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+      };
+
+      setTimeout(() => {
+        emit('highlight-on-map', clearHighlightData);
+      }, 50);
+      return;
+    }
+
     // 檢查是否為服務人員圖層
     const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
 
@@ -242,46 +267,17 @@
       // 處理服務人員圖層的點擊 - 顯示 service_items 在右側面板
       console.log('🎯 DataTableTab: 檢測到服務人員圖層點擊:', item);
 
-      // 從 layer.geoJsonData 中找到對應的服務點及其 service_items
-      const serviceItems = [];
-      if (layer.geoJsonData && layer.geoJsonData.features) {
-        // 找到對應的服務點 feature
-        const servicePointFeature = layer.geoJsonData.features.find(
-          (feature) =>
-            feature.properties &&
-            (feature.properties.id === item.id ||
-              feature.properties['#'] === item['#'] ||
-              feature.properties.編號 === item.編號 ||
-              feature.properties.name === item.姓名)
-        );
+      // 使用共用的工具函數創建服務項目資料
+      const { serviceItemsData, serviceItemsFeature } = dataStore.createServiceItemsData(
+        item,
+        layer
+      );
 
-        if (servicePointFeature && servicePointFeature.properties) {
-          // 從 feature.properties 中獲取 service_items
-          if (servicePointFeature.properties.service_items) {
-            serviceItems.push(...servicePointFeature.properties.service_items);
-          }
-        }
-      }
-
-      const serviceItemsData = {
-        type: 'service-items',
-        layerId: layer.layerId,
-        layerName: layer.layerName,
-        servicePoint: item,
-        servicePointInfo: {
-          name: item.姓名 || item.name,
-          address: item.個案居住地址 || item.address,
-          time: item.時間 || item.time,
-          serviceType: item.服務項目代碼 || item.serviceType,
-          order: item.順序 || item.order,
-          lat: item.緯度 || item.lat,
-          lng: item.經度 || item.lon,
-        },
-        serviceItems: serviceItems,
-      };
-
-      // 發送服務項目列表到右側面板
+      // 發送服務項目列表到右側面板（統一使用事件流處理）
       emit('show-service-point-detail', serviceItemsData);
+
+      // 發送要素選中事件（與 MapTab 保持一致）
+      emit('feature-selected', serviceItemsFeature);
 
       // 同時發送地圖高亮事件
       const highlightData = {
