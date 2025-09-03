@@ -381,7 +381,7 @@
         :bottomViewHeight="actualBottomViewPixelHeight"
         :isPanelDragging="isOverallDragging"
         @update:activeBottomTab="$emit('update:activeBottomTab', $event)"
-        @highlight-on-map="highlightFeatureOnMap"
+        @highlight-on-map="$emit('highlight-on-map', $event)"
         @show-service-point-detail="$emit('show-service-point-detail', $event)"
         @reset-view="$emit('reset-view')"
       />
