@@ -358,27 +358,58 @@
               }
             } else if (type === 'point') {
               // 一般點類型
-              const icon = L.divIcon({
-                html: `<div
-                class="rounded-circle"
-                style="
-                   background-color: var(--my-color-${colorName});
-                   width: 8px;
-                   height: 8px;
-                   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                 ">
-                 </div>`, // HTML 內容：圓形標記
-                className: '', // 移除不必要的 CSS 類名
-                iconSize: [8, 8], // 圖標尺寸
-                iconAnchor: [4, 4], // 圖標錨點
-                popupAnchor: [0, -4], // 彈窗錨點
-              });
-              return L.marker(latlng, { icon }); // 返回標記實例
+              // 檢查是否為新基準中央服務紀錄且有路線順序
+              if (feature.properties.routeOrder) {
+                // 新基準中央服務紀錄點位：顯示路線順序
+                const routeOrder = feature.properties.routeOrder;
+                const icon = L.divIcon({
+                  html: `
+                  <div class="d-flex align-items-center justify-content-center my-font-size-xs fw-bold"
+                       style="background: var(--my-color-${colorName}); color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                    ${routeOrder}
+                  </div>
+                  `,
+                  className: 'service-route-point-icon',
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12],
+                  popupAnchor: [0, -12],
+                });
+                return L.marker(latlng, { icon });
+              } else {
+                // 一般點類型
+                const icon = L.divIcon({
+                  html: `<div
+                  class="rounded-circle"
+                  style="
+                     background-color: var(--my-color-${colorName});
+                     width: 8px;
+                     height: 8px;
+                     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                   ">
+                   </div>`, // HTML 內容：圓形標記
+                  className: '', // 移除不必要的 CSS 類名
+                  iconSize: [8, 8], // 圖標尺寸
+                  iconAnchor: [4, 4], // 圖標錨點
+                  popupAnchor: [0, -4], // 彈窗錨點
+                });
+                return L.marker(latlng, { icon }); // 返回標記實例
+              }
             }
             return null; // 非點類型返回 null
           },
           // 樣式設定函數
           style: (feature) => {
+            // 新基準中央服務紀錄路線的特殊樣式處理
+            if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
+              return {
+                color: feature.properties.strokeColor || 'var(--my-color-orange)', // 路線顏色
+                weight: feature.properties.strokeWidth || 3, // 路線粗細
+                opacity: feature.properties.strokeOpacity || 0.8, // 路線透明度
+                lineCap: 'round', // 線條端點樣式
+                lineJoin: 'round', // 線條連接樣式
+                dashArray: null, // 實線
+              };
+            }
             // 路徑規劃路線的特殊樣式處理
             if (layer.isRoutePlanningLayer && feature.properties.type === 'route-line') {
               return {
@@ -483,6 +514,26 @@
                   closeOnClick: false,
                 }
               );
+            } else if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
+              // 新基準中央服務紀錄路線的彈出視窗
+              layer.bindPopup(
+                `
+                <div class="">
+                  <div class="my-title-xs-gray pb-2">${feature.properties.layerName}</div>
+                  <div class="my-content-sm-black">${feature.properties.name}</div>
+                  <div class="my-content-xs-gray pt-1">服務人員: ${feature.properties.serviceProviderId}</div>
+                  <div class="my-content-xs-gray">服務日期: ${feature.properties.serviceDate}</div>
+                  <div class="my-content-xs-gray">服務點數: ${feature.properties.pointCount} 個</div>
+                </div>
+              `,
+                {
+                  className: 'service-route-popup',
+                  offset: [0, -5],
+                  closeButton: true,
+                  autoClose: false,
+                  closeOnClick: false,
+                }
+              );
             } else if (layer.isRoutePlanningLayer) {
               // 根據要素類型設定不同的彈出視窗
               if (feature.properties.type === 'route-planning-point') {
@@ -536,12 +587,33 @@
                 );
               }
             } else {
-              layer.bindPopup(`
-                <div class="">
-                  <div class="my-title-xs-gray pb-2">${layerName}</div>
-                  <div class="my-content-sm-black">${feature.properties.name}</div>
-                </div>
-              `);
+              // 檢查是否為新基準中央服務紀錄點位
+              if (feature.properties.routeOrder && feature.properties.propertyData) {
+                // 新基準中央服務紀錄點位的彈窗
+                layer.bindPopup(`
+                  <div class="">
+                    <div class="my-title-xs-gray pb-2">${layerName}</div>
+                    <div class="my-content-sm-black">${feature.properties.name}</div>
+                    <div class="my-content-xs-gray pt-1">路線順序: ${feature.properties.routeOrder}</div>
+                    <div class="my-content-xs-gray">服務時間: ${feature.properties.propertyData.服務時間}</div>
+                    <div class="my-content-xs-gray">居住地址: ${feature.properties.propertyData.個案居住地址}</div>
+                  </div>
+                `, {
+                  className: 'service-route-point-popup',
+                  offset: [0, -5],
+                  closeButton: true,
+                  autoClose: false,
+                  closeOnClick: false,
+                });
+              } else {
+                // 一般點類型的彈窗
+                layer.bindPopup(`
+                  <div class="">
+                    <div class="my-title-xs-gray pb-2">${layerName}</div>
+                    <div class="my-content-sm-black">${feature.properties.name}</div>
+                  </div>
+                `);
+              }
             }
 
             // 綁定滑鼠事件
@@ -1005,9 +1077,9 @@
         // 檢查地圖實例和準備狀態
         if (!mapInstance || !isMapReady.value) return;
 
-        // 使用固定的台北市預設範圍，不依賴當前存儲的值
-        const defaultCenter = [25.051474, 121.557989]; // 台北市中心
-        const defaultZoom = 11; // 適合台北市的縮放等級
+        // 使用固定的台中市預設範圍，不依賴當前存儲的值
+        const defaultCenter = [24.1477, 120.6736]; // 台中市政府
+        const defaultZoom = 11; // 適合台中市的縮放等級
 
         console.log(`🌍 顯示全市: 中心點 ${defaultCenter}, 縮放等級 ${defaultZoom}`);
 

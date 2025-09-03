@@ -5,7 +5,7 @@ export const useDefineStore = defineStore('define', {
     selectedBasemap: 'carto_light_labels', // 當前選中的底圖
     // 地圖視圖狀態
     mapView: {
-      center: [25.051474, 121.557989], // 地圖中心點 [緯度, 經度] - 台北市中心
+      center: [24.1477, 120.6736], // 地圖中心點 [緯度, 經度] - 台中市政府
       zoom: 11, // 縮放等級
     },
     basemaps: [
