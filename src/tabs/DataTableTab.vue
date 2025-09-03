@@ -129,22 +129,46 @@
    * @param {Object} layer - 圖層物件
    */
   const handleHighlight = (item, layer) => {
-    console.log('準備高亮顯示:', { item, layer: layer.layerName });
+    console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
 
-    // 傳遞包含圖層資訊和項目ID的物件
-    const highlightData = {
-      id: item.id || item['#'], // 🔥 優先使用 item.id，如果沒有則使用 item['#'] 作為後備
-      layerId: layer.layerId,
-      layerName: layer.layerName,
-      item: item,
-    };
+    // 對於新基準中央服務紀錄圖層，需要特殊處理
+    if (layer.layerId === 'new-standard-central-service') {
+      // 傳遞服務人員的詳細資訊
+      const highlightData = {
+        type: 'service-provider',
+        serviceProviderId: item.服務人員身分證,
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+        item: item,
+        firstServicePoint: item.firstServicePoint,
+        allServicePoints: item.allServicePoints,
+      };
 
-    console.log('發送高亮事件:', highlightData);
+      console.log('🎯 DataTableTab: 發送服務人員高亮事件:', highlightData);
+      console.log('🎯 DataTableTab: firstServicePoint:', item.firstServicePoint);
 
-    // 添加小延遲，確保地圖已準備就緒
-    setTimeout(() => {
-      emit('highlight-on-map', highlightData);
-    }, 50);
+      // 添加小延遲，確保地圖已準備就緒
+      setTimeout(() => {
+        console.log('🎯 DataTableTab: 正在發送 highlight-on-map 事件');
+        emit('highlight-on-map', highlightData);
+      }, 50);
+    } else {
+      // 其他圖層的原有邏輯
+      const highlightData = {
+        id: item.id || item['#'], // 🔥 優先使用 item.id，如果沒有則使用 item['#'] 作為後備
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+        item: item,
+      };
+
+      console.log('🎯 DataTableTab: 發送高亮事件:', highlightData);
+
+      // 添加小延遲，確保地圖已準備就緒
+      setTimeout(() => {
+        console.log('🎯 DataTableTab: 正在發送 highlight-on-map 事件');
+        emit('highlight-on-map', highlightData);
+      }, 50);
+    }
   };
 
   // 記錄上一次的圖層列表用於比較

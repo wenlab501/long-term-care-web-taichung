@@ -1,7 +1,7 @@
 <script>
   import DetailItem from '../components/DetailItem.vue';
   import { useDataStore } from '../stores/dataStore';
-  import { computed } from 'vue';
+  import { computed, ref } from 'vue';
 
   export default {
     name: 'PropertiesTab',
@@ -140,6 +140,35 @@
           selectedFeature.value?.properties?.type === 'optimization-point'
         );
       });
+
+      /**
+       * 👨‍⚕️ 是否為服務人員物件 (Is Service Provider Object)
+       * 檢查選中物件是否為服務人員物件
+       */
+      const isServiceProviderObject = computed(() => {
+        const isServiceProvider = selectedFeature.value?.properties?.type === 'service-provider';
+        console.log('🔍 檢查是否為服務人員物件:', {
+          selectedFeature: selectedFeature.value,
+          type: selectedFeature.value?.properties?.type,
+          isServiceProvider,
+          allServicePoints: selectedFeature.value?.properties?.allServicePoints,
+        });
+        return isServiceProvider;
+      });
+
+      /**
+       * 📍 選中的服務點 (Selected Service Point)
+       * 用於顯示個案詳細信息
+       */
+      const selectedServicePoint = ref(null);
+
+      /**
+       * 🎯 選擇服務點 (Select Service Point)
+       * 點擊個案列表中的項目時調用
+       */
+      const selectServicePoint = (point) => {
+        selectedServicePoint.value = point;
+      };
 
       /**
        * 📍 路徑規劃路線詳細信息 (Route Planning Line Details)
@@ -316,6 +345,9 @@
         isRouteOptimizationLine, // 是否為路徑優化路線
         isRouteOptimizationPoint, // 是否為路徑優化點
         routeOptimizationDetails, // 路徑優化路線詳細信息
+        isServiceProviderObject, // 是否為服務人員物件
+        selectedServicePoint, // 選中的服務點
+        selectServicePoint, // 選擇服務點方法
         pointsInRange, // 範圍內點位清單
         polygonInRange, // 範圍內多邊形清單
         allObjectsInRange, // 範圍內所有物件清單
@@ -433,6 +465,90 @@
                 :label="polygon.properties.layerName"
                 :value="polygon.properties.name"
               />
+            </template>
+          </template>
+
+          <!-- 👨‍⚕️ 服務人員專用：服務點詳細信息 -->
+          <template v-if="isServiceProviderObject && selectedFeature.properties.allServicePoints">
+            <hr class="my-3" />
+
+            <!-- 服務人員基本信息 -->
+            <div class="my-title-xs-gray mb-3">服務人員信息</div>
+            <DetailItem
+              label="服務人員身分證"
+              :value="selectedFeature.properties.serviceProviderId"
+            />
+            <DetailItem label="服務日期" :value="selectedFeature.properties.layerName" />
+            <DetailItem
+              label="服務點位數"
+              :value="`${selectedFeature.properties.allServicePoints.length} 個`"
+            />
+
+            <!-- 個案列表 -->
+            <template v-if="selectedFeature.properties.allServicePoints.length > 0">
+              <hr class="my-3" />
+              <div class="my-title-xs-gray mb-3">
+                個案列表 ({{ selectedFeature.properties.allServicePoints.length }} 個)
+              </div>
+
+              <!-- 個案列表表格 -->
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 50px">順序</th>
+                      <th style="width: 80px">姓名</th>
+                      <th style="width: 100px">時間</th>
+                      <th>地址</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(point, index) in selectedFeature.properties.allServicePoints"
+                      :key="index"
+                      class="cursor-pointer"
+                      @click="selectServicePoint(point)"
+                    >
+                      <td class="text-center">
+                        <span class="badge bg-primary">{{ point.順序 }}</span>
+                      </td>
+                      <td class="fw-bold">{{ point.姓名 }}</td>
+                      <td class="text-muted">{{ point.時間 }}</td>
+                      <td class="text-muted small">{{ point.地址 }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- 選中個案的詳細信息 -->
+              <template v-if="selectedServicePoint">
+                <hr class="my-3" />
+                <div class="my-title-xs-gray mb-3">
+                  個案詳細信息 - {{ selectedServicePoint.姓名 }}
+                </div>
+                <DetailItem label="編號" :value="selectedServicePoint.編號" />
+                <DetailItem label="姓名" :value="selectedServicePoint.姓名" />
+                <DetailItem label="性別" :value="selectedServicePoint.性別" />
+                <DetailItem label="服務時間" :value="selectedServicePoint.時間" />
+                <DetailItem label="個案戶籍縣市" :value="selectedServicePoint.個案戶籍縣市" />
+                <DetailItem label="鄉鎮區" :value="selectedServicePoint.鄉鎮區" />
+                <DetailItem label="里別" :value="selectedServicePoint.里別" />
+                <DetailItem label="個案戶籍地址" :value="selectedServicePoint.個案戶籍地址" />
+                <DetailItem label="個案居住縣市" :value="selectedServicePoint.個案居住縣市" />
+                <DetailItem label="個案居住地址" :value="selectedServicePoint.地址" />
+                <DetailItem
+                  label="緯度"
+                  :value="
+                    selectedServicePoint.緯度 ? selectedServicePoint.緯度.toFixed(6) : '無座標'
+                  "
+                />
+                <DetailItem
+                  label="經度"
+                  :value="
+                    selectedServicePoint.經度 ? selectedServicePoint.經度.toFixed(6) : '無座標'
+                  "
+                />
+              </template>
             </template>
           </template>
 

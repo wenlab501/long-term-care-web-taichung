@@ -37,6 +37,7 @@
       'feature-selected',
       'open-distance-modal',
       'open-isochrone-modal',
+      'highlight-on-map',
     ],
 
     // 🔧 組件設定函數 (Component Setup Function)
@@ -514,7 +515,10 @@
                   closeOnClick: false,
                 }
               );
-            } else if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
+            } else if (
+              feature.properties.layerName &&
+              feature.properties.layerName.includes('路線')
+            ) {
               // 新基準中央服務紀錄路線的彈出視窗
               layer.bindPopup(
                 `
@@ -590,7 +594,8 @@
               // 檢查是否為新基準中央服務紀錄點位
               if (feature.properties.routeOrder && feature.properties.propertyData) {
                 // 新基準中央服務紀錄點位的彈窗
-                layer.bindPopup(`
+                layer.bindPopup(
+                  `
                   <div class="">
                     <div class="my-title-xs-gray pb-2">${layerName}</div>
                     <div class="my-content-sm-black">${feature.properties.name}</div>
@@ -598,13 +603,15 @@
                     <div class="my-content-xs-gray">服務時間: ${feature.properties.propertyData.服務時間}</div>
                     <div class="my-content-xs-gray">居住地址: ${feature.properties.propertyData.個案居住地址}</div>
                   </div>
-                `, {
-                  className: 'service-route-point-popup',
-                  offset: [0, -5],
-                  closeButton: true,
-                  autoClose: false,
-                  closeOnClick: false,
-                });
+                `,
+                  {
+                    className: 'service-route-point-popup',
+                    offset: [0, -5],
+                    closeButton: true,
+                    autoClose: false,
+                    closeOnClick: false,
+                  }
+                );
               } else {
                 // 一般點類型的彈窗
                 layer.bindPopup(`
@@ -1092,7 +1099,7 @@
 
       // 🎯 高亮顯示特定要素函數 (Highlight Specific Feature Function)
       const highlightFeature = (highlightData) => {
-        console.log('🎯 開始高亮顯示要素:', highlightData); // 輸出開始高亮的訊息
+        console.log('🎯 MapTab: 開始高亮顯示要素:', highlightData); // 輸出開始高亮的訊息
 
         // 檢查地圖是否準備就緒
         if (!mapInstance || !isMapReady.value) {
@@ -1110,6 +1117,62 @@
 
         // 解析高亮資料
         let targetLayerId, targetFeatureId; // 宣告目標圖層 ID 和要素 ID
+
+        // 檢查是否為服務人員高亮事件
+        if (highlightData.type === 'service-provider') {
+          console.log('🎯 處理服務人員高亮事件:', highlightData);
+
+          // 將地圖中心移動到第一個服務點
+          if (highlightData.firstServicePoint) {
+            const { lat, lon } = highlightData.firstServicePoint;
+
+            // 只有當有座標時才移動地圖和創建標記
+            if (lat && lon) {
+              mapInstance.setView([lat, lon], 15); // 縮放到 15 級別
+
+              // 創建一個臨時的標記來標示第一個服務點
+              const firstPointMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                  className: 'first-service-point-marker',
+                  html: '<div style="background-color: #ff6b6b; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">1</div>',
+                  iconSize: [20, 20],
+                  iconAnchor: [10, 10],
+                }),
+              }).addTo(mapInstance);
+
+              // 添加彈出視窗
+              firstPointMarker
+                .bindPopup(
+                  `
+                <div style="font-size: 14px;">
+                  <strong>第一個服務點</strong><br>
+                  姓名: ${highlightData.firstServicePoint.name}<br>
+                  地址: ${highlightData.firstServicePoint.address}<br>
+                  時間: ${highlightData.firstServicePoint.time}
+                </div>
+              `
+                )
+                .openPopup();
+            } else {
+              // 如果沒有座標，只顯示提示訊息
+              console.log('⚠️ 第一個服務點沒有座標，無法在地圖上顯示');
+            }
+
+            // 設置選中的特徵到資料存儲（用於右側面板顯示）
+            dataStore.setSelectedFeature({
+              type: 'Feature',
+              properties: {
+                type: 'service-provider',
+                serviceProviderId: highlightData.serviceProviderId,
+                layerId: highlightData.layerId,
+                layerName: highlightData.layerName,
+                allServicePoints: highlightData.allServicePoints,
+                firstServicePoint: highlightData.firstServicePoint,
+              },
+            });
+          }
+          return;
+        }
 
         // 檢查高亮資料是否為物件格式
         if (typeof highlightData === 'object' && highlightData !== null) {
@@ -1843,6 +1906,7 @@
       'route-planning-click-mode-active': isRoutePlanningClickMode,
       'route-optimization-click-mode-active': isRouteOptimizationClickMode,
     }"
+    @highlight-on-map="highlightFeature"
   >
     <!-- 🗺️ Leaflet 地圖容器 (Leaflet Map Container) -->
     <!-- 這是 Leaflet 地圖實際渲染的 DOM 元素 -->
