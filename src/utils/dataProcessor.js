@@ -1,5 +1,5 @@
 // 新基準中央服務紀錄
-export async function loadNewStandardCentralServiceData(layer) {
+export async function loadNewStandardCentralServiceData(layer, dateFilter = null) {
   try {
     const layerId = layer.layerId;
     const colorName = layer.colorName;
@@ -19,7 +19,11 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     const jsonData = await response.json();
 
-    const geoJsonData = {
+    console.log('📅 載入服務紀錄數據，日期篩選:', dateFilter);
+
+    // 按服務人員分組的圖層數據
+    const serviceProviderLayers = new Map();
+    const allGeoJsonData = {
       type: 'FeatureCollection',
       features: [],
     };
@@ -28,9 +32,35 @@ export async function loadNewStandardCentralServiceData(layer) {
     const serviceProviderData = new Map();
 
     jsonData.forEach((serviceProvider) => {
-      // 只處理 1140701 的資料
-      if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
-        return;
+      // 日期篩選邏輯
+      if (dateFilter) {
+        // 如果有日期篩選，只處理符合條件的資料
+        const filterValue = parseInt(dateFilter);
+        const serviceDate = serviceProvider['服務日期(請輸入7碼)'];
+        console.log('🔍 日期篩選檢查:', {
+          filterValue,
+          serviceDate,
+          serviceDateType: typeof serviceDate,
+          matches: serviceDate === filterValue,
+        });
+
+        if (serviceDate !== filterValue) {
+          return;
+        }
+      } else {
+        // 如果沒有日期篩選，預設只處理 1140701 的資料
+        if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
+          return;
+        }
+      }
+
+      // 為每個服務人員創建獨立的圖層
+      const serviceProviderId = serviceProvider.服務人員身分證;
+      if (!serviceProviderLayers.has(serviceProviderId)) {
+        serviceProviderLayers.set(serviceProviderId, {
+          type: 'FeatureCollection',
+          features: [],
+        });
       }
 
       if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
@@ -42,7 +72,7 @@ export async function loadNewStandardCentralServiceData(layer) {
         ) {
           serviceProvider.route.features.forEach((routeFeature) => {
             if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
-              geoJsonData.features.push({
+              const routeFeatureData = {
                 type: 'Feature',
                 geometry: routeFeature.geometry,
                 properties: {
@@ -63,7 +93,12 @@ export async function loadNewStandardCentralServiceData(layer) {
                   segments: routeFeature.properties?.segments?.length || 0,
                   ...routeFeature.properties,
                 },
-              });
+              };
+
+              // 添加到對應的服務人員圖層
+              serviceProviderLayers.get(serviceProviderId).features.push(routeFeatureData);
+              // 也添加到總圖層
+              allGeoJsonData.features.push(routeFeatureData);
             }
           });
         }
@@ -86,7 +121,7 @@ export async function loadNewStandardCentralServiceData(layer) {
               const lon = parseFloat(serviceRecord.datail.Lon);
 
               if (!isNaN(lat) && !isNaN(lon)) {
-                geoJsonData.features.push({
+                const pointFeatureData = {
                   type: 'Feature',
                   geometry: {
                     type: 'Point',
@@ -105,7 +140,12 @@ export async function loadNewStandardCentralServiceData(layer) {
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
                     address: serviceRecord.datail.個案居住地址,
                   },
-                });
+                };
+
+                // 添加到對應的服務人員圖層
+                serviceProviderLayers.get(serviceProviderId).features.push(pointFeatureData);
+                // 也添加到總圖層
+                allGeoJsonData.features.push(pointFeatureData);
               }
             }
           });
@@ -169,7 +209,7 @@ export async function loadNewStandardCentralServiceData(layer) {
     const districtCounts = {};
     let validPointCount = 0;
 
-    geoJsonData.features
+    allGeoJsonData.features
       .filter((feature) => feature.geometry.type === 'Point')
       .forEach((feature) => {
         // 這裡需要從服務人員資料中獲取鄉鎮區資訊
@@ -199,15 +239,27 @@ export async function loadNewStandardCentralServiceData(layer) {
       .sort((a, b) => b.count - a.count);
 
     const summaryData = {
-      totalCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
-      routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
+      totalCount: allGeoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
+      routeCount: allGeoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
       districtCount: districtCount,
     };
 
+    // 將服務人員圖層轉換為陣列格式
+    const serviceProviderLayersArray = Array.from(serviceProviderLayers.entries()).map(
+      ([serviceProviderId, geoJsonData]) => ({
+        serviceProviderId,
+        layerName: serviceProviderId, // 直接使用服務人員身分證作為圖層名稱
+        geoJsonData,
+        pointCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
+        routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
+      })
+    );
+
     return {
-      geoJsonData,
+      geoJsonData: allGeoJsonData,
       tableData,
       summaryData,
+      serviceProviderLayers: serviceProviderLayersArray,
     };
   } catch (error) {
     console.error('❌ 數據載入失敗:', error);
