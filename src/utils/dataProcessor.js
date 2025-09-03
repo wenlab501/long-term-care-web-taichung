@@ -29,62 +29,91 @@ export async function loadNewStandardCentralServiceData(layer) {
     // 遍歷所有服務人員的資料
     jsonData.forEach((serviceProvider) => {
       if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
-        // 為每個服務人員生成路線
-        const routeCoordinates = [];
-        const servicePoints = [];
+        let servicePoints = []; // 將 servicePoints 移到外層作用域
 
-        // 收集所有服務點位並按時間排序
-        serviceProvider.data.forEach((serviceRecord) => {
-          if (serviceRecord.datail && serviceRecord.datail.Lat && serviceRecord.datail.Lon) {
-            const lat = parseFloat(serviceRecord.datail.Lat);
-            const lon = parseFloat(serviceRecord.datail.Lon);
-
-            if (!isNaN(lat) && !isNaN(lon)) {
-              // 計算時間（小時 + 分鐘/60）
-              const startTime = serviceRecord.hour_start + serviceRecord.min_start / 60;
-
-              servicePoints.push({
-                lat,
-                lon,
-                startTime,
-                serviceRecord,
-                coordinates: [lon, lat],
+        // 檢查是否有 route 欄位包含路線幾何資料
+        if (serviceProvider.route && serviceProvider.route.features && Array.isArray(serviceProvider.route.features)) {
+          // 使用 route 欄位中的 features 來繪製路線
+          serviceProvider.route.features.forEach((routeFeature) => {
+            if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
+              geoJsonData.features.push({
+                type: 'Feature',
+                geometry: routeFeature.geometry,
+                properties: {
+                  id: `route_${serviceProvider.服務人員身分證}`,
+                  layerId: layerId,
+                  layerName: `${layer.layerName}_路線`,
+                  name: `服務路線_${serviceProvider.服務人員身分證}`,
+                  strokeColor: getComputedStyle(document.documentElement)
+                    .getPropertyValue(`--my-color-${colorName}`)
+                    .trim(),
+                  strokeWidth: 3,
+                  strokeOpacity: 0.8,
+                  serviceProviderId: serviceProvider.服務人員身分證,
+                  serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                  pointCount: routeFeature.geometry.coordinates.length,
+                  ...routeFeature.properties, // 包含原始 route feature 的屬性
+                },
               });
             }
-          }
-        });
-
-        // 按時間排序服務點位
-        servicePoints.sort((a, b) => a.startTime - b.startTime);
-
-        // 生成路線座標
-        servicePoints.forEach((point) => {
-          routeCoordinates.push(point.coordinates);
-        });
-
-        // 如果有路線資料，創建路線 Feature
-        if (routeCoordinates.length > 1) {
-          geoJsonData.features.push({
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: routeCoordinates,
-            },
-            properties: {
-              id: `route_${serviceProvider.服務人員身分證}`,
-              layerId: layerId,
-              layerName: `${layer.layerName}_路線`,
-              name: `服務路線_${serviceProvider.服務人員身分證}`,
-              strokeColor: getComputedStyle(document.documentElement)
-                .getPropertyValue(`--my-color-${colorName}`)
-                .trim(),
-              strokeWidth: 3,
-              strokeOpacity: 0.8,
-              serviceProviderId: serviceProvider.服務人員身分證,
-              serviceDate: serviceProvider['服務日期(請輸入7碼)'],
-              pointCount: routeCoordinates.length,
-            },
           });
+        } else {
+          // 如果沒有 route 欄位，則根據服務時間生成路線
+          const routeCoordinates = [];
+
+          // 收集所有服務點位並按時間排序
+          serviceProvider.data.forEach((serviceRecord) => {
+            if (serviceRecord.datail && serviceRecord.datail.Lat && serviceRecord.datail.Lon) {
+              const lat = parseFloat(serviceRecord.datail.Lat);
+              const lon = parseFloat(serviceRecord.datail.Lon);
+
+              if (!isNaN(lat) && !isNaN(lon)) {
+                // 計算時間（小時 + 分鐘/60）
+                const startTime = serviceRecord.hour_start + serviceRecord.min_start / 60;
+
+                servicePoints.push({
+                  lat,
+                  lon,
+                  startTime,
+                  serviceRecord,
+                  coordinates: [lon, lat],
+                });
+              }
+            }
+          });
+
+          // 按時間排序服務點位
+          servicePoints.sort((a, b) => a.startTime - b.startTime);
+
+          // 生成路線座標
+          servicePoints.forEach((point) => {
+            routeCoordinates.push(point.coordinates);
+          });
+
+          // 如果有路線資料，創建路線 Feature
+          if (routeCoordinates.length > 1) {
+            geoJsonData.features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates,
+              },
+              properties: {
+                id: `route_${serviceProvider.服務人員身分證}`,
+                layerId: layerId,
+                layerName: `${layer.layerName}_路線`,
+                name: `服務路線_${serviceProvider.服務人員身分證}`,
+                strokeColor: getComputedStyle(document.documentElement)
+                  .getPropertyValue(`--my-color-${colorName}`)
+                  .trim(),
+                strokeWidth: 3,
+                strokeOpacity: 0.8,
+                serviceProviderId: serviceProvider.服務人員身分證,
+                serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                pointCount: routeCoordinates.length,
+              },
+            });
+          }
         }
 
         // 為每個服務點位創建點 Feature
