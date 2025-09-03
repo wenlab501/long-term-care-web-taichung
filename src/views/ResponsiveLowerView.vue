@@ -37,6 +37,7 @@
       'update:activeBottomTab', // 更新底部分頁
       'highlight-on-map', // 在地圖上高亮顯示
       'highlight-feature', // 高亮顯示特徵
+      'show-service-point-detail', // 顯示服務點詳細資訊
     ],
 
     /**
@@ -80,8 +81,8 @@
 
         return {
           'min-height': `${baseHeight}px`,
-          'height': `${baseHeight + extraPadding}px`,
-          'padding': `8px 4px ${extraPadding}px 4px`,
+          height: `${baseHeight + extraPadding}px`,
+          padding: `8px 4px ${extraPadding}px 4px`,
         };
       });
 
@@ -158,7 +159,10 @@
 
       <!-- 📊 資料表格分頁內容 -->
       <div v-show="activeTab === 'table'" class="h-100">
-        <DataTableTab @highlight-on-map="$emit('highlight-on-map', $event)" />
+        <DataTableTab
+          @highlight-on-map="$emit('highlight-on-map', $event)"
+          @show-service-point-detail="$emit('show-service-point-detail', $event)"
+        />
       </div>
 
       <!-- 📈 物件屬性分頁內容 -->

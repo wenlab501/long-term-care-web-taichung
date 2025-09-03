@@ -24,12 +24,20 @@
   };
 
   /**
-   * 根據圖層的第一筆資料，動態獲取所有適合顯示在表格中的欄位名稱
+   * 根據圖層類型返回固定的欄位名稱（簡化顯示）
    * @param {object} layer - 圖層物件
-   * @returns {string[]} - 一個包含所有欄位名稱的字串陣列
+   * @returns {string[]} - 固定的欄位名稱陣列
    */
   const getLayerColumns = (layer) => {
-    // 獲取排序後的資料陣列
+    // 檢查是否為服務人員圖層（新基準中央服務紀錄）
+    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
+
+    if (isServiceProviderLayer) {
+      // 服務人員圖層只顯示指定的欄位
+      return ['#', '編號', '姓名', '性別', '個案居住地址', '起始時間', '結束時間', '總時間'];
+    }
+
+    // 其他圖層使用原來的動態欄位邏輯
     const data = getSortedData(layer);
 
     // 如果沒有資料或資料為空，返回一個空陣列
@@ -130,6 +138,96 @@
   };
 
   /**
+   * 🎨 獲取圖層顏色 (Get Layer Color)
+   * 確保與地圖上顯示的顏色一致
+   * @param {Object} layer - 圖層物件
+   * @returns {string} CSS 顏色值
+   */
+  const getLayerColor = (layer) => {
+    // 如果是服務人員圖層，從 GeoJSON features 中獲取實際使用的顏色
+    if (layer.layerId && layer.layerId.startsWith('service-provider-') && layer.geoJsonData) {
+      const features = layer.geoJsonData.features || [];
+      if (features.length > 0) {
+        // 優先使用 fillColor，如果沒有則使用 routeColor
+        const firstFeature = features[0];
+        if (firstFeature.properties) {
+          if (firstFeature.properties.fillColor) {
+            return `var(--my-color-${firstFeature.properties.fillColor})`;
+          } else if (firstFeature.properties.routeColor) {
+            return `var(--my-color-${firstFeature.properties.routeColor})`;
+          }
+        }
+      }
+    }
+
+    // 回退到使用 layer.colorName
+    return layer.colorName ? `var(--my-color-${layer.colorName})` : 'var(--my-color-gray-300)';
+  };
+
+  /**
+   * 📊 獲取欄位顯示值 (Get Column Display Value)
+   * @param {Object} item - 資料項目
+   * @param {string} column - 欄位名稱
+   * @param {Object} layer - 圖層物件
+   * @returns {string} 顯示值
+   */
+  const getColumnDisplayValue = (item, column, layer) => {
+    // 檢查是否為服務人員圖層
+    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
+
+    if (isServiceProviderLayer) {
+      // 服務人員圖層的欄位映射
+      switch (column) {
+        case '#':
+          return item['#'] || 'N/A';
+        case '編號':
+          return item.編號 || 'N/A';
+        case '姓名':
+          return item.姓名 || 'N/A';
+        case '性別':
+          return item.性別 || 'N/A';
+        case '個案居住地址':
+          return item.個案居住地址 || 'N/A';
+        case '起始時間':
+          return item.時間 || item.起始時間 || 'N/A';
+        case '結束時間':
+          // 優先使用已計算的結束時間，否則從 hour_end 和 min_end 計算
+          if (item.結束時間) {
+            return item.結束時間;
+          } else if (item.hour_end !== undefined && item.min_end !== undefined) {
+            return `${item.hour_end}:${item.min_end.toString().padStart(2, '0')}`;
+          }
+          return 'N/A';
+        case '總時間':
+          // 優先使用已計算的總時間，否則從時間差計算
+          if (item.總時間) {
+            return item.總時間;
+          } else if (
+            item.hour_start !== undefined &&
+            item.min_start !== undefined &&
+            item.hour_end !== undefined &&
+            item.min_end !== undefined
+          ) {
+            const startMinutes = item.hour_start * 60 + item.min_start;
+            const endMinutes = item.hour_end * 60 + item.min_end;
+            const totalMinutes = endMinutes - startMinutes;
+            if (totalMinutes > 0) {
+              const hours = Math.floor(totalMinutes / 60);
+              const minutes = totalMinutes % 60;
+              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+            }
+          }
+          return 'N/A';
+        default:
+          return item[column] || 'N/A';
+      }
+    }
+
+    // 其他圖層使用原始值
+    return item[column] || 'N/A';
+  };
+
+  /**
    * 🎯 處理地圖高亮顯示 (Handle Map Highlighting)
    * @param {Object} item - 要高亮的項目
    * @param {Object} layer - 圖層物件
@@ -137,40 +235,39 @@
   const handleHighlight = (item, layer) => {
     console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
 
-    // 檢查是否為 service_points 的點擊（根據圖層名稱判斷）
-    const isServicePointsClick = layer.layerName && layer.layerName.includes('service-points');
+    // 檢查是否為服務人員圖層
+    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
 
-    // 對於新基準中央服務紀錄圖層，需要特殊處理
-    if (layer.layerId === 'new-standard-central-service') {
-      // 傳遞服務人員的詳細資訊
-      const highlightData = {
-        type: 'service-provider',
-        serviceProviderId: item.服務人員身分證,
+    if (isServiceProviderLayer) {
+      // 處理服務人員圖層的點擊 - 顯示 service_items 在右側面板
+      console.log('🎯 DataTableTab: 檢測到服務人員圖層點擊:', item);
+
+      // 從 layer.geoJsonData 中找到對應的服務點及其 service_items
+      const serviceItems = [];
+      if (layer.geoJsonData && layer.geoJsonData.features) {
+        // 找到對應的服務點 feature
+        const servicePointFeature = layer.geoJsonData.features.find(
+          (feature) =>
+            feature.properties &&
+            (feature.properties.id === item.id ||
+              feature.properties['#'] === item['#'] ||
+              feature.properties.編號 === item.編號 ||
+              feature.properties.name === item.姓名)
+        );
+
+        if (servicePointFeature && servicePointFeature.properties) {
+          // 從 feature.properties 中獲取 service_items
+          if (servicePointFeature.properties.service_items) {
+            serviceItems.push(...servicePointFeature.properties.service_items);
+          }
+        }
+      }
+
+      const serviceItemsData = {
+        type: 'service-items',
         layerId: layer.layerId,
         layerName: layer.layerName,
-        item: item,
-        firstServicePoint: item.firstServicePoint,
-        allServicePoints: item.allServicePoints,
-      };
-
-      console.log('🎯 DataTableTab: 發送服務人員高亮事件:', highlightData);
-      console.log('🎯 DataTableTab: firstServicePoint:', item.firstServicePoint);
-
-      // 添加小延遲，確保地圖已準備就緒
-      setTimeout(() => {
-        console.log('🎯 DataTableTab: 正在發送 highlight-on-map 事件');
-        emit('highlight-on-map', highlightData);
-      }, 50);
-    } else if (isServicePointsClick) {
-      // 處理 service_points 的點擊
-      console.log('🎯 DataTableTab: 檢測到 service_points 點擊:', item);
-
-      const servicePointData = {
-        type: 'service-point',
-        layerId: layer.layerId,
-        layerName: layer.layerName,
-        item: item,
-        // 從 item 中提取服務點的詳細資訊
+        servicePoint: item,
         servicePointInfo: {
           name: item.姓名 || item.name,
           address: item.個案居住地址 || item.address,
@@ -180,10 +277,11 @@
           lat: item.緯度 || item.lat,
           lng: item.經度 || item.lon,
         },
+        serviceItems: serviceItems,
       };
 
-      // 發送服務點詳細資訊事件
-      emit('show-service-point-detail', servicePointData);
+      // 發送服務項目列表到右側面板
+      emit('show-service-point-detail', serviceItemsData);
 
       // 同時發送地圖高亮事件
       const highlightData = {
@@ -297,7 +395,13 @@
               </span>
             </span>
           </div>
-          <div class="w-100" :class="`my-bgcolor-${layer.colorName}`" style="min-height: 4px"></div>
+          <div
+            class="w-100"
+            :style="{
+              backgroundColor: getLayerColor(layer),
+              minHeight: '4px',
+            }"
+          ></div>
         </li>
       </ul>
     </div>
@@ -357,11 +461,11 @@
                           }"
                         ></div>
                         <div class="my-content-xs-black w-100 px-3 py-2">
-                          {{ item[column] }}
+                          {{ getColumnDisplayValue(item, column, layer) }}
                         </div>
                       </div>
                       <div v-else class="my-content-xs-black px-3 py-2">
-                        {{ item[column] }}
+                        {{ getColumnDisplayValue(item, column, layer) }}
                       </div>
                     </td>
                   </template>

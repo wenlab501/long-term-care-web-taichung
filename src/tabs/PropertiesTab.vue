@@ -146,14 +146,24 @@
        * 檢查選中物件是否為服務人員物件
        */
       const isServiceProviderObject = computed(() => {
-        const isServiceProvider = selectedFeature.value?.properties?.type === 'service-provider';
-        console.log('🔍 檢查是否為服務人員物件:', {
+        return selectedFeature.value?.properties?.type === 'service-provider';
+      });
+
+      /**
+       * 📋 是否為服務項目列表物件 (Is Service Items Object)
+       * 檢查選中物件是否包含服務項目列表
+       */
+      const isServiceItemsObject = computed(() => {
+        const result =
+          selectedFeature.value?.properties?.type === 'service-items' &&
+          selectedFeature.value?.properties?.serviceItems;
+        console.log('📋 PropertiesTab isServiceItemsObject:', {
           selectedFeature: selectedFeature.value,
           type: selectedFeature.value?.properties?.type,
-          isServiceProvider,
-          allServicePoints: selectedFeature.value?.properties?.allServicePoints,
+          serviceItems: selectedFeature.value?.properties?.serviceItems,
+          result: result,
         });
-        return isServiceProvider;
+        return result;
       });
 
       /**
@@ -346,6 +356,7 @@
         isRouteOptimizationPoint, // 是否為路徑優化點
         routeOptimizationDetails, // 路徑優化路線詳細信息
         isServiceProviderObject, // 是否為服務人員物件
+        isServiceItemsObject, // 是否為服務項目列表物件
         selectedServicePoint, // 選中的服務點
         selectServicePoint, // 選擇服務點方法
         pointsInRange, // 範圍內點位清單
@@ -419,8 +430,12 @@
       <div>
         <div
           v-if="selectedLayer"
-          :class="`my-bgcolor-${selectedLayer.colorName}`"
-          :style="{ minHeight: '4px' }"
+          :style="{
+            backgroundColor: selectedLayer.colorName
+              ? `var(--my-color-${selectedLayer.colorName})`
+              : 'var(--my-color-gray-300)',
+            minHeight: '4px',
+          }"
         ></div>
 
         <div class="p-3">
@@ -821,6 +836,55 @@
               label="建立時間"
               :value="formatDateTime(selectedFeature.properties.createdAt)"
             />
+          </template>
+
+          <!-- 📋 服務項目列表顯示 -->
+          <template v-if="isServiceItemsObject">
+            <hr class="my-3" />
+            <div class="my-title-sm-black mb-3">
+              <i class="fas fa-list me-2"></i>
+              服務項目列表 ({{ selectedFeature.properties.serviceItems.length }} 項)
+            </div>
+
+            <div v-if="selectedFeature.properties.serviceItems.length > 0" class="mb-3">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col" class="text-center">#</th>
+                      <th scope="col">服務項目代碼</th>
+                      <th scope="col">服務類別</th>
+                      <th scope="col">數量</th>
+                      <th scope="col">單價</th>
+                      <th scope="col">服務時間</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(item, index) in selectedFeature.properties.serviceItems"
+                      :key="item.row_id || index"
+                    >
+                      <td class="text-center">{{ index + 1 }}</td>
+                      <td>{{ item['服務項目代碼'] || item.serviceType || 'N/A' }}</td>
+                      <td>
+                        {{ item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A' }}
+                      </td>
+                      <td>{{ item['數量\n僅整數'] || item.quantity || 'N/A' }}</td>
+                      <td>{{ item.單價 || item.unitPrice || 'N/A' }}</td>
+                      <td>
+                        {{ item.hour_start || 'N/A' }}:{{ item.min_start || '00' }} -
+                        {{ item.hour_end || 'N/A' }}:{{ item.min_end || '00' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div v-else class="text-muted">
+              <i class="fas fa-info-circle me-2"></i>
+              此服務點沒有服務項目記錄
+            </div>
           </template>
         </div>
       </div>

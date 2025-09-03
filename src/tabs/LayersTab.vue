@@ -40,6 +40,33 @@
         dataStore.toggleGroupVisibility(groupName);
       };
 
+      /**
+       * 🎨 獲取圖層顏色 (Get Layer Color)
+       * 確保與地圖上顯示的顏色一致
+       * @param {Object} layer - 圖層物件
+       * @returns {string} CSS 顏色值
+       */
+      const getLayerColor = (layer) => {
+        // 如果是服務人員圖層，從 GeoJSON features 中獲取實際使用的顏色
+        if (layer.layerId && layer.layerId.startsWith('service-provider-') && layer.geoJsonData) {
+          const features = layer.geoJsonData.features || [];
+          if (features.length > 0) {
+            // 優先使用 fillColor，如果沒有則使用 routeColor
+            const firstFeature = features[0];
+            if (firstFeature.properties) {
+              if (firstFeature.properties.fillColor) {
+                return `var(--my-color-${firstFeature.properties.fillColor})`;
+              } else if (firstFeature.properties.routeColor) {
+                return `var(--my-color-${firstFeature.properties.routeColor})`;
+              }
+            }
+          }
+        }
+
+        // 回退到使用 layer.colorName
+        return layer.colorName ? `var(--my-color-${layer.colorName})` : 'var(--my-color-gray-300)';
+      };
+
       // 📤 將需要暴露給 <template> 使用的數據和方法返回
       return {
         layers,
@@ -48,6 +75,7 @@
         isGroupVisible: dataStore.isGroupVisible,
         layerListRef,
         getIcon,
+        getLayerColor,
       };
     },
   };
@@ -71,7 +99,12 @@
                 :checked="isGroupVisible(group.groupName)"
                 @change="toggleGroup(group.groupName)"
               />
-              <label :for="'group-switch-' + group.groupName"></label>
+              <label
+                :for="'group-switch-' + group.groupName"
+                :style="{
+                  '--layer-color': 'var(--my-color-green)',
+                }"
+              ></label>
             </div>
           </div>
 
@@ -84,8 +117,10 @@
               <!-- 圖層圖示 -->
               <div
                 class="d-flex"
-                :class="`my-bgcolor-${layer.colorName}`"
-                style="min-width: 6px"
+                :style="{
+                  backgroundColor: getLayerColor(layer),
+                  minWidth: '6px',
+                }"
               ></div>
               <div class="w-100">
                 <div class="d-flex">
@@ -107,7 +142,12 @@
                       :disabled="layer.isLoading"
                       @change="toggleLayer(layer.layerId)"
                     />
-                    <label :for="'switch-' + layer.layerId"></label>
+                    <label
+                      :for="'switch-' + layer.layerId"
+                      :style="{
+                        '--layer-color': 'var(--my-color-green)',
+                      }"
+                    ></label>
                   </div>
                 </div>
                 <div v-if="layer.legendData && layer.visible" class="px-3 pb-2">
@@ -168,7 +208,7 @@
   }
 
   input:checked + label {
-    background: var(--my-color-tab20-3);
+    background: var(--layer-color, var(--my-color-green));
   }
 
   input:checked + label:after {

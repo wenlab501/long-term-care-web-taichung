@@ -595,18 +595,52 @@
 
       /**
        * 📋 處理服務點詳細資訊顯示事件 (Handle Service Point Detail Event)
-       * 當用戶點擊 service_points 時，在左側面板顯示詳細資訊
+       * 當用戶點擊 service_points 時，在左側面板顯示詳細資訊，或在右側面板顯示 service_items
        * @param {Object} servicePointData - 服務點詳細資料
        */
       const handleShowServicePointDetail = (servicePointData) => {
         console.log('📋 HomeView 處理服務點詳細資訊:', servicePointData);
 
-        // 儲存選中的服務點資訊
-        selectedServicePoint.value = servicePointData;
+        if (servicePointData.type === 'service-items') {
+          // 如果是 service-items 類型，顯示在右側面板
+          console.log('📋 顯示 service_items 在右側面板');
 
-        // 確保左側面板是可見的
-        if (leftViewWidth.value === 0) {
-          leftViewWidth.value = 20; // 設定預設寬度
+          // 切換到右側屬性分頁
+          activeRightTab.value = 'properties';
+
+          // 確保右側面板是可見的
+          if (rightViewWidth.value === 0) {
+            rightViewWidth.value = 20; // 設定預設寬度
+          }
+
+          // 創建一個特殊的 feature 物件來包含 service_items 資料
+          const serviceItemsFeature = {
+            type: 'Feature',
+            properties: {
+              ...servicePointData.servicePoint,
+              serviceItems: servicePointData.serviceItems,
+              servicePointInfo: servicePointData.servicePointInfo,
+              type: 'service-items',
+              layerId: servicePointData.layerId,
+              layerName: servicePointData.layerName,
+            },
+          };
+
+          console.log('📋 創建的 serviceItemsFeature:', serviceItemsFeature);
+          console.log('📋 serviceItems 數量:', servicePointData.serviceItems?.length || 0);
+
+          // 設定選中的 feature
+          dataStore.setSelectedFeature(serviceItemsFeature);
+
+          console.log('📋 設定後的 selectedFeature:', dataStore.selectedFeature);
+        } else {
+          // 原有的 service-point 處理邏輯
+          selectedServicePoint.value = servicePointData;
+
+          // 確保左側面板是可見的
+          if (leftViewWidth.value === 0) {
+            leftViewWidth.value = 20; // 設定預設寬度
+          }
         }
       };
 
@@ -1163,6 +1197,7 @@
               @update:activeBottomTab="activeBottomTab = $event"
               @highlight-on-map="handleHighlight"
               @highlight-feature="handleHighlight"
+              @show-service-point-detail="handleShowServicePointDetail"
             />
           </div>
         </div>

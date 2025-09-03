@@ -38,19 +38,53 @@ export const useDataStore = defineStore(
       'tab20-20',
     ];
 
-    // 記錄服務人員ID與顏色的映射
+    // 記錄服務人員ID與顏色的映射（按日期分組）
     const serviceProviderColorMap = new Map();
 
-    // 根據服務人員ID獲取顏色（確保一致性）- 使用和dataProcessor相同的邏輯
-    const getColorForServiceProvider = (serviceProviderId) => {
-      // 使用確定性的哈希算法，確保同一個ID總是得到相同顏色
+    // 根據服務人員ID和日期獲取顏色（確保同一天內顏色不重複）
+    const getColorForServiceProvider = (serviceProviderId, dateStr = null) => {
+      // 如果沒有提供日期，使用當前日期
+      const currentDate = dateStr || 'default';
+
+      // 確保該日期有顏色映射
+      if (!serviceProviderColorMap.has(currentDate)) {
+        serviceProviderColorMap.set(currentDate, new Map());
+      }
+
+      const dateColorMap = serviceProviderColorMap.get(currentDate);
+
+      // 如果該服務人員已經有顏色，返回已有的顏色
+      if (dateColorMap.has(serviceProviderId)) {
+        return dateColorMap.get(serviceProviderId);
+      }
+
+      // 為該服務人員分配新顏色（使用確定性算法但基於日期）
       let hash = 0;
-      for (let i = 0; i < serviceProviderId.length; i++) {
-        hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
+      // 結合服務人員ID和日期來生成哈希
+      const combinedId = `${serviceProviderId}_${currentDate}`;
+      for (let i = 0; i < combinedId.length; i++) {
+        hash = (hash << 5) - hash + combinedId.charCodeAt(i);
         hash = hash & hash; // 轉換為32位整數
       }
-      const colorIndex = Math.abs(hash) % layerColors.length;
-      return layerColors[colorIndex];
+
+      // 從已使用的顏色中選擇一個未使用的顏色
+      const usedColors = new Set(Array.from(dateColorMap.values()));
+      let colorIndex = Math.abs(hash) % layerColors.length;
+      let attempts = 0;
+
+      // 如果顏色已被使用，嘗試下一個顏色
+      while (usedColors.has(layerColors[colorIndex]) && attempts < layerColors.length) {
+        colorIndex = (colorIndex + 1) % layerColors.length;
+        attempts++;
+      }
+
+      // 如果所有顏色都用完了，使用哈希得到的顏色（允許重複）
+      const assignedColor = layerColors[colorIndex];
+
+      // 記錄該服務人員的顏色分配
+      dateColorMap.set(serviceProviderId, assignedColor);
+
+      return assignedColor;
     };
 
     // 在新的分組結構中搜尋指定 ID 的圖層
@@ -170,14 +204,19 @@ export const useDataStore = defineStore(
         console.log('📅 dataStore 接收到的日期參數:', dateStr);
         console.log('📅 將用此日期查詢 JSON 中的服務日期(請輸入7碼)');
 
+        // 獲取當前日期的顏色映射
+        const currentDateColorMap = serviceProviderColorMap.has(dateStr)
+          ? serviceProviderColorMap.get(dateStr)
+          : new Map();
+
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
-            colorName: 'tab20-2', // 預設顏色，實際會被每個服務人員的顏色覆蓋
+            colorName: 'tab20-1', // 預設顏色，實際會被每個服務人員的顏色覆蓋
             fileName: '新基準中央服務紀錄_all.json',
           },
           dateStr,
-          serviceProviderColorMap // 傳遞顏色映射
+          currentDateColorMap // 傳遞當前日期的顏色映射
         );
 
         // 找到服務記錄群組
@@ -201,7 +240,7 @@ export const useDataStore = defineStore(
                 isAnalysisLayer: false,
                 isIsochroneAnalysisLayer: false,
                 geoJsonData: serviceLayer.geoJsonData,
-                tableData: [],
+                tableData: serviceLayer.tableData || [], // 使用 dataProcessor 提供的 service_points 資料
                 summaryData: {
                   totalCount: serviceLayer.pointCount,
                   routeCount: serviceLayer.routeCount,
@@ -210,7 +249,7 @@ export const useDataStore = defineStore(
                 legendData: null,
                 loader: loadNewStandardCentralServiceData,
                 serviceProviderId: serviceLayer.serviceProviderId,
-                colorName: getColorForServiceProvider(serviceLayer.serviceProviderId), // 使用一致的顏色
+                colorName: getColorForServiceProvider(serviceLayer.serviceProviderId, dateStr), // 使用一致的顏色（按日期分配）
                 type: 'point',
                 shape: 'circle',
               };
@@ -219,6 +258,9 @@ export const useDataStore = defineStore(
               serviceRecordGroup.groupLayers.push(serviceLayerObj);
               console.log('📅 創建服務人員圖層:', serviceLayer.serviceProviderId);
             });
+
+            // 更新全局顏色映射
+            serviceProviderColorMap.set(dateStr, currentDateColorMap);
           } else {
             console.log('📅 沒有找到該日期的服務人員數據');
           }
@@ -241,7 +283,7 @@ export const useDataStore = defineStore(
       const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
-        // 重置顏色索引和顏色映射，確保下次載入時顏色重新從頭開始分配
+        // 清除所有日期的顏色映射，確保下次載入時顏色重新從頭開始分配
         serviceProviderColorMap.clear();
         console.log('📅 已清除所有服務人員圖層和顏色映射');
       }
