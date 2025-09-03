@@ -266,6 +266,28 @@
   };
 
   /**
+   * 🔄 重試地圖初始化 (Retry Map Initialization)
+   * 透過 mainContentRef 呼叫地圖重試初始化功能
+   */
+  const retryMapInitialization = () => {
+    if (mainContentRef.value) {
+      console.log('🔄 MiddleView: 呼叫地圖重試初始化');
+      mainContentRef.value.retryMapInitialization();
+    }
+  };
+
+  /**
+   * 📊 獲取地圖初始化狀態 (Get Map Initialization Status)
+   * 透過 mainContentRef 獲取地圖初始化狀態
+   */
+  const getMapInitStatus = () => {
+    if (mainContentRef.value) {
+      return mainContentRef.value.getMapInitStatus();
+    }
+    return 'not-applicable';
+  };
+
+  /**
    * 🛑 停止地圖點擊模式 (Stop Map Click Mode)
    * 透過 mainContentRef 呼叫停止地圖點擊功能
    */
@@ -285,6 +307,8 @@
     fitToTainanBounds, // 地圖邊界適應
     resetMapTab, // 地圖視圖重設
     invalidateMapSize, // 地圖尺寸刷新
+    retryMapInitialization, // 重試地圖初始化
+    getMapInitStatus, // 獲取地圖初始化狀態
     stopMapClickMode, // 停止地圖點擊模式
     // 如果 HomeView 需要直接存取子組件，可以暴露 mainContentRef 和 bottomViewRef
     // mainContentRef,    // 主內容組件引用

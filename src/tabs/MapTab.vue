@@ -78,7 +78,7 @@
 
         // 檢查地圖容器是否存在
         if (!mapContainer.value) {
-          console.warn('[MapTab] 地圖容器不存在');
+          console.error('[MapTab] 地圖容器不存在，無法創建地圖');
           return false;
         }
 
@@ -90,22 +90,44 @@
 
         // 檢查容器尺寸是否有效
         const rect = mapContainer.value.getBoundingClientRect(); // 獲取容器的邊界矩形
-        console.log('[MapTab] 容器尺寸:', rect);
+        console.log('[MapTab] 容器尺寸:', {
+          width: rect.width,
+          height: rect.height,
+          top: rect.top,
+          left: rect.left,
+          containerId: mapContainer.value.id,
+          containerClasses: mapContainer.value.className,
+        });
 
+        // 如果寬度或高度為零，無法創建有效的地圖
         if (rect.width === 0 || rect.height === 0) {
-          // 如果寬度或高度為零，但容器存在，可能是暫時的布局問題
-          console.warn('[MapTab] 容器尺寸為零，但容器存在，嘗試創建地圖'); // 輸出警告訊息
-          // 不返回 false，繼續嘗試創建地圖
+          console.error('[MapTab] 容器尺寸無效，無法創建地圖', {
+            width: rect.width,
+            height: rect.height,
+          });
+          return false;
+        }
+
+        // 檢查 Leaflet 是否可用
+        if (typeof L === 'undefined') {
+          console.error('[MapTab] Leaflet 庫未載入');
+          return false;
         }
 
         try {
+          console.log('[MapTab] 開始創建 Leaflet 地圖實例');
+
           // 創建 Leaflet 地圖實例，使用 defineStore 中保存的視圖狀態
           mapInstance = L.map(mapContainer.value, {
             center: defineStore.mapView.center, // 使用保存的地圖中心點
             zoom: defineStore.mapView.zoom, // 使用保存的縮放等級
             zoomControl: false, // 禁用預設縮放控制項
             attributionControl: false, // 禁用預設版權資訊控制項
+            fadeAnimation: true, // 啟用淡入淡出動畫
+            zoomAnimation: true, // 啟用縮放動畫
           });
+
+          console.log('[MapTab] Leaflet 地圖實例創建成功');
 
           // 綁定地圖事件處理器
           mapInstance.on('zoomend', handleZoomEnd); // 縮放結束事件
@@ -140,33 +162,45 @@
             }
           });
 
-          // 移除分析圖層專用面板，讓圖層按加入順序自然顯示
-
           // 設定 popup 面板的 z-index
-          mapInstance.getPane('popupPane').style.zIndex = 2200;
+          const popupPane = mapInstance.getPane('popupPane');
+          if (popupPane) {
+            popupPane.style.zIndex = 2200;
+          }
 
           // 設定地圖準備就緒狀態
           isMapReady.value = true; // 標記地圖已準備就緒
 
           // 如果已經處於點擊模式，確保樣式正確應用
           if (isClickMode.value) {
-            const mapContainer = mapInstance.getContainer();
-            mapContainer.style.cursor = 'crosshair';
-            mapContainer.classList.add('click-mode-active');
+            const mapContainerEl = mapInstance.getContainer();
+            mapContainerEl.style.cursor = 'crosshair';
+            mapContainerEl.classList.add('click-mode-active');
           } else if (isIsochroneClickMode.value) {
-            const mapContainer = mapInstance.getContainer();
-            mapContainer.style.cursor = 'crosshair';
-            mapContainer.classList.add('isochrone-click-mode-active');
+            const mapContainerEl = mapInstance.getContainer();
+            mapContainerEl.style.cursor = 'crosshair';
+            mapContainerEl.classList.add('isochrone-click-mode-active');
           } else if (isRoutePlanningClickMode.value) {
-            const mapContainer = mapInstance.getContainer();
-            mapContainer.style.cursor = 'crosshair';
-            mapContainer.classList.add('route-planning-click-mode-active');
+            const mapContainerEl = mapInstance.getContainer();
+            mapContainerEl.style.cursor = 'crosshair';
+            mapContainerEl.classList.add('route-planning-click-mode-active');
           }
 
-          console.log('[MapTab] 地圖創建成功'); // 輸出成功訊息
+          console.log('[MapTab] 地圖創建成功，初始化完成'); // 輸出成功訊息
           return true; // 返回成功狀態
         } catch (error) {
-          console.error('[MapTab] 地圖創建失敗:', error); // 輸出錯誤訊息
+          console.error('[MapTab] 地圖創建失敗:', error);
+
+          // 清理失敗的地圖實例
+          if (mapInstance) {
+            try {
+              mapInstance.remove();
+            } catch (cleanupError) {
+              console.warn('[MapTab] 清理失敗的地圖實例時發生錯誤:', cleanupError);
+            }
+            mapInstance = null;
+          }
+
           return false; // 返回失敗狀態
         }
       };
@@ -1780,12 +1814,14 @@
 
       // 🚀 初始化地圖函數 (Initialize Map Function)
       let isInitializing = false; // 防止重複初始化的標誌
+      let initTimeoutId = null; // 初始化超時計時器
 
       const initMap = () => {
         console.log('[MapTab] initMap 被調用，當前狀態:', {
           mapInstance: !!mapInstance,
           isMapReady: isMapReady.value,
           isInitializing: isInitializing,
+          containerExists: !!mapContainer.value,
         });
 
         // 檢查是否已經有地圖實例存在，避免重複初始化
@@ -1800,56 +1836,134 @@
           return;
         }
 
+        // 清除之前的超時計時器
+        if (initTimeoutId) {
+          clearTimeout(initTimeoutId);
+          initTimeoutId = null;
+        }
+
         console.log('[MapTab] 開始初始化地圖');
         isInitializing = true; // 設置初始化標誌
         let attempts = 0; // 初始化嘗試次數計數器
         const maxAttempts = 20; // 最大嘗試次數
 
+        // 檢查容器是否準備就緒的函數
+        const isContainerReady = () => {
+          if (!mapContainer.value) {
+            console.warn(`[MapTab] 嘗試 ${attempts}: 地圖容器不存在`);
+            return false;
+          }
+
+          const rect = mapContainer.value.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(mapContainer.value);
+
+          console.log(`[MapTab] 嘗試 ${attempts}: 容器狀態`, {
+            width: rect.width,
+            height: rect.height,
+            display: computedStyle.display,
+            visibility: computedStyle.visibility,
+            parentElement: mapContainer.value.parentElement?.tagName,
+            parentRect: mapContainer.value.parentElement?.getBoundingClientRect(),
+          });
+
+          // 檢查容器是否可見且有有效尺寸
+          if (rect.width === 0 || rect.height === 0) {
+            console.warn(`[MapTab] 嘗試 ${attempts}: 容器尺寸為零`);
+            return false;
+          }
+
+          if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+            console.warn(`[MapTab] 嘗試 ${attempts}: 容器隱藏`);
+            return false;
+          }
+
+          // 檢查父元素鏈是否都可見
+          let parent = mapContainer.value.parentElement;
+          while (parent) {
+            const parentStyle = window.getComputedStyle(parent);
+            if (parentStyle.display === 'none' || parentStyle.visibility === 'hidden') {
+              console.warn(`[MapTab] 嘗試 ${attempts}: 父元素隱藏`, parent.tagName);
+              return false;
+            }
+            parent = parent.parentElement;
+          }
+
+          return true;
+        };
+
         // 嘗試初始化函數
         const tryInit = () => {
           if (attempts >= maxAttempts) {
             // 如果超過最大嘗試次數
-            console.error('[MapTab] 地圖初始化超時'); // 輸出超時錯誤
+            console.error('[MapTab] 地圖初始化超時，已達最大嘗試次數', maxAttempts);
             isInitializing = false; // 重置初始化標誌
             return;
           }
 
           attempts++; // 增加嘗試次數
 
-          // 檢查容器是否存在
-          if (!mapContainer.value) {
-            console.warn('[MapTab] 地圖容器不存在，延遲重試');
-            setTimeout(tryInit, 200); // 延遲 200ms 後重試
+          // 檢查容器是否準備就緒
+          if (!isContainerReady()) {
+            const delay = Math.min(200 * attempts, 1000); // 漸進式延遲，最多1秒
+            console.log(`[MapTab] 容器未準備就緒，${delay}ms 後重試 (${attempts}/${maxAttempts})`);
+            setTimeout(tryInit, delay);
             return;
           }
 
           try {
+            console.log(`[MapTab] 容器準備就緒，嘗試創建地圖 (${attempts}/${maxAttempts})`);
             if (createMap()) {
               // 嘗試創建地圖
+              console.log('[MapTab] 地圖創建成功，設定底圖和同步圖層');
               setBasemap(); // 設定底圖
               syncLayers(); // 同步圖層
               isInitializing = false; // 重置初始化標誌
+              console.log('[MapTab] 地圖初始化完成');
             } else {
+              console.warn('[MapTab] 地圖創建失敗，繼續重試');
               setTimeout(tryInit, 200); // 延遲 200ms 後重試
             }
           } catch (error) {
             console.error('[MapTab] 地圖創建過程中發生錯誤:', error);
-            setTimeout(tryInit, 200); // 延遲 200ms 後重試
+            if (attempts < maxAttempts) {
+              setTimeout(tryInit, 200); // 延遲 200ms 後重試
+            } else {
+              console.error('[MapTab] 重試次數已達上限，初始化失敗');
+              isInitializing = false;
+            }
           }
         };
 
         tryInit(); // 開始嘗試初始化
+
+        // 設定總體超時保護
+        initTimeoutId = setTimeout(() => {
+          if (isInitializing) {
+            console.error('[MapTab] 地圖初始化總體超時 (30秒)，強制終止');
+            isInitializing = false;
+          }
+        }, 30000); // 30秒總體超時
       };
 
       // 🔄 生命週期：組件掛載 (Lifecycle: Component Mounted)
       onMounted(() => {
+        console.log('[MapTab] 組件已掛載，開始初始化流程');
+
         nextTick(() => {
           // 等待 DOM 更新完成
           setTimeout(() => {
+            console.log('[MapTab] DOM 更新完成，開始地圖初始化');
             // 延遲執行確保容器準備就緒
             initMap(); // 初始化地圖
+
             // 地圖初始化完成後設置 ResizeObserver
-            setTimeout(setupResizeObserver, 500); // 延遲 500ms 設置尺寸觀察器
+            setTimeout(() => {
+              if (isMapReady.value) {
+                setupResizeObserver();
+              } else {
+                console.warn('[MapTab] 地圖尚未準備就緒，跳過 ResizeObserver 設置');
+              }
+            }, 500); // 延遲 500ms 設置尺寸觀察器
           }, 100); // 延遲 100ms
         });
 
@@ -1859,6 +1973,20 @@
 
       // 🧹 生命週期：組件卸載 (Lifecycle: Component Unmounted)
       onUnmounted(() => {
+        console.log('[MapTab] 組件卸載，清理資源');
+
+        // 清理初始化相關計時器
+        if (initTimeoutId) {
+          clearTimeout(initTimeoutId);
+          initTimeoutId = null;
+          console.log('🧹 初始化超時計時器已清理');
+        }
+
+        if (isInitializing) {
+          console.warn('[MapTab] 組件卸載時初始化仍在進行中');
+          isInitializing = false;
+        }
+
         // 清理 ResizeObserver 和相關計時器
         if (resizeTimeout) {
           clearTimeout(resizeTimeout);
@@ -1879,6 +2007,7 @@
           mapInstance.off('moveend', handleMoveEnd); // 移除移動結束事件監聽器
           mapInstance.remove(); // 移除地圖實例
           mapInstance = null; // 清空引用
+          console.log('🧹 地圖實例已清理');
         }
 
         // 清理圖層相關變數
@@ -1888,6 +2017,8 @@
 
         // 🖱️ 移除全域點擊事件監聽器
         document.removeEventListener('click', hideContextMenu);
+
+        console.log('[MapTab] 資源清理完成');
       });
 
       // 👀 監聽器：監聽資料存儲中的圖層變化 (Watcher: Watch Data Store Layers)
@@ -1902,6 +2033,33 @@
           }
         }
       );
+
+      // 🔄 手動重試地圖初始化函數 (Manual Retry Map Initialization Function)
+      const retryMapInitialization = () => {
+        console.log('[MapTab] 手動重試地圖初始化');
+
+        // 清理當前的狀態
+        if (mapInstance) {
+          try {
+            mapInstance.remove();
+          } catch (error) {
+            console.warn('[MapTab] 清理舊地圖實例時發生錯誤:', error);
+          }
+          mapInstance = null;
+        }
+
+        isMapReady.value = false;
+
+        // 重新開始初始化
+        initMap();
+      };
+
+      // 📊 計算屬性：地圖初始化狀態 (Computed Property: Map Initialization Status)
+      const mapInitStatus = computed(() => {
+        if (isMapReady.value) return 'ready';
+        if (isInitializing) return 'initializing';
+        return 'failed';
+      });
 
       // 📤 返回組件公開的屬性和方法 (Return Component Public Properties and Methods)
       return {
@@ -1932,6 +2090,11 @@
         isRoutePlanningClickMode, // 路徑規劃點擊模式狀態
         isRouteOptimizationClickMode, // 路徑優化點擊模式狀態
         defineStore, // 定義存儲實例
+
+        // 地圖初始化相關
+        mapInitStatus, // 地圖初始化狀態
+        retryMapInitialization, // 手動重試地圖初始化函數
+
         // 右鍵菜單相關
         contextMenu, // 右鍵菜單 DOM 引用
         showContextMenu, // 是否顯示右鍵菜單
@@ -1960,6 +2123,39 @@
     <!-- 🗺️ Leaflet 地圖容器 (Leaflet Map Container) -->
     <!-- 這是 Leaflet 地圖實際渲染的 DOM 元素 -->
     <div :id="mapContainerId" ref="mapContainer" class="h-100 w-100"></div>
+
+    <!-- 🗺️ 地圖初始化狀態指示器 (Map Initialization Status Indicator) -->
+    <div
+      v-if="mapInitStatus !== 'ready'"
+      class="position-absolute top-50 start-50 translate-middle bg-white p-3 rounded shadow border"
+      style="z-index: 1000; min-width: 200px"
+    >
+      <div class="text-center">
+        <!-- 初始化中狀態 -->
+        <div v-if="mapInitStatus === 'initializing'" class="text-primary">
+          <div class="spinner-border spinner-border-sm me-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span>地圖初始化中...</span>
+        </div>
+
+        <!-- 初始化失敗狀態 -->
+        <div v-else-if="mapInitStatus === 'failed'" class="text-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <span>地圖初始化失敗</span>
+          <div class="mt-2">
+            <button
+              class="btn btn-sm btn-outline-primary"
+              @click="retryMapInitialization"
+              title="重試地圖初始化"
+            >
+              <i class="fas fa-redo me-1"></i>
+              重試
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 🖱️ 右鍵菜單 (Context Menu) -->
     <div

@@ -189,6 +189,27 @@
         }
       };
 
+      /**
+       * 🔄 重試地圖初始化 (Retry Map Initialization)
+       * 當地圖初始化失敗時手動重試
+       */
+      const retryMapInitialization = () => {
+        if (props.activeUpperTab === 'map' && MapTab.value) {
+          MapTab.value.retryMapInitialization();
+        }
+      };
+
+      /**
+       * 📊 獲取地圖初始化狀態 (Get Map Initialization Status)
+       * 返回當前地圖的初始化狀態
+       */
+      const getMapInitStatus = () => {
+        if (props.activeUpperTab === 'map' && MapTab.value) {
+          return MapTab.value.mapInitStatus;
+        }
+        return 'not-applicable';
+      };
+
       return {
         MapTab, // 地圖組件引用
         DashboardTab, // 儀表板組件引用
@@ -197,6 +218,8 @@
         resetView, // 重設視圖功能
         fitToTainanBounds, // 適應邊界功能
         invalidateMapSize, // 刷新地圖尺寸功能
+        retryMapInitialization, // 重試地圖初始化功能
+        getMapInitStatus, // 獲取地圖初始化狀態
       };
     },
   };

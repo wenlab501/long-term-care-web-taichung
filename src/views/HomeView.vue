@@ -499,6 +499,27 @@
       };
 
       /**
+       * 🔄 重試地圖初始化 (Retry Map Initialization)
+       * 當地圖初始化失敗時手動重試
+       */
+      const retryMapInitialization = () => {
+        if (middlePanelRef.value) {
+          middlePanelRef.value.retryMapInitialization();
+        }
+      };
+
+      /**
+       * 📊 獲取地圖初始化狀態 (Get Map Initialization Status)
+       * 返回當前地圖的初始化狀態
+       */
+      const getMapInitStatus = () => {
+        if (middlePanelRef.value) {
+          return middlePanelRef.value.getMapInitStatus();
+        }
+        return 'not-available';
+      };
+
+      /**
        * 🎯 處理特徵選中事件 (Handle Feature Selected Event)
        * 當用戶在地圖上選中某個特徵時觸發
        * @param {Object} feature - 選中的地理特徵對象
@@ -790,6 +811,10 @@
         // 🎯 互動函數
         updateActiveMarkers, // 更新作用中標記
         handleFeatureSelected, // 處理特徵選中
+
+        // 🗺️ 地圖相關函數
+        retryMapInitialization, // 重試地圖初始化
+        getMapInitStatus, // 獲取地圖初始化狀態
 
         // 📊 距離輸入 Modal 相關
         showDistanceModal, // 是否顯示距離輸入 modal
