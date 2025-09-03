@@ -524,40 +524,6 @@
       };
 
       /**
-       * 🎯 處理特徵選中事件 (Handle Feature Selected Event)
-       * 當用戶在地圖上選中某個特徵時觸發
-       * @param {Object} feature - 選中的地理特徵對象
-       */
-      const handleFeatureSelected = (feature) => {
-        console.log('HomeView - handleFeatureSelected called with:', {
-          feature: feature,
-          properties: feature.properties,
-          store: dataStore,
-        });
-        // 將選中的特徵設定到 Pinia store
-        dataStore.setSelectedFeature(feature);
-        console.log('HomeView - After setting selectedFeature:', {
-          storeSelectedFeature: dataStore.selectedFeature,
-        });
-
-        // 檢查當前是桌面版還是響應式版本
-        const isDesktop = window.innerWidth >= 1200; // xl breakpoint
-
-        if (isDesktop) {
-          // 桌面版：切換到右側屬性分頁
-          activeRightTab.value = 'properties';
-        } else {
-          // 響應式版本：切換到底部屬性分頁
-          activeLowerTab.value = 'properties';
-
-          // 如果底部面板高度太小，自動調整到合適的高度
-          if (mobileBottomViewHeight.value < 30) {
-            mobileBottomViewHeight.value = 40; // 設定為 40vh，提供足夠空間顯示屬性
-          }
-        }
-      };
-
-      /**
        * 🎯 處理高亮顯示事件 (Handle Highlight Event)
        * 在地圖上高亮顯示指定的特徵
        * @param {Object} highlightData - 包含 layerId 和 id 的物件
@@ -599,60 +565,51 @@
        * @param {Object} servicePointData - 服務點詳細資料
        */
       const handleShowServicePointDetail = (servicePointData) => {
-        console.log('📋 HomeView 處理服務點詳細資訊:', servicePointData);
+        console.log('📋 [3] HomeView: 開始處理 service point detail', servicePointData);
 
         if (servicePointData.type === 'service-items') {
-          // 如果是 service-items 類型，顯示在屬性面板
-          console.log('📋 顯示 service_items 在屬性面板');
+          console.log('>> [3a] HomeView: 檢測到 `service-items` 類型');
 
-          // 檢查當前是桌面版還是響應式版本
-          const isDesktop = window.innerWidth >= 1200; // xl breakpoint
-
-          if (isDesktop) {
-            // 桌面版：切換到右側屬性分頁
-            activeRightTab.value = 'properties';
-
-            // 確保右側面板是可見的
-            if (rightViewWidth.value === 0) {
-              rightViewWidth.value = 20; // 設定預設寬度
-            }
-          } else {
-            // 響應式版本：切換到底部屬性分頁
-            activeLowerTab.value = 'properties';
-
-            // 確保底部面板有足夠高度顯示屬性
-            if (mobileBottomViewHeight.value < 30) {
-              mobileBottomViewHeight.value = 40; // 設定合適的高度
-            }
-          }
-
-          // 創建一個特殊的 feature 物件來包含 service_items 資料
+          // 創建一個統一的 feature 物件來包含 service_items 資料
+          // 這是確保無論來源如何，狀態都是一致的關鍵
           const serviceItemsFeature = {
             type: 'Feature',
             properties: {
               ...servicePointData.servicePoint,
-              serviceItems: servicePointData.serviceItems,
+              serviceItems: servicePointData.serviceItems, // 確保使用 `serviceItems` (camelCase)
               servicePointInfo: servicePointData.servicePointInfo,
-              type: 'service-items',
+              type: 'service-items', // 最重要的類型標識
               layerId: servicePointData.layerId,
               layerName: servicePointData.layerName,
             },
           };
 
-          console.log('📋 創建的 serviceItemsFeature:', serviceItemsFeature);
-          console.log('📋 serviceItems 數量:', servicePointData.serviceItems?.length || 0);
-
-          // 設定選中的 feature
+          console.log('>> [4] HomeView: 創建的 serviceItemsFeature', serviceItemsFeature);
+          // 設定選中的 feature 到 Pinia store，這是觸發 UI 更新的核心
           dataStore.setSelectedFeature(serviceItemsFeature);
+          console.log('>> [5] HomeView: 已在 dataStore 中設定 selectedFeature');
 
-          console.log('📋 設定後的 selectedFeature:', dataStore.selectedFeature);
+          // 根據設備類型顯示對應的面板
+          const isDesktop = window.innerWidth >= 1200;
+          if (isDesktop) {
+            activeRightTab.value = 'properties';
+            if (rightViewWidth.value === 0) {
+              rightViewWidth.value = 20;
+            }
+            console.log('>> [6] HomeView: 已切換到桌面版右側屬性面板');
+          } else {
+            activeLowerTab.value = 'properties';
+            if (mobileBottomViewHeight.value < 30) {
+              mobileBottomViewHeight.value = 40;
+            }
+            console.log('>> [6] HomeView: 已切換到行動版下方屬性面板');
+          }
         } else {
-          // 原有的 service-point 處理邏輯
+          // 處理其他類型的點擊事件（例如在左側面板顯示詳細資訊）
+          console.log('>> [3b] HomeView: 處理非 `service-items` 類型');
           selectedServicePoint.value = servicePointData;
-
-          // 確保左側面板是可見的
           if (leftViewWidth.value === 0) {
-            leftViewWidth.value = 20; // 設定預設寬度
+            leftViewWidth.value = 20;
           }
         }
       };
@@ -889,7 +846,6 @@
 
         // 🎯 互動函數
         updateActiveMarkers, // 更新作用中標記
-        handleFeatureSelected, // 處理特徵選中
 
         // 🗺️ 地圖相關函數
         retryMapInitialization, // 重試地圖初始化
@@ -1124,7 +1080,6 @@
             @highlight-on-map="handleHighlight"
             @highlight-feature="handleHighlight"
             @show-service-point-detail="handleShowServicePointDetail"
-            @feature-selected="handleFeatureSelected"
             @open-distance-modal="openDistanceModal"
             @open-isochrone-modal="openIsochroneModal"
           />
@@ -1180,7 +1135,6 @@
               @update:zoomLevel="zoomLevel = $event"
               @update:currentCoords="currentCoords = $event"
               @update:activeMarkers="activeMarkers = $event"
-              @feature-selected="handleFeatureSelected"
               @show-service-point-detail="handleShowServicePointDetail"
               @open-distance-modal="openDistanceModal"
               @open-isochrone-modal="openIsochroneModal"
