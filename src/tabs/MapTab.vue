@@ -77,6 +77,12 @@
         // 檢查地圖容器是否存在
         if (!mapContainer.value) return false;
 
+        // 檢查是否已經有地圖實例存在，避免重複創建
+        if (mapInstance) {
+          console.warn('[MapTab] 地圖實例已存在，跳過創建');
+          return true;
+        }
+
         // 檢查容器尺寸是否有效
         const rect = mapContainer.value.getBoundingClientRect(); // 獲取容器的邊界矩形
         if (rect.width === 0 || rect.height === 0) {
@@ -1171,7 +1177,9 @@
               },
             });
           }
-          return;
+
+          console.log('✅ 服務人員高亮事件處理完成，退出函數');
+          return; // 確保退出函數
         }
 
         // 檢查高亮資料是否為物件格式
@@ -1354,14 +1362,14 @@
               if (mapContainer.value) {
                 const rect = mapContainer.value.getBoundingClientRect();
                 if (rect.width === 0 || rect.height === 0) {
-                  console.warn('🔄 地圖容器尺寸為零，嘗試重新初始化地圖');
-                  // 如果容器尺寸為零，嘗試重新初始化
+                  console.warn('🔄 地圖容器尺寸為零，延遲刷新地圖尺寸');
+                  // 如果容器尺寸為零，延遲刷新而不是重新初始化
                   setTimeout(() => {
-                    if (mapContainer.value) {
+                    if (mapContainer.value && mapInstance && isMapReady.value) {
                       const newRect = mapContainer.value.getBoundingClientRect();
-                      if (newRect.width > 0 || newRect.height > 0) {
+                      if (newRect.width > 0 && newRect.height > 0) {
                         mapInstance.invalidateSize();
-                        console.log('🗺️ 地圖尺寸已重新初始化');
+                        console.log('🗺️ 地圖尺寸已延遲刷新');
                       }
                     }
                   }, 100);
@@ -1376,11 +1384,9 @@
             }
           });
         } else if (!mapInstance) {
-          console.warn('🔄 地圖實例不存在，嘗試重新初始化');
-          // 如果地圖實例不存在，嘗試重新初始化
-          setTimeout(() => {
-            initMap();
-          }, 200);
+          console.warn('🔄 地圖實例不存在，等待初始化完成');
+          // 如果地圖實例不存在，不嘗試重新初始化，避免重複初始化
+          // 讓 initMap 函數自然完成初始化過程
         }
       };
 
@@ -1767,6 +1773,12 @@
 
       // 🚀 初始化地圖函數 (Initialize Map Function)
       const initMap = () => {
+        // 檢查是否已經有地圖實例存在，避免重複初始化
+        if (mapInstance && isMapReady.value) {
+          console.warn('[MapTab] 地圖已初始化，跳過重複初始化');
+          return;
+        }
+
         let attempts = 0; // 初始化嘗試次數計數器
         const maxAttempts = 20; // 最大嘗試次數
 

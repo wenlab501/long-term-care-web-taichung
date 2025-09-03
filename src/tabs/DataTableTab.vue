@@ -64,10 +64,16 @@
    * @returns {Array} 排序後的資料陣列
    */
   const getSortedData = (layer) => {
-    if (!layer.tableData) return [];
+    console.log('🔍 getSortedData 被調用:', layer.layerId, layer.tableData);
+
+    if (!layer.tableData) {
+      console.log('⚠️ 沒有 tableData');
+      return [];
+    }
 
     const sortState = layerSortStates.value[layer.layerId];
     if (!sortState || !sortState.key) {
+      console.log('📊 返回原始 tableData:', layer.tableData.length, '筆資料');
       return layer.tableData;
     }
 
@@ -292,7 +298,12 @@
                   v-for="item in getSortedData(layer)"
                   :key="item.id"
                   class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
-                  @click="handleHighlight(item, layer)"
+                  @click="
+                    () => {
+                      console.log('🔥 表格行被點擊了!', item, layer);
+                      handleHighlight(item, layer);
+                    }
+                  "
                 >
                   <template v-for="column in getLayerColumns(layer)" :key="column">
                     <td
