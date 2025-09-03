@@ -167,6 +167,8 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     // 6. 統計資料
     const districtCounts = {};
+    let validPointCount = 0;
+
     geoJsonData.features
       .filter((feature) => feature.geometry.type === 'Point')
       .forEach((feature) => {
@@ -175,14 +177,25 @@ export async function loadNewStandardCentralServiceData(layer) {
         const serviceProvider = serviceProviderData.get(serviceProviderId);
         if (serviceProvider && serviceProvider.allServicePoints.length > 0) {
           const district = serviceProvider.allServicePoints[0].鄉鎮區;
-          if (district) {
+          if (district && typeof district === 'string' && district.trim() !== '') {
             districtCounts[district] = (districtCounts[district] || 0) + 1;
+            validPointCount++;
           }
         }
       });
 
+    // 如果沒有有效的行政區資料，創建一個預設的統計
+    if (Object.keys(districtCounts).length === 0) {
+      console.warn('[loadNewStandardCentralServiceData] 沒有找到有效的行政區資料，使用預設統計');
+      districtCounts['未知區域'] = validPointCount || 1;
+    }
+
     const districtCount = Object.entries(districtCounts)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({
+        name: name || '未知區域',
+        count: Math.max(0, count || 0), // 確保計數不會是負數
+      }))
+      .filter((item) => item.count > 0) // 過濾掉計數為0的項目
       .sort((a, b) => b.count - a.count);
 
     const summaryData = {

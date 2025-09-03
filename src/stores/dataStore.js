@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-import { load142Data, loadNewStandardCentralServiceData } from '../utils/dataProcessor.js';
+import { loadNewStandardCentralServiceData } from '../utils/dataProcessor.js';
 
 // 主要數據存儲定義 (Main Data Store Definition)
 export const useDataStore = defineStore(
@@ -11,24 +11,6 @@ export const useDataStore = defineStore(
       {
         groupName: '居家式長照機構',
         groupLayers: [
-          {
-            layerId: '居家式喘息(GA09)及居家式短照(SC09)服務單位',
-            layerName: '居家式喘息(GA09)及居家式短照(SC09)服務單位',
-            visible: false,
-            isLoading: false,
-            isLoaded: false,
-            type: 'point',
-            shape: 'circle',
-            colorName: 'red',
-            geoJsonData: null,
-            summaryData: null,
-            tableData: null,
-            legendData: null,
-            loader: load142Data,
-            fileName:
-              '台北市政府衛生局/臺北市政府衛生局長照2.0居家式喘息(GA09)及居家式短照(SC09)服務單位一覽表_142_coord.csv',
-            fieldName: null,
-          },
           {
             layerId: '新基準中央服務紀錄',
             layerName: '新基準中央服務紀錄',

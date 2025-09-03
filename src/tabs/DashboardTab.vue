@@ -49,6 +49,17 @@
       return;
     }
 
+    // 驗證資料，過濾掉無效的資料
+    const validDistrictCount = districtCount.filter(
+      (d) =>
+        d && typeof d.count === 'number' && d.count >= 0 && d.name && typeof d.name === 'string'
+    );
+
+    if (validDistrictCount.length === 0) {
+      console.warn('[DashboardTab] 沒有有效的行政區資料可以繪製圖表');
+      return;
+    }
+
     // 清除之前的圖表
     d3.select(chartContainer.value).selectAll('*').remove();
 
@@ -58,7 +69,13 @@
     const width = containerWidth - margin.left - margin.right;
     const barHeight = 8;
     const barSpacing = 24;
-    const height = districtCount.length * barSpacing;
+    const height = validDistrictCount.length * barSpacing;
+
+    // 檢查容器寬度是否有效
+    if (width <= 0) {
+      console.warn('[DashboardTab] 圖表容器寬度無效，跳過繪製');
+      return;
+    }
 
     // 創建 SVG
     const svg = d3
@@ -67,18 +84,20 @@
       .attr('width', containerWidth)
       .attr('height', height + margin.top + margin.bottom);
 
-    const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
     // 設定比例尺
-    const maxCount = d3.max(districtCount, d => d.count);
-    const xScale = d3
-      .scaleLinear()
-      .domain([0, maxCount])
-      .range([0, width]);
+    const maxCount = d3.max(validDistrictCount, (d) => d.count);
 
-                /**
+    // 確保 maxCount 是正數
+    if (!maxCount || maxCount <= 0) {
+      console.warn('[DashboardTab] 最大計數值無效，跳過繪製');
+      return;
+    }
+
+    const xScale = d3.scaleLinear().domain([0, maxCount]).range([0, width]);
+
+    /**
      * 計算刻度系統 - 所有刻度都是5的倍數，且等間隔分布，最多5個刻度
      */
     const calculateTickSystem = (dataMaxValue) => {
@@ -115,9 +134,9 @@
       }
 
       return {
-        ticks: ticks,           // 刻度陣列 [0, 5, 10, 15...]，最多5個
+        ticks: ticks, // 刻度陣列 [0, 5, 10, 15...]，最多5個
         maxValue: chartMaxValue, // 圖表最大值
-        interval: interval       // 刻度間隔
+        interval: interval, // 刻度間隔
       };
     };
 
@@ -133,8 +152,8 @@
       .enter()
       .append('line')
       .attr('class', 'grid-line')
-      .attr('x1', d => xScale(d))
-      .attr('x2', d => xScale(d))
+      .attr('x1', (d) => xScale(d))
+      .attr('x2', (d) => xScale(d))
       .attr('y1', 0)
       .attr('y2', height)
       .attr('stroke', 'var(--my-color-gray-400)')
@@ -143,31 +162,31 @@
 
     // 添加長條
     g.selectAll('.bar')
-      .data(districtCount)
+      .data(validDistrictCount)
       .enter()
       .append('rect')
       .attr('class', 'bar')
       .attr('x', 0)
       .attr('y', (d, i) => i * barSpacing + (barSpacing - barHeight) / 2)
-      .attr('width', d => xScale(d.count))
+      .attr('width', (d) => Math.max(0, xScale(d.count))) // 確保寬度不會是負數
       .attr('height', barHeight)
       .attr('fill', 'var(--my-color-blue)');
 
     // 添加數值標籤
     g.selectAll('.label')
-      .data(districtCount)
+      .data(validDistrictCount)
       .enter()
       .append('text')
       .attr('class', 'label my-font-size-xs')
-      .attr('x', d => xScale(d.count) + 5)
+      .attr('x', (d) => Math.max(0, xScale(d.count)) + 5)
       .attr('y', (d, i) => i * barSpacing + barSpacing / 2)
       .attr('dy', '0.35em')
       .attr('fill', 'var(--my-color-black)')
-      .text(d => d.count);
+      .text((d) => d.count);
 
     // 添加區域名稱標籤
     g.selectAll('.district-label')
-      .data(districtCount)
+      .data(validDistrictCount)
       .enter()
       .append('text')
       .attr('class', 'district-label my-font-size-xs')
@@ -176,7 +195,7 @@
       .attr('dy', '0.35em')
       .attr('fill', 'var(--my-color-black)')
       .style('text-anchor', 'end')
-      .text(d => d.name);
+      .text((d) => d.name);
 
     // 添加 X 軸數字標籤
     g.selectAll('.x-axis-label')
@@ -184,11 +203,11 @@
       .enter()
       .append('text')
       .attr('class', 'x-axis-label my-font-size-xs')
-      .attr('x', d => xScale(d))
+      .attr('x', (d) => xScale(d))
       .attr('y', height + 15)
       .attr('fill', 'var(--my-color-gray-600)')
       .style('text-anchor', 'middle')
-      .text(d => d);
+      .text((d) => d);
   };
 
   // 記錄上一次的圖層列表用於比較
@@ -329,7 +348,9 @@
                 </div>
                 <div class="col-6" v-if="currentLayerSummary.districtCount">
                   <div class="text-center">
-                    <div class="my-title-xl-black">{{ currentLayerSummary.districtCount.length }}</div>
+                    <div class="my-title-xl-black">
+                      {{ currentLayerSummary.districtCount.length }}
+                    </div>
                     <div class="my-title-sm-gray">行政區數量</div>
                   </div>
                 </div>
@@ -338,7 +359,10 @@
           </div>
 
           <!-- 行政區分布圖表 -->
-          <div class="col-12 col-xl-6" v-if="currentLayerSummary.districtCount && currentLayerSummary.districtCount.length > 0">
+          <div
+            class="col-12 col-xl-6"
+            v-if="currentLayerSummary.districtCount && currentLayerSummary.districtCount.length > 0"
+          >
             <div class="rounded-4 my-bgcolor-gray-100 p-4 mb-3">
               <h6 class="mb-3">行政區分布</h6>
               <div ref="chartContainer" class="w-100"></div>

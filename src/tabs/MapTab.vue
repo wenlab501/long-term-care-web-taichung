@@ -74,8 +74,13 @@
 
       // 🏗️ 創建地圖實例函數 (Create Map Instance Function)
       const createMap = () => {
+        console.log('[MapTab] createMap 被調用');
+
         // 檢查地圖容器是否存在
-        if (!mapContainer.value) return false;
+        if (!mapContainer.value) {
+          console.warn('[MapTab] 地圖容器不存在');
+          return false;
+        }
 
         // 檢查是否已經有地圖實例存在，避免重複創建
         if (mapInstance) {
@@ -85,10 +90,12 @@
 
         // 檢查容器尺寸是否有效
         const rect = mapContainer.value.getBoundingClientRect(); // 獲取容器的邊界矩形
+        console.log('[MapTab] 容器尺寸:', rect);
+
         if (rect.width === 0 || rect.height === 0) {
-          // 如果寬度或高度為零
-          console.warn('[MapTab] 容器尺寸為零，延遲初始化'); // 輸出警告訊息
-          return false; // 返回失敗狀態
+          // 如果寬度或高度為零，但容器存在，可能是暫時的布局問題
+          console.warn('[MapTab] 容器尺寸為零，但容器存在，嘗試創建地圖'); // 輸出警告訊息
+          // 不返回 false，繼續嘗試創建地圖
         }
 
         try {
@@ -1772,13 +1779,29 @@
       };
 
       // 🚀 初始化地圖函數 (Initialize Map Function)
+      let isInitializing = false; // 防止重複初始化的標誌
+
       const initMap = () => {
+        console.log('[MapTab] initMap 被調用，當前狀態:', {
+          mapInstance: !!mapInstance,
+          isMapReady: isMapReady.value,
+          isInitializing: isInitializing,
+        });
+
         // 檢查是否已經有地圖實例存在，避免重複初始化
         if (mapInstance && isMapReady.value) {
           console.warn('[MapTab] 地圖已初始化，跳過重複初始化');
           return;
         }
 
+        // 檢查是否正在初始化中，避免重複初始化
+        if (isInitializing) {
+          console.warn('[MapTab] 地圖正在初始化中，跳過重複初始化');
+          return;
+        }
+
+        console.log('[MapTab] 開始初始化地圖');
+        isInitializing = true; // 設置初始化標誌
         let attempts = 0; // 初始化嘗試次數計數器
         const maxAttempts = 20; // 最大嘗試次數
 
@@ -1787,17 +1810,31 @@
           if (attempts >= maxAttempts) {
             // 如果超過最大嘗試次數
             console.error('[MapTab] 地圖初始化超時'); // 輸出超時錯誤
+            isInitializing = false; // 重置初始化標誌
             return;
           }
 
           attempts++; // 增加嘗試次數
 
-          if (createMap()) {
-            // 嘗試創建地圖
-            setBasemap(); // 設定底圖
-            syncLayers(); // 同步圖層
-          } else {
-            setTimeout(tryInit, 100); // 延遲 100ms 後重試
+          // 檢查容器是否存在
+          if (!mapContainer.value) {
+            console.warn('[MapTab] 地圖容器不存在，延遲重試');
+            setTimeout(tryInit, 200); // 延遲 200ms 後重試
+            return;
+          }
+
+          try {
+            if (createMap()) {
+              // 嘗試創建地圖
+              setBasemap(); // 設定底圖
+              syncLayers(); // 同步圖層
+              isInitializing = false; // 重置初始化標誌
+            } else {
+              setTimeout(tryInit, 200); // 延遲 200ms 後重試
+            }
+          } catch (error) {
+            console.error('[MapTab] 地圖創建過程中發生錯誤:', error);
+            setTimeout(tryInit, 200); // 延遲 200ms 後重試
           }
         };
 
