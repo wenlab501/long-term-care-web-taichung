@@ -146,8 +146,20 @@
               addRouteOptimizationPoint(e.latlng.lat, e.latlng.lng);
               return false; // 阻止事件繼續傳播
             } else if (!e.originalEvent.target.closest('.leaflet-interactive')) {
-              // 否則清除選取（視圖狀態恢復由 watch 監聽器處理）
-              console.log('🎯 MapTab: 點擊空白處，清除選取');
+              // 如果點擊的是地圖空白處，清除所有選取和高亮顯示
+              console.log('🎯 MapTab: 點擊空白處，清除選取和高亮顯示');
+              // 刪除地圖上的任何臨時標記
+              mapInstance.eachLayer((layer) => {
+                if (
+                  layer.options &&
+                  layer.options.icon &&
+                  (layer.options.icon.options?.className === 'first-service-point-marker' ||
+                    layer.options.icon.options?.className === 'highlight-service-point-marker')
+                ) {
+                  mapInstance.removeLayer(layer);
+                }
+              });
+              // 清除選中狀態和重設所有圖層樣式
               dataStore.setSelectedFeature(null);
               resetAllLayerStyles();
             }
@@ -914,7 +926,7 @@
                 const isServiceProviderLayer =
                   layer.layerId && layer.layerId.startsWith('service-provider-');
 
-                // 檢查是否已經選取了相同的要素
+                // 檢查是否已絗選取了相同的要素
                 const isSameFeature =
                   dataStore.selectedFeature &&
                   dataStore.selectedFeature.properties &&
@@ -944,13 +956,70 @@
                   dataStore.setSelectedFeature(null);
                   resetAllLayerStyles();
 
-                  // 使用共用的工具函數創建服務項目資料
-                  const { serviceItemsData } = dataStore.createServiceItemsData(feature, layer);
+                  // 找到對應的圖層資訊（因為 layer 來源於 Leaflet，保險起見再次查找 store 內部資料）
+                  const storeLayer = dataStore.findLayerById(layer.layerId) || {
+                    layerId: layer.layerId,
+                    layerName: layer.layerName,
+                  };
+
+                  // 高亮選中的圖層樣式
+                  this._originalStyle = {
+                    weight: this.options?.weight,
+                    color: this.options?.color,
+                    fillOpacity: this.options?.fillOpacity,
+                  };
+
+                  // 應用高亮樣式
+                  if (this.setStyle) {
+                    this.setStyle({
+                      weight: 3,
+                      color: 'var(--my-color-tab20-2-hover)',
+                      fillOpacity: 0.8,
+                    });
+                  }
+
+                  // 如果是點物件，進行高亮顯示
+                  const element = this.getElement && this.getElement();
+                  if (element) {
+                    const innerIconDiv = element.querySelector('div');
+                    if (innerIconDiv) {
+                      innerIconDiv.style.transition = 'transform 0.04s ease-in-out';
+                      innerIconDiv.style.transform = 'scale(1.6)';
+                    }
+                  }
+
+                  // 如果有bringToFront方法，將圖層置於最前方
+                  if (this.bringToFront) {
+                    this.bringToFront();
+                  }
+
+                  // 使用共用的工具函數創建服務項目資料（與 BottomPanel 行為一致）
+                  const { serviceItemsData } = dataStore.createServiceItemsData(
+                    feature,
+                    storeLayer
+                  );
 
                   console.log('🎯 MapTab: 創建了 serviceItemsData，準備發送事件', serviceItemsData);
 
-                  // 統一使用事件流處理
+                  // 統一使用事件流處理，交由 HomeView/RightView 顯示 service_items
                   emit('show-service-point-detail', serviceItemsData);
+
+                  // 將服務項目資料也設置到選中物件中，使得右側面板可以完整地顯示服務詳情
+                  const serviceItemsFeature = {
+                    type: 'Feature',
+                    properties: {
+                      ...serviceItemsData.servicePoint,
+                      serviceItems: serviceItemsData.serviceItems,
+                      servicePointInfo: serviceItemsData.servicePointInfo,
+                      id: feature.properties.id,
+                      type: 'service-items',
+                      layerId: layer.layerId,
+                      layerName: layer.layerName,
+                    },
+                  };
+
+                  console.log('服務項目特征已創建並設置到 dataStore:', serviceItemsFeature);
+                  dataStore.setSelectedFeature(serviceItemsFeature);
 
                   // 縮放到該服務點
                   if (feature.geometry && feature.geometry.type === 'Point') {
@@ -1026,6 +1095,24 @@
 
       // 🔄 重設所有圖層樣式函數 (Reset All Layer Styles Function)
       const resetAllLayerStyles = () => {
+        console.log('🔄 MapTab: 重設所有圖層樣式');
+
+        // 刪除地圖上的任何臨時標記
+        if (mapInstance) {
+          // 確保 mapInstance 存在
+          mapInstance.eachLayer((layer) => {
+            if (
+              layer.options &&
+              layer.options.icon &&
+              (layer.options.icon.options?.className === 'first-service-point-marker' ||
+                layer.options.icon.options?.className === 'highlight-service-point-marker')
+            ) {
+              mapInstance.removeLayer(layer);
+            }
+          });
+        }
+
+        // 重設圖層群組中的每個圖層
         Object.values(layerGroups).forEach((layerGroup) => {
           if (layerGroup) {
             layerGroup.eachLayer((layer) => {
@@ -1047,11 +1134,12 @@
                   }
                 } else if (type === 'point') {
                   // 一般點類型處理
-                  const element = layer.getElement();
+                  const element = layer.getElement && layer.getElement();
                   if (element) {
                     const innerIconDiv = element.querySelector('div');
                     if (innerIconDiv) {
                       innerIconDiv.style.transform = '';
+                      innerIconDiv.style.boxShadow = '';
                     }
                   }
                 } else if (type === 'polygon') {
@@ -1061,6 +1149,11 @@
                   } else if (layerGroup.resetStyle) {
                     layerGroup.resetStyle(layer);
                   }
+                }
+
+                // 關閉所有打開的彈出視窗
+                if (layer.closePopup) {
+                  layer.closePopup();
                 }
               }
             });
@@ -1260,6 +1353,9 @@
             if (lat && lon) {
               mapInstance.setView([lat, lon], 15); // 縮放到 15 級別
 
+              // 清除所有現有樣式和標記
+              resetAllLayerStyles();
+
               // 創建一個臨時的標記來標示第一個服務點
               const firstPointMarker = L.marker([lat, lon], {
                 icon: L.divIcon({
@@ -1320,6 +1416,98 @@
           return;
         }
 
+        // 檢查是否為服務項目（從底部面板點擊）
+        if (
+          highlightData.item &&
+          highlightData.layerId &&
+          highlightData.layerId.startsWith('service-provider-')
+        ) {
+          console.log('🎯 MapTab: 處理從底部面板點擊的服務項目:', highlightData);
+
+          // 清除所有圖層的樣式
+          resetAllLayerStyles();
+
+          // 從項目中獲取經緯度
+          const item = highlightData.item;
+          const lat = item.緯度 || item.lat;
+          const lon = item.經度 || item.lon;
+
+          if (lat && lon) {
+            // 移動地圖視圖到服務點位置
+            mapInstance.setView([lat, lon], 16);
+
+            // 尋找並高亮地圖上對應的服務點
+            let foundAndHighlighted = false;
+            const targetLayerGroup = layerGroups[highlightData.layerId];
+
+            if (targetLayerGroup) {
+              targetLayerGroup.eachLayer((layer) => {
+                const feature = layer.feature;
+                if (feature && feature.properties) {
+                  // 使用緯度和經度來匹配對應的服務點
+                  const featureLat = feature.geometry.coordinates[1];
+                  const featureLon = feature.geometry.coordinates[0];
+
+                  // 檢查座標是否匹配（允許小數點差異）
+                  if (Math.abs(featureLat - lat) < 0.0001 && Math.abs(featureLon - lon) < 0.0001) {
+                    // 高亮地圖上現有的服務點
+                    if (layer.getElement) {
+                      const element = layer.getElement();
+                      if (element) {
+                        const innerIconDiv = element.querySelector('div');
+                        if (innerIconDiv) {
+                          innerIconDiv.style.transition = 'transform 0.04s ease-in-out';
+                          innerIconDiv.style.transform = 'scale(2.0)'; // 放大以示高亮
+                          innerIconDiv.style.boxShadow = '0 0 15px #ff6b6b'; // 添加紅色光暈
+                          innerIconDiv.style.zIndex = '1000';
+                        }
+                        element.style.zIndex = 1000;
+                      }
+                    }
+
+                    // 將圖層置於最前方
+                    if (layer.bringToFront) {
+                      layer.bringToFront();
+                    }
+
+                    foundAndHighlighted = true;
+                    console.log('✅ 找到並高亮了地圖上的服務點');
+                    return; // 找到後停止搜尋
+                  }
+                }
+              });
+            }
+
+            // 如果沒有找到現有服務點，創建臨時標記來顯示位置
+            if (!foundAndHighlighted) {
+              console.log('⚠️ 沒有找到現有服務點，創建臨時標記');
+              const highlightMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                  className: 'highlight-service-point-marker',
+                  html: `<div style="background-color: #ff6b6b; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 0 10px #ff6b6b;">${item.routeOrder || item.順序 || '★'}</div>`,
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12],
+                }),
+              }).addTo(mapInstance);
+
+              // 添加彈出視窗
+              highlightMarker
+                .bindPopup(
+                  `
+                <div style="font-size: 14px;">
+                  <strong>${item.姓名 || item.name}</strong><br>
+                  地址: ${item.個案居住地址 || item.address || '無'}<br>
+                  時間: ${item.時間 || item.time || '無'}
+                </div>
+                `
+                )
+                .openPopup();
+            }
+          }
+
+          return; // 完成高亮處理，退出函數
+        }
+
         // 檢查高亮資料是否為物件格式
         if (typeof highlightData === 'object' && highlightData !== null) {
           targetLayerId = highlightData.layerId; // 從物件中獲取圖層 ID
@@ -1333,6 +1521,9 @@
 
         // 執行高亮顯示的核心邏輯函數
         const performHighlight = () => {
+          // 首先清除選中狀態
+          dataStore.setSelectedFeature(null);
+
           // 重置所有圖層樣式
           resetAllLayerStyles();
 
@@ -2053,9 +2244,22 @@
         (newFeature, oldFeature) => {
           console.log('🎯 MapTab: selectedFeature 變化', { newFeature, oldFeature });
 
+          // 當有新的選擇時，確保只有一個物件被高亮顯示
+          if (newFeature) {
+            console.log('🎯 MapTab: 新的選擇，確保只有一個物件被高亮顯示');
+
+            // 如果是服務項目類型，不需要額外處理，因為已經在highlightFeature函數中處理
+            if (newFeature.properties?.type === 'service-items') {
+              // 不需要額外操作，讓專屬處理來管理
+            }
+          }
+
           // 如果從有選中變為沒有選中，恢復預設視圖
           if (oldFeature && !newFeature) {
             console.log('🎯 MapTab: 清除選取，恢復預設視圖');
+            // 重置所有圖層樣式以確保沒有高亮顯示
+            resetAllLayerStyles();
+
             // 檢查是否為點要素選取，如果是則恢復到預設視圖
             if (
               oldFeature.geometry?.type === 'Point' ||
