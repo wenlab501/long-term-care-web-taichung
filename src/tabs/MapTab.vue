@@ -38,6 +38,7 @@
       'open-distance-modal',
       'open-isochrone-modal',
       'highlight-on-map',
+      'show-service-point-detail',
     ],
 
     // 🔧 組件設定函數 (Component Setup Function)
@@ -907,8 +908,77 @@
                   return;
                 }
 
-                dataStore.setSelectedFeature(feature); // 設定選中的要素到資料存儲
-                emit('feature-selected', feature); // 發送要素選中事件
+                // 檢查是否為服務人員圖層的點擊
+                const isServiceProviderLayer =
+                  layer.layerId && layer.layerId.startsWith('service-provider-');
+
+                if (isServiceProviderLayer) {
+                  console.log('🎯 MapTab: 檢測到服務人員圖層點擊:', feature.properties);
+
+                  // 從圖層中找到對應的服務點及其 service_items
+                  const serviceItems = [];
+                  if (layer.geoJsonData && layer.geoJsonData.features) {
+                    // 找到對應的服務點 feature
+                    const servicePointFeature = layer.geoJsonData.features.find(
+                      (f) =>
+                        f.properties &&
+                        (f.properties.id === feature.properties.id ||
+                          f.properties['#'] === feature.properties['#'] ||
+                          f.properties.編號 === feature.properties.編號 ||
+                          f.properties.name === feature.properties.name)
+                    );
+
+                    if (servicePointFeature && servicePointFeature.properties) {
+                      // 從 feature.properties 中獲取 service_items
+                      if (servicePointFeature.properties.service_items) {
+                        serviceItems.push(...servicePointFeature.properties.service_items);
+                      }
+                    }
+                  }
+
+                  const serviceItemsData = {
+                    type: 'service-items',
+                    layerId: layer.layerId,
+                    layerName: layer.layerName,
+                    servicePoint: feature.properties,
+                    servicePointInfo: {
+                      name: feature.properties.姓名 || feature.properties.name,
+                      address: feature.properties.個案居住地址 || feature.properties.address,
+                      time: feature.properties.時間 || feature.properties.time,
+                      serviceType:
+                        feature.properties.服務項目代碼 || feature.properties.serviceType,
+                      order: feature.properties.順序 || feature.properties.order,
+                      lat: feature.properties.緯度 || feature.properties.lat,
+                      lng: feature.properties.經度 || feature.properties.lon,
+                    },
+                    serviceItems: serviceItems,
+                  };
+
+                  // 創建一個特殊的 feature 物件來包含 service_items 資料
+                  const serviceItemsFeature = {
+                    type: 'Feature',
+                    properties: {
+                      ...feature.properties,
+                      serviceItems: serviceItems,
+                      servicePointInfo: serviceItemsData.servicePointInfo,
+                      type: 'service-items',
+                      layerId: layer.layerId,
+                      layerName: layer.layerName,
+                    },
+                  };
+
+                  console.log('🎯 MapTab: 創建的 serviceItemsFeature:', serviceItemsFeature);
+                  console.log('🎯 MapTab: serviceItems 數量:', serviceItems?.length || 0);
+
+                  // 發送服務項目列表到右側面板（與 DataTableTab 保持一致）
+                  emit('show-service-point-detail', serviceItemsData);
+
+                  dataStore.setSelectedFeature(serviceItemsFeature); // 設定選中的要素到資料存儲
+                  emit('feature-selected', serviceItemsFeature); // 發送要素選中事件
+                } else {
+                  dataStore.setSelectedFeature(feature); // 設定選中的要素到資料存儲
+                  emit('feature-selected', feature); // 發送要素選中事件
+                }
               },
               // 右鍵點擊事件
               contextmenu: function (e) {

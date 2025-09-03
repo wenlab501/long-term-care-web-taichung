@@ -30,6 +30,7 @@
     emits: [
       'update:activeBottomTab', // 更新作用中底部分頁
       'highlight-on-map', // 在地圖上高亮顯示
+      'show-service-point-detail', // 顯示服務點詳細資訊
       'reset-view', // 重設視圖
     ],
 
@@ -74,7 +75,10 @@
       <!-- 📊 資料表格分頁內容 (Data Table Tab Content) -->
       <!-- 顯示載入的地理資料，支援搜尋、排序、高亮等功能 -->
       <div class="h-100">
-        <DataTableTab @highlight-on-map="$emit('highlight-on-map', $event)" />
+        <DataTableTab
+          @highlight-on-map="$emit('highlight-on-map', $event)"
+          @show-service-point-detail="$emit('show-service-point-detail', $event)"
+        />
       </div>
     </div>
   </div>
