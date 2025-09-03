@@ -21,21 +21,11 @@
       // 響應式數據
       const isOpen = ref(false);
       const selectedDate = ref(props.modelValue || '');
-      const currentYear = ref(new Date().getFullYear());
-      const currentMonth = ref(new Date().getMonth() + 1);
+      // 固定為 2025 年 7 月
+      const currentYear = ref(2025);
+      const currentMonth = ref(7);
 
       // 計算屬性
-      const displayText = computed(() => {
-        if (selectedDate.value) {
-          // 將 7 碼日期轉換為可讀格式 (例如: 1140701 -> 2025/07/01)
-          const republicanYear = parseInt(selectedDate.value.substring(0, 3));
-          const year = republicanYear + 1911; // 民國年轉西元年
-          const month = selectedDate.value.substring(3, 5);
-          const day = selectedDate.value.substring(5, 7);
-          return `${year}/${month}/${day}`;
-        }
-        return props.placeholder;
-      });
 
       const calendarDays = computed(() => {
         const year = currentYear.value;
@@ -103,29 +93,16 @@
         }
       };
 
+      // 禁用月份切換功能，固定為 2025 年 7 月
       const previousMonth = () => {
-        if (currentMonth.value === 1) {
-          currentMonth.value = 12;
-          currentYear.value--;
-        } else {
-          currentMonth.value--;
-        }
+        // 不執行任何操作
       };
 
       const nextMonth = () => {
-        if (currentMonth.value === 12) {
-          currentMonth.value = 1;
-          currentYear.value++;
-        } else {
-          currentMonth.value++;
-        }
+        // 不執行任何操作
       };
 
-      const clearDate = () => {
-        selectedDate.value = '';
-        emit('update:modelValue', '');
-        emit('date-selected', '');
-      };
+
 
       const closeCalendar = (event) => {
         if (!event.target.closest('.date-picker-container')) {
@@ -155,13 +132,11 @@
         selectedDate,
         currentYear,
         currentMonth,
-        displayText,
         calendarDays,
         toggleCalendar,
         selectDate,
         previousMonth,
         nextMonth,
-        clearDate,
       };
     },
   };
@@ -169,36 +144,11 @@
 
 <template>
   <div class="date-picker-container">
-    <!-- 日期顯示和操作按鈕 -->
-    <div class="d-flex align-items-center gap-2 mb-2">
-      <div class="flex-grow-1">
-        <div v-if="selectedDate" class="my-content-sm-black">已選擇: {{ displayText }}</div>
-        <div v-else class="my-content-xs-gray">
-          {{ placeholder }}
-        </div>
-      </div>
-      <button
-        v-if="selectedDate"
-        class="btn btn-sm btn-outline-danger"
-        type="button"
-        @click="clearDate"
-        title="清除日期"
-      >
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-
     <!-- 日曆 -->
     <div class="calendar-container bg-white border rounded shadow-sm p-2">
       <!-- 日曆標題 -->
-      <div class="calendar-header d-flex justify-content-between align-items-center mb-2">
-        <button class="btn btn-sm btn-outline-secondary" @click="previousMonth" title="上一個月">
-          <i class="fas fa-chevron-left"></i>
-        </button>
+      <div class="calendar-header d-flex justify-content-center align-items-center mb-2">
         <h6 class="mb-0 my-font-size-sm">{{ currentYear }}年{{ currentMonth }}月</h6>
-        <button class="btn btn-sm btn-outline-secondary" @click="nextMonth" title="下一個月">
-          <i class="fas fa-chevron-right"></i>
-        </button>
       </div>
 
       <!-- 星期標題 -->
@@ -256,8 +206,11 @@
   }
 
   .calendar-day.bg-primary {
-    background-color: var(--my-color-blue) !important;
+    background-color: var(--my-color-tab20-4) !important; /* 使用紅色作為高亮 */
     color: white !important;
+    font-weight: bold !important;
+    border: 2px solid var(--my-color-tab20-4-hover) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
   }
 
   .calendar-container {

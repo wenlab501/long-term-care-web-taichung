@@ -51,8 +51,6 @@
       let mapInstance = null; // 地圖實例，使用普通變數而非 ref 避免響應式開銷
       let currentTileLayer = null; // 當前底圖圖層實例
       let layerGroups = {}; // 存放所有圖層群組的物件
-      let isClickMode = ref(false); // 是否處於點擊模式
-      let isIsochroneClickMode = ref(false); // 是否處於等時圈點擊模式
       let isRoutePlanningClickMode = ref(false); // 是否處於路徑規劃點擊模式
       let isRouteOptimizationClickMode = ref(false); // 是否處於路徑優化點擊模式
 
@@ -135,17 +133,7 @@
 
           // 綁定地圖點擊事件 - 點擊空白處清除選取或添加分析點
           mapInstance.on('click', function (e) {
-            if (isClickMode.value) {
-              // 如果處於數據分析點擊模式，發送事件到父組件顯示距離輸入 modal
-              e.originalEvent.stopPropagation();
-              emit('open-distance-modal', e.latlng.lat, e.latlng.lng);
-              return false; // 阻止事件繼續傳播
-            } else if (isIsochroneClickMode.value) {
-              // 如果處於等時圈分析點擊模式，發送事件到父組件顯示等時分析 modal
-              e.originalEvent.stopPropagation();
-              emit('open-isochrone-modal', e.latlng.lat, e.latlng.lng);
-              return false; // 阻止事件繼續傳播
-            } else if (isRoutePlanningClickMode.value) {
+            if (isRoutePlanningClickMode.value) {
               // 如果處於路徑規劃點擊模式，添加路徑規劃點並阻止其他事件
               e.originalEvent.stopPropagation();
               addRoutePlanningPoint(e.latlng.lat, e.latlng.lng);
@@ -172,15 +160,7 @@
           isMapReady.value = true; // 標記地圖已準備就緒
 
           // 如果已經處於點擊模式，確保樣式正確應用
-          if (isClickMode.value) {
-            const mapContainerEl = mapInstance.getContainer();
-            mapContainerEl.style.cursor = 'crosshair';
-            mapContainerEl.classList.add('click-mode-active');
-          } else if (isIsochroneClickMode.value) {
-            const mapContainerEl = mapInstance.getContainer();
-            mapContainerEl.style.cursor = 'crosshair';
-            mapContainerEl.classList.add('isochrone-click-mode-active');
-          } else if (isRoutePlanningClickMode.value) {
+          if (isRoutePlanningClickMode.value) {
             const mapContainerEl = mapInstance.getContainer();
             mapContainerEl.style.cursor = 'crosshair';
             mapContainerEl.classList.add('route-planning-click-mode-active');
@@ -303,10 +283,10 @@
                 // 分析圓圈：2公里半徑
                 const circle = L.circle(latlng, {
                   radius: feature.properties.radius,
-                  color: 'var(--my-color-green)',
+                  color: 'var(--my-color-tab20-3)',
                   weight: 1,
                   opacity: 0.8,
-                  fillColor: 'var(--my-color-green)',
+                  fillColor: 'var(--my-color-tab20-3)',
                   fillOpacity: 0.2,
                 });
 
@@ -333,10 +313,10 @@
                 // 等時圈分析圓圈：藍色圓圈（回退模式）
                 const circle = L.circle(latlng, {
                   radius: feature.properties.radius,
-                  color: 'var(--my-color-blue)',
+                  color: 'var(--my-color-tab20-1)',
                   weight: 1,
                   opacity: 0.8,
-                  fillColor: 'var(--my-color-blue)',
+                  fillColor: 'var(--my-color-tab20-1)',
                   fillOpacity: 0.2,
                 });
 
@@ -351,7 +331,7 @@
                 // 根據完成狀態選擇不同的樣式
                 const backgroundColor = isCompleted
                   ? 'var(--my-color-gray-500)'
-                  : 'var(--my-color-orange)';
+                  : 'var(--my-color-tab20-2)';
                 const borderColor = isCompleted ? 'var(--my-color-gray-400)' : 'white';
                 const textColor = isCompleted
                   ? 'var(--my-color-gray-200)'
@@ -382,7 +362,7 @@
                 // 根據完成狀態選擇不同的樣式
                 const backgroundColor = isCompleted
                   ? 'var(--my-color-gray-500)'
-                  : 'var(--my-color-purple)';
+                  : 'var(--my-color-tab20-5)';
                 const borderColor = isCompleted ? 'var(--my-color-gray-400)' : 'white';
                 const textColor = isCompleted
                   ? 'var(--my-color-gray-200)'
@@ -450,7 +430,7 @@
             // 新基準中央服務紀錄路線的特殊樣式處理
             if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
               return {
-                color: feature.properties.strokeColor || 'var(--my-color-orange)', // 路線顏色
+                color: feature.properties.strokeColor || 'var(--my-color-tab20-2)', // 路線顏色
                 weight: feature.properties.strokeWidth || 3, // 路線粗細
                 opacity: feature.properties.strokeOpacity || 0.8, // 路線透明度
                 lineCap: 'round', // 線條端點樣式
@@ -460,8 +440,10 @@
             }
             // 路徑規劃路線的特殊樣式處理
             if (layer.isRoutePlanningLayer && feature.properties.type === 'route-line') {
+              // 使用與圖層相同的顏色系統
+              const routeColor = feature.properties.routeColor || 'tab20-2'; // 預設使用 tab20-2 (橘色)
               return {
-                color: 'var(--my-color-orange)', // 橘色路線
+                color: `var(--my-color-${routeColor})`, // 使用動態顏色
                 weight: 4, // 路線粗細
                 opacity: 0.8, // 路線透明度
                 lineCap: 'round', // 線條端點樣式
@@ -474,8 +456,10 @@
               layer.isRouteOptimizationLayer &&
               feature.properties.type === 'optimized-route-line'
             ) {
+              // 使用與圖層相同的顏色系統
+              const routeColor = feature.properties.routeColor || 'tab20-5'; // 預設使用 tab20-5 (紫色)
               return {
-                color: 'var(--my-color-purple)', // 紫色路線
+                color: `var(--my-color-${routeColor})`, // 使用動態顏色
                 weight: 4, // 路線粗細
                 opacity: 0.8, // 路線透明度
                 lineCap: 'round', // 線條端點樣式
@@ -489,10 +473,10 @@
               feature.properties.type === 'isochrone-polygon-analysis'
             ) {
               return {
-                color: 'var(--my-color-blue)',
+                color: 'var(--my-color-tab20-1)',
                 weight: 2,
                 opacity: 0.8,
-                fillColor: 'var(--my-color-blue)',
+                fillColor: 'var(--my-color-tab20-1)',
                 fillOpacity: 0.3,
               };
             }
@@ -675,11 +659,7 @@
               // 滑鼠懸停事件
               mouseover: function () {
                 // 如果處於點擊模式，禁用 hover 效果
-                if (
-                  isClickMode.value ||
-                  isIsochroneClickMode.value ||
-                  isRoutePlanningClickMode.value
-                ) {
+                if (isRoutePlanningClickMode.value) {
                   return;
                 }
 
@@ -755,7 +735,7 @@
                     this.setStyle({
                       weight: 6, // 加粗路線
                       opacity: 1.0, // 增加透明度
-                      color: 'var(--my-color-orange-hover)', // 使用深橘色
+                      color: 'var(--my-color-tab20-2-hover)', // 使用深橘色
                     });
                     this.bringToFront(); // 置於最前層
                   }
@@ -789,11 +769,7 @@
               // 滑鼠離開事件
               mouseout: function () {
                 // 如果處於點擊模式，禁用 hover 效果
-                if (
-                  isClickMode.value ||
-                  isIsochroneClickMode.value ||
-                  isRoutePlanningClickMode.value
-                ) {
+                if (isRoutePlanningClickMode.value) {
                   return;
                 }
 
@@ -866,20 +842,6 @@
               },
               // 點擊事件
               click: function (e) {
-                // 如果處於數據分析點擊模式，阻止圖層選擇並添加分析點
-                if (isClickMode.value) {
-                  e.originalEvent.stopPropagation();
-                  addAnalysisPoint(e.latlng.lat, e.latlng.lng);
-                  return false;
-                }
-
-                // 如果處於等時圈分析點擊模式，阻止圖層選擇並添加等時圈分析點
-                if (isIsochroneClickMode.value) {
-                  e.originalEvent.stopPropagation();
-                  addIsochroneAnalysisPoint(e.latlng.lat, e.latlng.lng);
-                  return false;
-                }
-
                 // 如果處於路徑規劃點擊模式，阻止圖層選擇並添加路徑規劃點
                 if (isRoutePlanningClickMode.value) {
                   e.originalEvent.stopPropagation();
@@ -1431,83 +1393,7 @@
         }
       };
 
-      // 加入分析點
-      const addAnalysisPoint = (lat, lng) => {
-        dataStore.addAnalysisPoint(lat, lng);
-      };
-
-      // 加入等時圈分析點
-      const addIsochroneAnalysisPoint = async (lat, lng) => {
-        try {
-          await dataStore.addIsochroneAnalysisPoint(lat, lng);
-        } catch (error) {
-          console.error('添加等時圈分析點失敗:', error);
-        }
-      };
-
       // 開始點擊模式
-      const startClickMode = () => {
-        // 🔄 互斥邏輯：關閉其他點擊模式
-        if (isIsochroneClickMode.value) {
-          stopIsochroneClickMode();
-        }
-        if (isRoutePlanningClickMode.value) {
-          finishRoutePlanningClickMode();
-        }
-
-        isClickMode.value = true;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = 'crosshair';
-          // 為所有子元素設定十字游標
-          mapContainer.classList.add('click-mode-active');
-        }
-        console.log('🖱️ 開始數據分析點擊模式（自動關閉等時圈分析模式）');
-      };
-
-      // 停止點擊模式
-      const stopClickMode = () => {
-        isClickMode.value = false;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = '';
-          // 移除十字游標類別
-          mapContainer.classList.remove('click-mode-active');
-        }
-        console.log('🛑 停止地圖點擊模式');
-      };
-
-      // 開始等時圈點擊模式
-      const startIsochroneClickMode = () => {
-        // 🔄 互斥邏輯：關閉其他點擊模式
-        if (isClickMode.value) {
-          stopClickMode();
-        }
-        if (isRoutePlanningClickMode.value) {
-          finishRoutePlanningClickMode();
-        }
-
-        isIsochroneClickMode.value = true;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = 'crosshair';
-          // 為所有子元素設定十字游標
-          mapContainer.classList.add('isochrone-click-mode-active');
-        }
-        console.log('🖱️ 開始等時圈分析點擊模式（自動關閉數據分析模式）');
-      };
-
-      // 停止等時圈點擊模式
-      const stopIsochroneClickMode = () => {
-        isIsochroneClickMode.value = false;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = '';
-          // 移除十字游標類別
-          mapContainer.classList.remove('isochrone-click-mode-active');
-        }
-        console.log('🛑 停止等時圈分析點擊模式');
-      };
 
       // 🗺️ ============ 路徑規劃點擊模式相關函數 (Route Planning Click Mode Functions) ============
 
@@ -1526,12 +1412,6 @@
       // 開始路徑規劃點擊模式
       const startRoutePlanningClickMode = () => {
         // 🔄 互斥邏輯：關閉其他點擊模式
-        if (isClickMode.value) {
-          stopClickMode();
-        }
-        if (isIsochroneClickMode.value) {
-          stopIsochroneClickMode();
-        }
 
         isRoutePlanningClickMode.value = true;
         if (mapInstance) {
@@ -1616,12 +1496,6 @@
       // 開始路徑優化點擊模式
       const startRouteOptimizationClickMode = () => {
         // 🔄 互斥邏輯：關閉其他點擊模式
-        if (isClickMode.value) {
-          stopClickMode();
-        }
-        if (isIsochroneClickMode.value) {
-          stopIsochroneClickMode();
-        }
         if (isRoutePlanningClickMode.value) {
           finishRoutePlanningClickMode();
         }
@@ -1652,8 +1526,6 @@
 
         // 停止路徑優化點擊模式
         isRouteOptimizationClickMode.value = false;
-        isClickMode.value = false;
-        isIsochroneClickMode.value = false;
         isRoutePlanningClickMode.value = false;
 
         if (mapInstance) {
@@ -2073,10 +1945,7 @@
         isAnyLayerVisible, // 檢查是否有可見圖層的計算屬性
         highlightFeature, // 高亮顯示特定要素函數
         invalidateSize, // 刷新地圖尺寸函數
-        startClickMode, // 開始點擊模式函數
-        stopClickMode, // 停止點擊模式函數
-        startIsochroneClickMode, // 開始等時圈點擊模式函數
-        stopIsochroneClickMode, // 停止等時圈點擊模式函數
+
         startRoutePlanningClickMode, // 開始路徑規劃點擊模式函數
         finishRoutePlanningClickMode, // 完成路徑規劃點選函數
 
@@ -2085,8 +1954,6 @@
         finishRouteOptimizationClickMode, // 完成路徑優化點選函數
 
         clearAnalysisLayer, // 清除分析圖層函數
-        isClickMode, // 點擊模式狀態
-        isIsochroneClickMode, // 等時圈點擊模式狀態
         isRoutePlanningClickMode, // 路徑規劃點擊模式狀態
         isRouteOptimizationClickMode, // 路徑優化點擊模式狀態
         defineStore, // 定義存儲實例
@@ -2113,8 +1980,6 @@
     id="map-container"
     class="h-100 w-100 position-relative"
     :class="{
-      'click-mode-active': isClickMode,
-      'isochrone-click-mode-active': isIsochroneClickMode,
       'route-planning-click-mode-active': isRoutePlanningClickMode,
       'route-optimization-click-mode-active': isRouteOptimizationClickMode,
     }"
@@ -2233,42 +2098,6 @@
         顯示全市
       </button>
 
-      <!-- 點選數據分析位置 -->
-      <button
-        v-if="!isClickMode"
-        class="btn rounded-pill border-0 my-btn-green my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="startClickMode"
-        title="在地圖上點選位置進行數據分析"
-      >
-        點選數據分析位置
-      </button>
-      <button
-        v-else
-        class="btn rounded-pill border-0 my-btn-red my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="stopClickMode"
-        title="取消地圖點選"
-      >
-        取消地圖點選
-      </button>
-
-      <!-- 點選等時分析位置 -->
-      <button
-        v-if="!isIsochroneClickMode"
-        class="btn rounded-pill border-0 my-btn-blue my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="startIsochroneClickMode"
-        title="在地圖上點選位置進行等時圈分析"
-      >
-        點選等時分析位置
-      </button>
-      <button
-        v-else
-        class="btn rounded-pill border-0 my-btn-red my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="stopIsochroneClickMode"
-        title="取消等時圈分析點選"
-      >
-        取消等時圈點選
-      </button>
-
       <!-- 點選路徑規劃點 -->
       <button
         v-if="!isRoutePlanningClickMode"
@@ -2367,14 +2196,14 @@
 
   /* 🗺️ 路徑優化按鈕樣式 (Route Optimization Button Styles) */
   .my-btn-purple {
-    background-color: var(--my-color-purple, #6f42c1);
-    border-color: var(--my-color-purple, #6f42c1);
+    background-color: var(--my-color-tab20-5, #9467bd);
+    border-color: var(--my-color-tab20-5, #9467bd);
     color: white;
   }
 
   .my-btn-purple:hover {
-    background-color: var(--my-color-purple-hover, #5a32a1);
-    border-color: var(--my-color-purple-hover, #5a32a1);
+    background-color: var(--my-color-tab20-5-hover, #7467bd);
+    border-color: var(--my-color-tab20-5-hover, #7467bd);
     color: white;
   }
 

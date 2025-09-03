@@ -30,10 +30,22 @@
         dataStore.toggleLayerVisibility(layerId);
       };
 
+      /**
+       * 🔘 切換群組可見性
+       * 呼叫 store 中的 action 來切換指定群組所有圖層的顯示/隱藏狀態
+       * @param {string} groupName - 要切換的群組名稱
+       */
+      const toggleGroup = (groupName) => {
+        console.log('🔘 LayersTab: 切換群組', groupName);
+        dataStore.toggleGroupVisibility(groupName);
+      };
+
       // 📤 將需要暴露給 <template> 使用的數據和方法返回
       return {
         layers,
         toggleLayer,
+        toggleGroup,
+        isGroupVisible: dataStore.isGroupVisible,
         layerListRef,
         getIcon,
       };
@@ -48,6 +60,19 @@
         <div v-for="group in layers" :key="group.groupName" class="p-3">
           <div class="d-flex align-items-center pb-2">
             <div class="my-title-xs-gray">{{ group.groupName }}</div>
+            <!-- 群組開關 - 只有"新基準中央服務紀錄"群組才顯示 -->
+            <div
+              v-if="group.groupName === '新基準中央服務紀錄' && group.groupLayers.length > 0"
+              class="d-flex align-items-center justify-content-center ms-auto"
+            >
+              <input
+                type="checkbox"
+                :id="'group-switch-' + group.groupName"
+                :checked="isGroupVisible(group.groupName)"
+                @change="toggleGroup(group.groupName)"
+              />
+              <label :for="'group-switch-' + group.groupName"></label>
+            </div>
           </div>
 
           <div v-for="layer in group.groupLayers" :key="layer.layerId" class="mb-1">
@@ -143,7 +168,7 @@
   }
 
   input:checked + label {
-    background: var(--my-color-green);
+    background: var(--my-color-tab20-3);
   }
 
   input:checked + label:after {

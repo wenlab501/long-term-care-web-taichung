@@ -14,6 +14,38 @@ export const useDataStore = defineStore(
       },
     ]);
 
+    // 圖層顏色陣列（使用 Python tab20 色系）
+    const layerColors = [
+      'tab20-1',
+      'tab20-2',
+      'tab20-3',
+      'tab20-4',
+      'tab20-5',
+      'tab20-6',
+      'tab20-7',
+      'tab20-8',
+      'tab20-9',
+      'tab20-10',
+      'tab20-11',
+      'tab20-12',
+      'tab20-13',
+      'tab20-14',
+      'tab20-15',
+      'tab20-16',
+      'tab20-17',
+      'tab20-18',
+      'tab20-19',
+      'tab20-20',
+    ];
+
+    // 獲取下一可用顏色的函數
+    let colorIndex = 0;
+    const getNextColor = () => {
+      const color = layerColors[colorIndex % layerColors.length];
+      colorIndex++;
+      return color;
+    };
+
     // 在新的分組結構中搜尋指定 ID 的圖層
     const findLayerById = (layerId) => {
       for (const group of layers.value) {
@@ -51,6 +83,39 @@ export const useDataStore = defineStore(
 
       // 服務人員圖層已經在創建時載入好了數據，這裡只需要處理可見性切換
       console.log(`🔄 圖層 "${layer.layerName}" 可見性切換為:`, layer.visible);
+    };
+
+    // 控制整個群組圖層的顯示/隱藏
+    const toggleGroupVisibility = async (groupName) => {
+      console.log('🔧 DataStore: toggleGroupVisibility 被調用', groupName);
+      const group = layers.value.find((g) => g.groupName === groupName);
+      if (!group) {
+        console.error(`Group with name "${groupName}" not found.`);
+        return;
+      }
+
+      // 檢查群組中是否有任何圖層為可見狀態
+      const hasVisibleLayers = group.groupLayers.some((layer) => layer.visible);
+
+      // 如果有可見圖層，則全部隱藏；如果沒有可見圖層，則全部顯示
+      const newVisibility = !hasVisibleLayers;
+
+      console.log(
+        `🔧 DataStore: 群組 "${groupName}" 將 ${newVisibility ? '顯示' : '隱藏'} 所有圖層`
+      );
+
+      // 設置所有圖層的可見性
+      group.groupLayers.forEach((layer) => {
+        layer.visible = newVisibility;
+        console.log(`🔄 圖層 "${layer.layerName}" 可見性設為:`, newVisibility);
+      });
+    };
+
+    // 檢查群組是否有任何可見圖層
+    const isGroupVisible = (groupName) => {
+      const group = layers.value.find((g) => g.groupName === groupName);
+      if (!group) return false;
+      return group.groupLayers.some((layer) => layer.visible);
     };
 
     // ------------------------------------------------------------
@@ -101,7 +166,7 @@ export const useDataStore = defineStore(
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
-            colorName: 'orange',
+            colorName: 'tab20-2',
             fileName: '新基準中央服務紀錄_final_route.json',
           },
           dateStr
@@ -137,7 +202,7 @@ export const useDataStore = defineStore(
                 legendData: null,
                 loader: loadNewStandardCentralServiceData,
                 serviceProviderId: serviceLayer.serviceProviderId,
-                colorName: 'orange',
+                colorName: getNextColor(), // 使用不同的顏色
                 type: 'point',
                 shape: 'circle',
               };
@@ -168,6 +233,8 @@ export const useDataStore = defineStore(
       const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
+        // 重置顏色索引，確保下次載入時顏色重新從頭開始分配
+        colorIndex = 0;
         console.log('📅 已清除所有服務人員圖層');
       }
     };
@@ -717,6 +784,8 @@ export const useDataStore = defineStore(
       findLayerById, // 根據 ID 尋找圖層
       getAllLayers, // 獲取所有圖層的扁平陣列
       toggleLayerVisibility,
+      toggleGroupVisibility, // 切換群組圖層可見性
+      isGroupVisible, // 檢查群組是否有可見圖層
       selectedFeature,
       setSelectedFeature,
       clearSelectedFeature,
