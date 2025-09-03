@@ -26,8 +26,13 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     let id = 1;
 
-    // 遍歷所有服務人員的資料
+    // 遍歷所有服務人員的資料，只處理特定日期的資料
     jsonData.forEach((serviceProvider) => {
+      // 只處理服務日期為 1140701 的資料
+      if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
+        return; // 跳過非目標日期的資料
+      }
+      
       if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
         let servicePoints = []; // 將 servicePoints 移到外層作用域
 
