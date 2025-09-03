@@ -26,21 +26,26 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     let id = 1;
 
-    // 遍歷所有服務人員的資料，只處理特定日期的資料
+        // 遍歷所有服務人員的資料，只處理特定日期的資料
     jsonData.forEach((serviceProvider) => {
       // 只處理服務日期為 1140701 的資料
       if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
         return; // 跳過非目標日期的資料
       }
-      
+
       if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
         let servicePoints = []; // 將 servicePoints 移到外層作用域
 
         // 檢查是否有 route 欄位包含路線幾何資料
-        if (serviceProvider.route && serviceProvider.route.features && Array.isArray(serviceProvider.route.features)) {
-          // 使用 route 欄位中的 features 來繪製路線
+        if (
+          serviceProvider.route &&
+          serviceProvider.route.features &&
+          Array.isArray(serviceProvider.route.features)
+        ) {
+          // 使用 route 欄位中的 features 來繪製路線和座標點
           serviceProvider.route.features.forEach((routeFeature) => {
             if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
+              // 繪製路線
               geoJsonData.features.push({
                 type: 'Feature',
                 geometry: routeFeature.geometry,
@@ -59,6 +64,61 @@ export async function loadNewStandardCentralServiceData(layer) {
                   pointCount: routeFeature.geometry.coordinates.length,
                   ...routeFeature.properties, // 包含原始 route feature 的屬性
                 },
+              });
+
+              // 繪製路線上的每個座標點
+              routeFeature.geometry.coordinates.forEach((coordinate, index) => {
+                const [lng, lat] = coordinate;
+                
+                const propertyData = {
+                  座標順序: index + 1,
+                  經度: lng,
+                  緯度: lat,
+                  服務人員身分證: serviceProvider.服務人員身分證,
+                  服務日期: serviceProvider['服務日期(請輸入7碼)'],
+                };
+
+                const popupData = {
+                  name: `路線點位 ${index + 1}`,
+                  coordinate: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                  order: index + 1,
+                };
+
+                const tableData = {
+                  '#': id,
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue(`--my-color-${colorName}`)
+                    .trim(),
+                  座標順序: index + 1,
+                  經度: lng.toFixed(6),
+                  緯度: lat.toFixed(6),
+                  服務人員身分證: serviceProvider.服務人員身分證,
+                };
+
+                geoJsonData.features.push({
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [lng, lat],
+                  },
+                  properties: {
+                    id: id,
+                    layerId: layerId,
+                    layerName: layer.layerName,
+                    name: `路線點位 ${index + 1}`,
+                    fillColor: getComputedStyle(document.documentElement)
+                      .getPropertyValue(`--my-color-${colorName}`)
+                      .trim(),
+                    propertyData: propertyData,
+                    popupData: popupData,
+                    tableData: tableData,
+                    serviceProviderId: serviceProvider.服務人員身分證,
+                    routeOrder: index + 1,
+                    isRoutePoint: true, // 標記這是路線點位
+                  },
+                });
+
+                id++;
               });
             }
           });
