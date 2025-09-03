@@ -602,15 +602,28 @@
         console.log('📋 HomeView 處理服務點詳細資訊:', servicePointData);
 
         if (servicePointData.type === 'service-items') {
-          // 如果是 service-items 類型，顯示在右側面板
-          console.log('📋 顯示 service_items 在右側面板');
+          // 如果是 service-items 類型，顯示在屬性面板
+          console.log('📋 顯示 service_items 在屬性面板');
 
-          // 切換到右側屬性分頁
-          activeRightTab.value = 'properties';
+          // 檢查當前是桌面版還是響應式版本
+          const isDesktop = window.innerWidth >= 1200; // xl breakpoint
 
-          // 確保右側面板是可見的
-          if (rightViewWidth.value === 0) {
-            rightViewWidth.value = 20; // 設定預設寬度
+          if (isDesktop) {
+            // 桌面版：切換到右側屬性分頁
+            activeRightTab.value = 'properties';
+
+            // 確保右側面板是可見的
+            if (rightViewWidth.value === 0) {
+              rightViewWidth.value = 20; // 設定預設寬度
+            }
+          } else {
+            // 響應式版本：切換到底部屬性分頁
+            activeLowerTab.value = 'properties';
+
+            // 確保底部面板有足夠高度顯示屬性
+            if (mobileBottomViewHeight.value < 30) {
+              mobileBottomViewHeight.value = 40; // 設定合適的高度
+            }
           }
 
           // 創建一個特殊的 feature 物件來包含 service_items 資料
@@ -1167,6 +1180,7 @@
               @update:currentCoords="currentCoords = $event"
               @update:activeMarkers="activeMarkers = $event"
               @feature-selected="handleFeatureSelected"
+              @show-service-point-detail="handleShowServicePointDetail"
               @open-distance-modal="openDistanceModal"
               @open-isochrone-modal="openIsochroneModal"
             />

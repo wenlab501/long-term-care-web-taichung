@@ -118,9 +118,27 @@ export const useDataStore = defineStore(
       }
 
       console.log('🔧 DataStore: 找到圖層', layer.layerName, '當前狀態:', layer.visible);
+
+      const wasVisible = layer.visible;
       // 切換可見性狀態
       layer.visible = !layer.visible;
       console.log('🔧 DataStore: 新狀態:', layer.visible);
+
+      // 對於服務人員圖層，當第一次設為可見時才分配顏色
+      if (
+        !wasVisible &&
+        layer.visible &&
+        layer.layerId &&
+        layer.layerId.startsWith('service-provider-')
+      ) {
+        console.log('🎨 服務人員圖層第一次顯示，為其分配顏色');
+        // 使用圖層中儲存的服務日期來分配顏色
+        const serviceDate = layer.serviceDate || selectedServiceDate.value || 'default';
+        layer.colorName = getColorForServiceProvider(layer.serviceProviderId, serviceDate);
+        console.log(
+          `🎨 為服務人員 ${layer.serviceProviderId} (日期: ${serviceDate}) 分配顏色: ${layer.colorName}`
+        );
+      }
 
       // 服務人員圖層已經在創建時載入好了數據，這裡只需要處理可見性切換
       console.log(`🔄 圖層 "${layer.layerName}" 可見性切換為:`, layer.visible);
@@ -147,7 +165,25 @@ export const useDataStore = defineStore(
 
       // 設置所有圖層的可見性
       group.groupLayers.forEach((layer) => {
+        const wasVisible = layer.visible;
         layer.visible = newVisibility;
+
+        // 對於服務人員圖層，當第一次設為可見時才分配顏色
+        if (
+          !wasVisible &&
+          layer.visible &&
+          layer.layerId &&
+          layer.layerId.startsWith('service-provider-')
+        ) {
+          console.log('🎨 服務人員圖層第一次顯示，為其分配顏色');
+          // 使用圖層中儲存的服務日期來分配顏色
+          const serviceDate = layer.serviceDate || selectedServiceDate.value || 'default';
+          layer.colorName = getColorForServiceProvider(layer.serviceProviderId, serviceDate);
+          console.log(
+            `🎨 為服務人員 ${layer.serviceProviderId} (日期: ${serviceDate}) 分配顏色: ${layer.colorName}`
+          );
+        }
+
         console.log(`🔄 圖層 "${layer.layerName}" 可見性設為:`, newVisibility);
       });
     };
@@ -249,7 +285,8 @@ export const useDataStore = defineStore(
                 legendData: null,
                 loader: loadNewStandardCentralServiceData,
                 serviceProviderId: serviceLayer.serviceProviderId,
-                colorName: getColorForServiceProvider(serviceLayer.serviceProviderId, dateStr), // 使用一致的顏色（按日期分配）
+                serviceDate: dateStr, // 儲存服務日期，用於動態分配顏色
+                colorName: 'tab20-1', // 臨時使用預設顏色，實際顏色會在顯示時動態分配
                 type: 'point',
                 shape: 'circle',
               };

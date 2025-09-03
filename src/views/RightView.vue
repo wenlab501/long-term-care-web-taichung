@@ -106,10 +106,7 @@
     <div class="flex-grow-1 overflow-auto">
       <!-- 📋 物件屬性分頁內容 -->
       <div v-show="activeRightTab === 'properties'" class="h-100">
-        <PropertiesTab
-          :selected-feature="selectedFeature"
-          @highlight-feature="$emit('highlight-feature', $event)"
-        />
+        <PropertiesTab @highlight-feature="$emit('highlight-feature', $event)" />
       </div>
     </div>
   </div>
