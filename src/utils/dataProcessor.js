@@ -23,18 +23,17 @@ const TAB20_COLORS = [
 ];
 
 // 根據服務人員ID生成一致的顏色（與dataStore.js保持一致）
-function getColorForServiceProvider(serviceProviderId, dateStr = null, colorMap = null) {
+function getColorForServiceProvider(serviceProviderId, colorMap = null) {
   // 如果有colorMap且包含該服務人員的顏色，使用colorMap
   if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
     return colorMap.get(serviceProviderId);
   }
 
   // 使用確定性的哈希算法，確保同一個ID總是得到相同顏色
+  // 注意：這裡不使用日期，確保跨日期顏色一致
   let hash = 0;
-  // 如果有日期，將日期也加入哈希計算
-  const combinedId = dateStr ? `${serviceProviderId}_${dateStr}` : serviceProviderId;
-  for (let i = 0; i < combinedId.length; i++) {
-    hash = (hash << 5) - hash + combinedId.charCodeAt(i);
+  for (let i = 0; i < serviceProviderId.length; i++) {
+    hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
     hash = hash & hash; // 轉換為32位整數
   }
   const colorIndex = Math.abs(hash) % TAB20_COLORS.length;
@@ -42,14 +41,14 @@ function getColorForServiceProvider(serviceProviderId, dateStr = null, colorMap 
 }
 
 // 統一的顏色獲取函數 - 確保所有圖層物件使用相同顏色
-function getUnifiedLayerColor(serviceProviderId, colorMap, dateStr = null) {
+function getUnifiedLayerColor(serviceProviderId, colorMap) {
   // 優先級：colorMap > 服務人員ID生成的顏色
   if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
     return colorMap.get(serviceProviderId);
   }
 
   // 如果沒有colorMap，使用服務人員ID生成的顏色
-  return getColorForServiceProvider(serviceProviderId, dateStr);
+  return getColorForServiceProvider(serviceProviderId);
 }
 
 // 新基準中央服務紀錄
@@ -111,7 +110,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       const serviceProviderId = serviceProvider.服務人員身分證;
 
       // 使用統一的顏色獲取函數 - 確保所有物件使用相同顏色
-      const unifiedColor = getUnifiedLayerColor(serviceProviderId, colorMap, dateFilter);
+      const unifiedColor = getUnifiedLayerColor(serviceProviderId, colorMap);
       if (!serviceProviderLayers.has(serviceProviderId)) {
         serviceProviderLayers.set(serviceProviderId, {
           type: 'FeatureCollection',
@@ -340,6 +339,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
               return {
                 '#': index + 1,
+                id: `point_${serviceProviderId}_${index}`, // 添加與 GeoJSON feature 一致的 ID
                 姓名: point.姓名,
                 個案居住地址: point.地址,
                 時間: point.時間,
