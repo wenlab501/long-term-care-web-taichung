@@ -1,4 +1,3 @@
-
 // 新基準中央服務紀錄
 export async function loadNewStandardCentralServiceData(layer) {
   try {
@@ -42,14 +41,14 @@ export async function loadNewStandardCentralServiceData(layer) {
 
             if (!isNaN(lat) && !isNaN(lon)) {
               // 計算時間（小時 + 分鐘/60）
-              const startTime = serviceRecord.hour_start + (serviceRecord.min_start / 60);
-              
+              const startTime = serviceRecord.hour_start + serviceRecord.min_start / 60;
+
               servicePoints.push({
                 lat,
                 lon,
                 startTime,
                 serviceRecord,
-                coordinates: [lon, lat]
+                coordinates: [lon, lat],
               });
             }
           }
@@ -59,7 +58,7 @@ export async function loadNewStandardCentralServiceData(layer) {
         servicePoints.sort((a, b) => a.startTime - b.startTime);
 
         // 生成路線座標
-        servicePoints.forEach(point => {
+        servicePoints.forEach((point) => {
           routeCoordinates.push(point.coordinates);
         });
 
@@ -150,7 +149,7 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     // 包含為表格量身打造的數據陣列
     const tableData = geoJsonData.features
-      .filter(feature => feature.geometry.type === 'Point')
+      .filter((feature) => feature.geometry.type === 'Point')
       .map((feature) => ({
         ...feature.properties.tableData,
       }));
@@ -158,7 +157,7 @@ export async function loadNewStandardCentralServiceData(layer) {
     // 統計各行政區的數量
     const districtCounts = {};
     geoJsonData.features
-      .filter(feature => feature.geometry.type === 'Point')
+      .filter((feature) => feature.geometry.type === 'Point')
       .forEach((feature) => {
         const district = feature.properties.propertyData.鄉鎮區;
         if (district) {
@@ -173,8 +172,8 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     // 包含摘要資訊
     const summaryData = {
-      totalCount: geoJsonData.features.filter(f => f.geometry.type === 'Point').length,
-      routeCount: geoJsonData.features.filter(f => f.geometry.type === 'LineString').length,
+      totalCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
+      routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
       districtCount: districtCount,
     };
 
@@ -188,7 +187,6 @@ export async function loadNewStandardCentralServiceData(layer) {
     throw error;
   }
 }
-
 
 // 社區整體照顧服務體系C級單位
 
@@ -345,7 +343,6 @@ export async function loadPublicElderlyWelfareInstitutionData(layer) {
 
 // 老人福利機構
 
-
 // 一般護理之家
 
 // 住宿式長照機構
@@ -499,17 +496,8 @@ export async function load142Data(layer) {
   }
 }
 
-
 // 社區式喘息(GA03/GA04/GA06)及社區式短照(SC03/SC04/SC06) 服務單位
 
-
-
-
-
-
 // 4大超商
-
-
-
 
 // 臺北市區界圖
