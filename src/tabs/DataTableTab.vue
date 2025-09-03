@@ -2,7 +2,7 @@
   import { ref, computed, defineEmits, onMounted, watch } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
 
-  const emit = defineEmits(['highlight-on-map', 'show-service-point-detail', 'feature-selected']);
+  const emit = defineEmits(['highlight-on-map', 'show-service-point-detail']);
 
   const dataStore = useDataStore();
 
@@ -268,16 +268,10 @@
       console.log('🎯 DataTableTab: 檢測到服務人員圖層點擊:', item);
 
       // 使用共用的工具函數創建服務項目資料
-      const { serviceItemsData, serviceItemsFeature } = dataStore.createServiceItemsData(
-        item,
-        layer
-      );
+      const { serviceItemsData } = dataStore.createServiceItemsData(item, layer);
 
-      // 發送服務項目列表到右側面板（統一使用事件流處理）
+      // 發送服務項目列表到父組件
       emit('show-service-point-detail', serviceItemsData);
-
-      // 發送要素選中事件（與 MapTab 保持一致）
-      emit('feature-selected', serviceItemsFeature);
 
       // 同時發送地圖高亮事件
       const highlightData = {

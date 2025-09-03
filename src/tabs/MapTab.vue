@@ -34,11 +34,9 @@
       'update:zoomLevel',
       'update:currentCoords',
       'update:activeMarkers',
-      'feature-selected',
+      'show-service-point-detail',
       'open-distance-modal',
       'open-isochrone-modal',
-      'highlight-on-map',
-      'show-service-point-detail',
     ],
 
     // 🔧 組件設定函數 (Component Setup Function)
@@ -933,21 +931,26 @@
 
                 if (isServiceProviderLayer) {
                   console.log('🎯 MapTab: 檢測到服務人員圖層點擊:', feature.properties);
+                  console.log(
+                    '🎯 MapTab: feature.properties.service_items:',
+                    feature.properties.service_items
+                  );
+                  console.log(
+                    '🎯 MapTab: feature.properties.service_items 長度:',
+                    feature.properties.service_items?.length
+                  );
 
                   // 清除之前的選取，確保單一選擇
                   dataStore.setSelectedFeature(null);
                   resetAllLayerStyles();
 
                   // 使用共用的工具函數創建服務項目資料
-                  const { serviceItemsData, serviceItemsFeature, serviceItems } =
-                    dataStore.createServiceItemsData(feature, layer);
+                  const { serviceItemsData } = dataStore.createServiceItemsData(feature, layer);
 
-                  console.log('🎯 MapTab: 創建的 serviceItemsFeature:', serviceItemsFeature);
-                  console.log('🎯 MapTab: serviceItems 數量:', serviceItems?.length || 0);
+                  console.log('🎯 MapTab: 創建了 serviceItemsData，準備發送事件', serviceItemsData);
 
-                  // 統一使用事件流處理，與 DataTableTab 保持一致
+                  // 統一使用事件流處理
                   emit('show-service-point-detail', serviceItemsData);
-                  emit('feature-selected', serviceItemsFeature); // 發送要素選中事件
 
                   // 縮放到該服務點
                   if (feature.geometry && feature.geometry.type === 'Point') {

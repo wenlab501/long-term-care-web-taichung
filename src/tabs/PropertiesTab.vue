@@ -154,14 +154,24 @@
        * 檢查選中物件是否包含服務項目列表
        */
       const isServiceItemsObject = computed(() => {
+        const selectedFeatureProps = selectedFeature.value?.properties;
+        const type = selectedFeatureProps?.type;
+        const serviceItems = selectedFeatureProps?.serviceItems;
+        const serviceItemsLength = serviceItems?.length;
+
         const result =
-          selectedFeature.value?.properties?.type === 'service-items' &&
-          Array.isArray(selectedFeature.value?.properties?.serviceItems);
-        console.log('📋 PropertiesTab isServiceItemsObject:', {
-          type: selectedFeature.value?.properties?.type,
-          serviceItemsLength: selectedFeature.value?.properties?.serviceItems?.length,
+          type === 'service-items' && Array.isArray(serviceItems) && serviceItemsLength > 0;
+
+        console.log('📋 PropertiesTab isServiceItemsObject 詳細檢查:', {
+          selectedFeature: selectedFeature.value,
+          selectedFeatureProps: selectedFeatureProps,
+          type: type,
+          serviceItems: serviceItems,
+          serviceItemsLength: serviceItemsLength,
+          isArray: Array.isArray(serviceItems),
           result: result,
         });
+
         return result;
       });
 

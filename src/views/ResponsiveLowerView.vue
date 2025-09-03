@@ -38,7 +38,6 @@
       'highlight-on-map', // 在地圖上高亮顯示
       'highlight-feature', // 高亮顯示特徵
       'show-service-point-detail', // 顯示服務點詳細資訊
-      'feature-selected', // 要素選中事件
     ],
 
     /**
@@ -163,7 +162,6 @@
         <DataTableTab
           @highlight-on-map="$emit('highlight-on-map', $event)"
           @show-service-point-detail="$emit('show-service-point-detail', $event)"
-          @feature-selected="$emit('feature-selected', $event)"
         />
       </div>
 
