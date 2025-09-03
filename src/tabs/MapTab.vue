@@ -66,6 +66,9 @@
       /** 🗺️ 動態地圖容器 ID（避免多實例衝突） */
       const mapContainerId = ref(`leaflet-map-${Math.random().toString(36).substr(2, 9)}`);
 
+      // 🎯 地圖視圖狀態管理 (Map View State Management)
+      let previousViewState = null; // 保存高亮前的視圖狀態
+
       // 📊 計算屬性：檢查是否有任何圖層可見 (Computed Property: Check if Any Layer is Visible)
       const isAnyLayerVisible = computed(
         () => dataStore.getAllLayers().some((l) => l.visible && l.geoJsonData) // 檢查所有圖層中是否有可見且有資料的圖層
@@ -145,7 +148,7 @@
               addRouteOptimizationPoint(e.latlng.lat, e.latlng.lng);
               return false; // 阻止事件繼續傳播
             } else if (!e.originalEvent.target.closest('.leaflet-interactive')) {
-              // 否則清除選取
+              // 否則清除選取（視圖狀態恢復由 watch 監聽器處理）
               dataStore.setSelectedFeature(null);
               resetAllLayerStyles();
             }
@@ -1007,6 +1010,30 @@
         return geoJsonLayer; // 返回創建的 GeoJSON 圖層
       };
 
+      // 🎯 保存當前視圖狀態函數 (Save Current View State Function)
+      const saveCurrentViewState = () => {
+        if (mapInstance) {
+          const center = mapInstance.getCenter();
+          const zoom = mapInstance.getZoom();
+          previousViewState = {
+            center: [center.lat, center.lng],
+            zoom: zoom,
+          };
+          console.log('🎯 保存當前視圖狀態:', previousViewState);
+        }
+      };
+
+      // 🎯 恢復之前的視圖狀態函數 (Restore Previous View State Function)
+      const restorePreviousViewState = () => {
+        if (mapInstance && previousViewState) {
+          console.log('🎯 恢復之前的視圖狀態:', previousViewState);
+          mapInstance.setView(previousViewState.center, previousViewState.zoom);
+          // 同時更新 defineStore 中的值，保持一致性
+          defineStore.setMapView(previousViewState.center, previousViewState.zoom);
+          previousViewState = null; // 清除保存的狀態
+        }
+      };
+
       // 🔄 重設所有圖層樣式函數 (Reset All Layer Styles Function)
       const resetAllLayerStyles = () => {
         Object.values(layerGroups).forEach((layerGroup) => {
@@ -1319,8 +1346,9 @@
               const feature = layer.feature; // 獲取要素物件
               if (feature && feature.properties) {
                 // 檢查要素是否有屬性
-                // 獲取要素 ID
-                const featureId = feature.properties.id;
+                // 獲取要素 ID（與 DataTableTab.vue 中的邏輯保持一致）
+                const featureId =
+                  feature.properties.id || feature.properties['#'] || feature.properties.編號;
 
                 console.log(`🔍 檢查要素 ID: ${featureId} (目標: ${targetFeatureId})`); // 輸出檢查訊息
 
@@ -1343,7 +1371,9 @@
                 const feature = layer.feature; // 獲取要素物件
                 if (feature && feature.properties) {
                   // 檢查要素是否有屬性
-                  const featureId = feature.properties.id; // 獲取要素 ID
+                  // 獲取要素 ID（與 DataTableTab.vue 中的邏輯保持一致）
+                  const featureId =
+                    feature.properties.id || feature.properties['#'] || feature.properties.編號;
 
                   console.log(`🔍 檢查要素 ID: ${featureId} (目標: ${targetFeatureId})`); // 輸出檢查訊息
 
@@ -1418,6 +1448,9 @@
 
             // 如果有有效邊界，調整地圖視圖
             if (bounds && bounds.isValid()) {
+              // 在縮放前保存當前的視圖狀態
+              saveCurrentViewState();
+
               mapInstance.fitBounds(bounds, {
                 maxZoom: 16, // 最大縮放等級限制
                 padding: [50, 50], // 邊界內邊距
@@ -2008,6 +2041,21 @@
             setBasemap(); // 當底圖變化時重新設定
           }
         }
+      );
+
+      // 👀 監聽器：監聽選中要素變化 (Watcher: Watch Selected Feature Changes)
+      watch(
+        () => dataStore.selectedFeature,
+        (newFeature, oldFeature) => {
+          console.log('🎯 MapTab: selectedFeature 變化', { newFeature, oldFeature });
+          
+          // 如果從有選中變為沒有選中，恢復預設視圖
+          if (oldFeature && !newFeature) {
+            console.log('🎯 MapTab: 清除選取，恢復預設視圖');
+            restorePreviousViewState();
+          }
+        },
+        { deep: true }
       );
 
       // 🔄 手動重試地圖初始化函數 (Manual Retry Map Initialization Function)

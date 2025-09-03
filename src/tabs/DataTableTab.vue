@@ -289,6 +289,8 @@
         layerId: layer.layerId,
         layerName: layer.layerName,
         item: item,
+        serviceProviderId: layer.serviceProviderId, // 添加服務人員ID
+        serviceDate: layer.serviceDate, // 添加服務日期
       };
 
       setTimeout(() => {
@@ -297,7 +299,7 @@
     } else {
       // 其他圖層的原有邏輯
       const highlightData = {
-        id: item.id || item['#'], // 🔥 優先使用 item.id，如果沒有則使用 item['#'] 作為後備
+        id: item.id || item['#'] || item.編號, // 🔥 統一ID匹配邏輯
         layerId: layer.layerId,
         layerName: layer.layerName,
         item: item,
