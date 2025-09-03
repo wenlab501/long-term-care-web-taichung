@@ -11,7 +11,7 @@ src/data/
 ├── districts/               # 行政區相關資料
 │   ├── taipei-districts.json
 │   └── population-data.json
-├── geojson/                 # 地理資料檔案
+├── json/                 # 地理資料檔案
 │   ├── taipei-boundaries.geojson
 │   └── roads-network.geojson
 ├── statistics/              # 統計資料
@@ -59,11 +59,11 @@ import sampleData from '@/data/sample-data.json'
 export default {
   setup() {
     const data = ref(null)
-    
+
     onMounted(() => {
       data.value = sampleData
     })
-    
+
     return { data }
   }
 }
@@ -120,4 +120,4 @@ export default {
 - 對於大型資料集，考慮使用 Web Workers 處理
 - 實作資料快取機制避免重複載入
 - 使用分頁或虛擬滾動處理大量資料顯示
-- 考慮使用 IndexedDB 存放客戶端資料 
+- 考慮使用 IndexedDB 存放客戶端資料

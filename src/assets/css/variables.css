@@ -37,6 +37,9 @@
   --my-color-gray-900: #212121;
   --my-color-black: #000000;
 
+  /* 基本顏色 */
+  --my-color-green: #2ca02c;
+
   /* 圖層顏色，使用 Python tab20 色系 */
   --my-color-tab20-1: #1f77b4; /* 藍色 */
   --my-color-tab20-1-hover: #1f5fb4;

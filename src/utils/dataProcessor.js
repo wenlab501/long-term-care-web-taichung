@@ -22,12 +22,19 @@ const TAB20_COLORS = [
   'tab20-20',
 ];
 
-// 根據服務人員ID生成一致的顏色
-function getColorForServiceProvider(serviceProviderId) {
-  // 將ID轉換為數字，然後取模得到顏色索引
+// 根據服務人員ID生成一致的顏色（與dataStore.js保持一致）
+function getColorForServiceProvider(serviceProviderId, dateStr = null, colorMap = null) {
+  // 如果有colorMap且包含該服務人員的顏色，使用colorMap
+  if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
+    return colorMap.get(serviceProviderId);
+  }
+
+  // 使用確定性的哈希算法，確保同一個ID總是得到相同顏色
   let hash = 0;
-  for (let i = 0; i < serviceProviderId.length; i++) {
-    hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
+  // 如果有日期，將日期也加入哈希計算
+  const combinedId = dateStr ? `${serviceProviderId}_${dateStr}` : serviceProviderId;
+  for (let i = 0; i < combinedId.length; i++) {
+    hash = (hash << 5) - hash + combinedId.charCodeAt(i);
     hash = hash & hash; // 轉換為32位整數
   }
   const colorIndex = Math.abs(hash) % TAB20_COLORS.length;
@@ -35,14 +42,14 @@ function getColorForServiceProvider(serviceProviderId) {
 }
 
 // 統一的顏色獲取函數 - 確保所有圖層物件使用相同顏色
-function getUnifiedLayerColor(serviceProviderId, colorMap) {
+function getUnifiedLayerColor(serviceProviderId, colorMap, dateStr = null) {
   // 優先級：colorMap > 服務人員ID生成的顏色
-  if (colorMap && colorMap.has(serviceProviderId)) {
+  if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
     return colorMap.get(serviceProviderId);
   }
 
   // 如果沒有colorMap，使用服務人員ID生成的顏色
-  return getColorForServiceProvider(serviceProviderId);
+  return getColorForServiceProvider(serviceProviderId, dateStr);
 }
 
 // 新基準中央服務紀錄
@@ -104,7 +111,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       const serviceProviderId = serviceProvider.服務人員身分證;
 
       // 使用統一的顏色獲取函數 - 確保所有物件使用相同顏色
-      const unifiedColor = getUnifiedLayerColor(serviceProviderId, colorMap);
+      const unifiedColor = getUnifiedLayerColor(serviceProviderId, colorMap, dateFilter);
       if (!serviceProviderLayers.has(serviceProviderId)) {
         serviceProviderLayers.set(serviceProviderId, {
           type: 'FeatureCollection',
@@ -185,6 +192,21 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     routeOrder: index + 1,
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
                     address: serviceRecord.datail.個案居住地址,
+                    // 添加 service_items 資料
+                    service_items: serviceRecord.service_items || [],
+                    // 添加其他原始資料欄位
+                    編號: serviceRecord.datail.編號,
+                    姓名: serviceRecord.datail.姓名,
+                    性別: serviceRecord.datail.性別,
+                    個案戶籍縣市: serviceRecord.datail.個案戶籍縣市,
+                    鄉鎮區: serviceRecord.datail.鄉鎮區,
+                    里別: serviceRecord.datail.里別,
+                    個案戶籍地址: serviceRecord.datail.個案戶籍地址,
+                    個案居住縣市: serviceRecord.datail.個案居住縣市,
+                    hour_start: serviceRecord.hour_start,
+                    min_start: serviceRecord.min_start,
+                    hour_end: serviceRecord.hour_end,
+                    min_end: serviceRecord.min_end,
                   },
                 };
 
@@ -242,6 +264,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               個案居住縣市: point.datail.個案居住縣市,
               緯度: point.datail.Lat ? parseFloat(point.datail.Lat) : null,
               經度: point.datail.Lon ? parseFloat(point.datail.Lon) : null,
+              // 添加時間相關欄位
+              hour_start: point.hour_start,
+              min_start: point.min_start,
+              hour_end: point.hour_end,
+              min_end: point.min_end,
             })),
           });
         }
@@ -292,13 +319,62 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
     // 將服務人員圖層轉換為陣列格式
     const serviceProviderLayersArray = Array.from(serviceProviderLayers.entries()).map(
-      ([serviceProviderId, geoJsonData]) => ({
-        serviceProviderId,
-        layerName: serviceProviderId, // 直接使用服務人員身分證作為圖層名稱
-        geoJsonData,
-        pointCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
-        routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
-      })
+      ([serviceProviderId, geoJsonData]) => {
+        // 為每個服務人員準備 service_points 的 tableData
+        const serviceProviderInfo = serviceProviderData.get(serviceProviderId);
+        const servicePointsTableData = serviceProviderInfo
+          ? serviceProviderInfo.allServicePoints.map((point, index) => {
+              // 從 GeoJSON features 中找到對應的 service_items
+              let serviceItems = [];
+              if (geoJsonData && geoJsonData.features) {
+                const servicePointFeature = geoJsonData.features.find(
+                  (feature) =>
+                    feature.properties &&
+                    (feature.properties.編號 === point.編號 ||
+                      feature.properties.姓名 === point.姓名)
+                );
+                if (servicePointFeature && servicePointFeature.properties.service_items) {
+                  serviceItems = servicePointFeature.properties.service_items;
+                }
+              }
+
+              return {
+                '#': index + 1,
+                姓名: point.姓名,
+                個案居住地址: point.地址,
+                時間: point.時間,
+                服務項目代碼: point.服務項目代碼 || 'N/A',
+                順序: point.順序,
+                緯度: point.緯度,
+                經度: point.經度,
+                編號: point.編號,
+                性別: point.性別,
+                個案戶籍縣市: point.個案戶籍縣市,
+                鄉鎮區: point.鄉鎮區,
+                里別: point.里別,
+                個案戶籍地址: point.個案戶籍地址,
+                個案居住縣市: point.個案居住縣市,
+                // 添加時間相關欄位
+                hour_start: point.hour_start,
+                min_start: point.min_start,
+                hour_end: point.hour_end,
+                min_end: point.min_end,
+                // 添加 service_items
+                service_items: serviceItems,
+                color: serviceProviderInfo.color,
+              };
+            })
+          : [];
+
+        return {
+          serviceProviderId,
+          layerName: serviceProviderId, // 直接使用服務人員身分證作為圖層名稱
+          geoJsonData,
+          tableData: servicePointsTableData, // 添加 service_points 的表格資料
+          pointCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
+          routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
+        };
+      }
     );
 
     return {
