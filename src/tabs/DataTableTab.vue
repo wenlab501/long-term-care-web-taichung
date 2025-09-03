@@ -264,42 +264,51 @@
     const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
 
     if (isServiceProviderLayer) {
-      // 處理服務人員圖層的點擊 - 顯示 service_items 在右側面板
-      console.log('🎯 DataTableTab: 檢測到服務人員圖層點擊:', item);
+      console.log('🎯 DataTableTab: 處理服務人員圖層點擊:', item);
+
+      // 先清除之前的選取
+      dataStore.setSelectedFeature(null);
 
       // 使用共用的工具函數創建服務項目資料
       const { serviceItemsData } = dataStore.createServiceItemsData(item, layer);
 
-      // 發送服務項目列表到父組件
+      console.log('🎯 DataTableTab: 創建的服務項目資料:', serviceItemsData);
+
+      // 發送服務項目列表到父組件，觸發右側面板顯示
       emit('show-service-point-detail', serviceItemsData);
 
-      // 同時發送地圖高亮事件
+      // 發送特殊的地圖高亮事件，專門用於服務項目高亮
+      const serviceHighlightData = {
+        type: 'service-item-highlight',
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+        item: item,
+        serviceProviderId: layer.serviceProviderId,
+        serviceDate: layer.serviceDate,
+        coordinates: {
+          lat: item.緯度 || item.lat,
+          lon: item.經度 || item.lon,
+        },
+      };
+
+      console.log('🎯 DataTableTab: 發送服務項目高亮事件:', serviceHighlightData);
+
+      setTimeout(() => {
+        emit('highlight-on-map', serviceHighlightData);
+      }, 100);
+    } else {
+      // 其他圖層的原有邏輯
       const highlightData = {
         id: item.id || item['#'] || item.編號,
         layerId: layer.layerId,
         layerName: layer.layerName,
         item: item,
-        serviceProviderId: layer.serviceProviderId, // 添加服務人員ID
-        serviceDate: layer.serviceDate, // 添加服務日期
       };
 
-      setTimeout(() => {
-        emit('highlight-on-map', highlightData);
-      }, 50);
-    } else {
-      // 其他圖層的原有邏輯
-      const highlightData = {
-        id: item.id || item['#'] || item.編號, // 🔥 統一ID匹配邏輯
-        layerId: layer.layerId,
-        layerName: layer.layerName,
-        item: item,
-      };
-
-      console.log('🎯 DataTableTab: 發送高亮事件:', highlightData);
+      console.log('🎯 DataTableTab: 發送一般高亮事件:', highlightData);
 
       // 添加小延遲，確保地圖已準備就緒
       setTimeout(() => {
-        console.log('🎯 DataTableTab: 正在發送 highlight-on-map 事件');
         emit('highlight-on-map', highlightData);
       }, 50);
     }
