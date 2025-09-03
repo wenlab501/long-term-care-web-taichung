@@ -57,6 +57,7 @@
     'sort-table', // 表格排序
     'highlight-on-map', // 在地圖上高亮顯示
     'show-service-point-detail', // 顯示服務點詳細資訊
+    'feature-selected', // 要素選中事件
 
     // 🔄 操作相關事件
     'reset-view', // 重設視圖

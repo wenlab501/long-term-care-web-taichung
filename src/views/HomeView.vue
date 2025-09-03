@@ -1151,6 +1151,7 @@
               :rightViewWidth="rightViewWidth"
               @update:activeRightTab="activeRightTab = $event"
               @highlight-feature="handleHighlight"
+              @show-service-point-detail="handleShowServicePointDetail"
               :current-coords="currentCoords"
             />
           </div>

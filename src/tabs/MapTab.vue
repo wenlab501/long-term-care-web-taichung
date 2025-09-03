@@ -149,6 +149,7 @@
               return false; // 阻止事件繼續傳播
             } else if (!e.originalEvent.target.closest('.leaflet-interactive')) {
               // 否則清除選取（視圖狀態恢復由 watch 監聽器處理）
+              console.log('🎯 MapTab: 點擊空白處，清除選取');
               dataStore.setSelectedFeature(null);
               resetAllLayerStyles();
             }
@@ -915,72 +916,58 @@
                 const isServiceProviderLayer =
                   layer.layerId && layer.layerId.startsWith('service-provider-');
 
+                // 檢查是否已經選取了相同的要素
+                const isSameFeature =
+                  dataStore.selectedFeature &&
+                  dataStore.selectedFeature.properties &&
+                  dataStore.selectedFeature.properties.id === feature.properties.id;
+
+                if (isSameFeature) {
+                  // 如果點擊的是已經選取的要素，清除選取並回到預設視圖
+                  console.log('🎯 MapTab: 點擊已選取的要素，清除選取');
+                  dataStore.setSelectedFeature(null);
+                  resetAllLayerStyles();
+                  showFullCity();
+                  return;
+                }
+
                 if (isServiceProviderLayer) {
                   console.log('🎯 MapTab: 檢測到服務人員圖層點擊:', feature.properties);
 
-                  // 從圖層中找到對應的服務點及其 service_items
-                  const serviceItems = [];
-                  if (layer.geoJsonData && layer.geoJsonData.features) {
-                    // 找到對應的服務點 feature
-                    const servicePointFeature = layer.geoJsonData.features.find(
-                      (f) =>
-                        f.properties &&
-                        (f.properties.id === feature.properties.id ||
-                          f.properties['#'] === feature.properties['#'] ||
-                          f.properties.編號 === feature.properties.編號 ||
-                          f.properties.name === feature.properties.name)
-                    );
+                  // 清除之前的選取，確保單一選擇
+                  dataStore.setSelectedFeature(null);
+                  resetAllLayerStyles();
 
-                    if (servicePointFeature && servicePointFeature.properties) {
-                      // 從 feature.properties 中獲取 service_items
-                      if (servicePointFeature.properties.service_items) {
-                        serviceItems.push(...servicePointFeature.properties.service_items);
-                      }
-                    }
-                  }
-
-                  const serviceItemsData = {
-                    type: 'service-items',
-                    layerId: layer.layerId,
-                    layerName: layer.layerName,
-                    servicePoint: feature.properties,
-                    servicePointInfo: {
-                      name: feature.properties.姓名 || feature.properties.name,
-                      address: feature.properties.個案居住地址 || feature.properties.address,
-                      time: feature.properties.時間 || feature.properties.time,
-                      serviceType:
-                        feature.properties.服務項目代碼 || feature.properties.serviceType,
-                      order: feature.properties.順序 || feature.properties.order,
-                      lat: feature.properties.緯度 || feature.properties.lat,
-                      lng: feature.properties.經度 || feature.properties.lon,
-                    },
-                    serviceItems: serviceItems,
-                  };
-
-                  // 創建一個特殊的 feature 物件來包含 service_items 資料
-                  const serviceItemsFeature = {
-                    type: 'Feature',
-                    properties: {
-                      ...feature.properties,
-                      serviceItems: serviceItems,
-                      servicePointInfo: serviceItemsData.servicePointInfo,
-                      type: 'service-items',
-                      layerId: layer.layerId,
-                      layerName: layer.layerName,
-                    },
-                  };
+                  // 使用共用的工具函數創建服務項目資料
+                  const { serviceItemsData, serviceItemsFeature, serviceItems } =
+                    dataStore.createServiceItemsData(feature, layer);
 
                   console.log('🎯 MapTab: 創建的 serviceItemsFeature:', serviceItemsFeature);
                   console.log('🎯 MapTab: serviceItems 數量:', serviceItems?.length || 0);
 
-                  // 發送服務項目列表到右側面板（與 DataTableTab 保持一致）
+                  // 統一使用事件流處理，與 DataTableTab 保持一致
                   emit('show-service-point-detail', serviceItemsData);
-
-                  dataStore.setSelectedFeature(serviceItemsFeature); // 設定選中的要素到資料存儲
                   emit('feature-selected', serviceItemsFeature); // 發送要素選中事件
+
+                  // 縮放到該服務點
+                  if (feature.geometry && feature.geometry.type === 'Point') {
+                    const [lng, lat] = feature.geometry.coordinates;
+                    mapInstance.setView([lat, lng], 16); // 縮放到 16 級別
+                  }
                 } else {
+                  // 清除之前的選取，確保單一選擇
+                  dataStore.setSelectedFeature(null);
+                  resetAllLayerStyles();
+
+                  // 設定新的選取
                   dataStore.setSelectedFeature(feature); // 設定選中的要素到資料存儲
                   emit('feature-selected', feature); // 發送要素選中事件
+
+                  // 如果是點要素，縮放到該點
+                  if (feature.geometry && feature.geometry.type === 'Point') {
+                    const [lng, lat] = feature.geometry.coordinates;
+                    mapInstance.setView([lat, lng], 16); // 縮放到 16 級別
+                  }
                 }
               },
               // 右鍵點擊事件
@@ -1314,6 +1301,20 @@
 
           console.log('✅ 服務人員高亮事件處理完成，退出函數');
           return; // 確保退出函數
+        }
+
+        // 檢查是否為清除高亮事件
+        if (
+          typeof highlightData === 'object' &&
+          highlightData !== null &&
+          highlightData.id === null
+        ) {
+          console.log('🎯 MapTab: 接收到清除高亮事件');
+          // 清除所有圖層的樣式
+          resetAllLayerStyles();
+          // 回到預設視圖
+          showFullCity();
+          return;
         }
 
         // 檢查高亮資料是否為物件格式
@@ -2052,7 +2053,16 @@
           // 如果從有選中變為沒有選中，恢復預設視圖
           if (oldFeature && !newFeature) {
             console.log('🎯 MapTab: 清除選取，恢復預設視圖');
-            restorePreviousViewState();
+            // 檢查是否為點要素選取，如果是則恢復到預設視圖
+            if (
+              oldFeature.geometry?.type === 'Point' ||
+              oldFeature.properties?.type === 'service-items' ||
+              oldFeature.properties?.layerId?.startsWith('service-provider-')
+            ) {
+              showFullCity();
+            } else {
+              restorePreviousViewState();
+            }
           }
         },
         { deep: true }
