@@ -42,7 +42,7 @@ export async function loadNewStandardCentralServiceData(layer) {
           serviceProvider.route.features &&
           Array.isArray(serviceProvider.route.features)
         ) {
-          // 使用 route 欄位中的 features 來繪製路線和座標點
+          // 使用 route 欄位中的 features 來繪製路線
           serviceProvider.route.features.forEach((routeFeature) => {
             if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
               // 繪製路線
@@ -62,63 +62,11 @@ export async function loadNewStandardCentralServiceData(layer) {
                   serviceProviderId: serviceProvider.服務人員身分證,
                   serviceDate: serviceProvider['服務日期(請輸入7碼)'],
                   pointCount: routeFeature.geometry.coordinates.length,
+                  distance: routeFeature.properties?.summary?.distance || 0,
+                  duration: routeFeature.properties?.summary?.duration || 0,
+                  segments: routeFeature.properties?.segments?.length || 0,
                   ...routeFeature.properties, // 包含原始 route feature 的屬性
                 },
-              });
-
-              // 繪製路線上的每個座標點
-              routeFeature.geometry.coordinates.forEach((coordinate, index) => {
-                const [lng, lat] = coordinate;
-
-                const propertyData = {
-                  座標順序: index + 1,
-                  經度: lng,
-                  緯度: lat,
-                  服務人員身分證: serviceProvider.服務人員身分證,
-                  服務日期: serviceProvider['服務日期(請輸入7碼)'],
-                };
-
-                const popupData = {
-                  name: `路線點位 ${index + 1}`,
-                  coordinate: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-                  order: index + 1,
-                };
-
-                const tableData = {
-                  '#': id,
-                  color: getComputedStyle(document.documentElement)
-                    .getPropertyValue(`--my-color-${colorName}`)
-                    .trim(),
-                  座標順序: index + 1,
-                  經度: lng.toFixed(6),
-                  緯度: lat.toFixed(6),
-                  服務人員身分證: serviceProvider.服務人員身分證,
-                };
-
-                geoJsonData.features.push({
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [lng, lat],
-                  },
-                  properties: {
-                    id: id,
-                    layerId: layerId,
-                    layerName: layer.layerName,
-                    name: `路線點位 ${index + 1}`,
-                    fillColor: getComputedStyle(document.documentElement)
-                      .getPropertyValue(`--my-color-${colorName}`)
-                      .trim(),
-                    propertyData: propertyData,
-                    popupData: popupData,
-                    tableData: tableData,
-                    serviceProviderId: serviceProvider.服務人員身分證,
-                    routeOrder: index + 1,
-                    isRoutePoint: true, // 標記這是路線點位
-                  },
-                });
-
-                id++;
               });
             }
           });
@@ -181,63 +129,65 @@ export async function loadNewStandardCentralServiceData(layer) {
           }
         }
 
-        // 為每個服務點位創建點 Feature
-        servicePoints.forEach((point, index) => {
-          const propertyData = {
-            編號: point.serviceRecord.datail.編號,
-            姓名: point.serviceRecord.datail.姓名,
-            性別: point.serviceRecord.datail.性別,
-            個案戶籍縣市: point.serviceRecord.datail.個案戶籍縣市,
-            鄉鎮區: point.serviceRecord.datail.鄉鎮區,
-            里別: point.serviceRecord.datail.里別,
-            個案戶籍地址: point.serviceRecord.datail.個案戶籍地址,
-            個案居住縣市: point.serviceRecord.datail.個案居住縣市,
-            個案居住地址: point.serviceRecord.datail.個案居住地址,
-            服務時間: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
-            路線順序: index + 1,
-          };
+        // 為每個服務點位創建點 Feature（只有在沒有 route 欄位時才需要）
+        if (!serviceProvider.route || !serviceProvider.route.features) {
+          servicePoints.forEach((point, index) => {
+            const propertyData = {
+              編號: point.serviceRecord.datail.編號,
+              姓名: point.serviceRecord.datail.姓名,
+              性別: point.serviceRecord.datail.性別,
+              個案戶籍縣市: point.serviceRecord.datail.個案戶籍縣市,
+              鄉鎮區: point.serviceRecord.datail.鄉鎮區,
+              里別: point.serviceRecord.datail.里別,
+              個案戶籍地址: point.serviceRecord.datail.個案戶籍地址,
+              個案居住縣市: point.serviceRecord.datail.個案居住縣市,
+              個案居住地址: point.serviceRecord.datail.個案居住地址,
+              服務時間: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
+              路線順序: index + 1,
+            };
 
-          const popupData = {
-            name: point.serviceRecord.datail.姓名,
-            serviceTime: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
-            routeOrder: index + 1,
-          };
-
-          const tableData = {
-            '#': id,
-            color: getComputedStyle(document.documentElement)
-              .getPropertyValue(`--my-color-${colorName}`)
-              .trim(),
-            姓名: point.serviceRecord.datail.姓名,
-            個案居住地址: point.serviceRecord.datail.個案居住地址,
-            服務時間: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
-            路線順序: index + 1,
-          };
-
-          geoJsonData.features.push({
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: point.coordinates,
-            },
-            properties: {
-              id: id,
-              layerId: layerId,
-              layerName: layer.layerName,
+            const popupData = {
               name: point.serviceRecord.datail.姓名,
-              fillColor: getComputedStyle(document.documentElement)
+              serviceTime: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
+              routeOrder: index + 1,
+            };
+
+            const tableData = {
+              '#': id,
+              color: getComputedStyle(document.documentElement)
                 .getPropertyValue(`--my-color-${colorName}`)
                 .trim(),
-              propertyData: propertyData,
-              popupData: popupData,
-              tableData: tableData,
-              serviceProviderId: serviceProvider.服務人員身分證,
-              routeOrder: index + 1,
-            },
-          });
+              姓名: point.serviceRecord.datail.姓名,
+              個案居住地址: point.serviceRecord.datail.個案居住地址,
+              服務時間: `${point.serviceRecord.hour_start}:${point.serviceRecord.min_start.toString().padStart(2, '0')}`,
+              路線順序: index + 1,
+            };
 
-          id++;
-        });
+            geoJsonData.features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: point.coordinates,
+              },
+              properties: {
+                id: id,
+                layerId: layerId,
+                layerName: layer.layerName,
+                name: point.serviceRecord.datail.姓名,
+                fillColor: getComputedStyle(document.documentElement)
+                  .getPropertyValue(`--my-color-${colorName}`)
+                  .trim(),
+                propertyData: propertyData,
+                popupData: popupData,
+                tableData: tableData,
+                serviceProviderId: serviceProvider.服務人員身分證,
+                routeOrder: index + 1,
+              },
+            });
+
+            id++;
+          });
+        }
       }
     });
 
