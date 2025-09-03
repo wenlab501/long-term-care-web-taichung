@@ -26,7 +26,7 @@ export async function loadNewStandardCentralServiceData(layer) {
 
     let id = 1;
 
-        // 遍歷所有服務人員的資料，只處理特定日期的資料
+    // 遍歷所有服務人員的資料，只處理特定日期的資料
     jsonData.forEach((serviceProvider) => {
       // 只處理服務日期為 1140701 的資料
       if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
@@ -69,7 +69,7 @@ export async function loadNewStandardCentralServiceData(layer) {
               // 繪製路線上的每個座標點
               routeFeature.geometry.coordinates.forEach((coordinate, index) => {
                 const [lng, lat] = coordinate;
-                
+
                 const propertyData = {
                   座標順序: index + 1,
                   經度: lng,
