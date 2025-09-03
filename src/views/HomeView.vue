@@ -133,6 +133,10 @@
       /** 📍 作用中的地圖標記數量 */
       const activeMarkers = ref(0);
 
+      // 📋 服務點詳細資訊狀態 (Service Point Detail State)
+      /** 📋 當前選中的服務點詳細資訊 */
+      const selectedServicePoint = ref(null);
+
       // 🔧 拖曳狀態 (Dragging States)
       /** 🖱️ 側邊面板拖曳進行中狀態 */
       const isSidePanelDragging = ref(false);
@@ -589,6 +593,31 @@
         });
       };
 
+      /**
+       * 📋 處理服務點詳細資訊顯示事件 (Handle Service Point Detail Event)
+       * 當用戶點擊 service_points 時，在左側面板顯示詳細資訊
+       * @param {Object} servicePointData - 服務點詳細資料
+       */
+      const handleShowServicePointDetail = (servicePointData) => {
+        console.log('📋 HomeView 處理服務點詳細資訊:', servicePointData);
+
+        // 儲存選中的服務點資訊
+        selectedServicePoint.value = servicePointData;
+
+        // 確保左側面板是可見的
+        if (leftViewWidth.value === 0) {
+          leftViewWidth.value = 20; // 設定預設寬度
+        }
+      };
+
+      /**
+       * 📋 處理清除服務點詳細資訊事件 (Handle Clear Service Point Detail Event)
+       */
+      const handleClearServicePointDetail = () => {
+        console.log('📋 HomeView 清除服務點詳細資訊');
+        selectedServicePoint.value = null;
+      };
+
       // 📏 響應式垂直調整狀態
       /**
        * 📏 計算底部面板最小高度百分比 (Calculate Minimum Bottom Panel Height Percentage)
@@ -807,6 +836,9 @@
         mobileUpperViewRef, // 響應式上半部面板引用
         calculatedMiddleViewHeight, // 計算的中間面板高度
         handleHighlight, // 處理高亮顯示
+        handleShowServicePointDetail, // 處理服務點詳細資訊顯示
+        handleClearServicePointDetail, // 處理清除服務點詳細資訊
+        selectedServicePoint, // 選中的服務點資訊
 
         // 🎯 互動函數
         updateActiveMarkers, // 更新作用中標記
@@ -1003,7 +1035,10 @@
             :style="{ width: leftViewWidthPx }"
             v-if="leftViewWidth > 0"
           >
-            <LeftView />
+            <LeftView
+              :selectedServicePoint="selectedServicePoint"
+              @clear-service-point-detail="handleClearServicePointDetail"
+            />
           </div>
 
           <!-- 🔧 左側拖曳調整器 (Left Panel Resizer) -->
@@ -1041,6 +1076,7 @@
             @reset-view="resetView"
             @highlight-on-map="handleHighlight"
             @highlight-feature="handleHighlight"
+            @show-service-point-detail="handleShowServicePointDetail"
             @feature-selected="handleFeatureSelected"
             @open-distance-modal="openDistanceModal"
             @open-isochrone-modal="openIsochroneModal"

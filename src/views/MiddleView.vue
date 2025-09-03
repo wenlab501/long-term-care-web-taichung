@@ -56,6 +56,7 @@
     'update:tableSearchQuery', // 更新搜尋查詢
     'sort-table', // 表格排序
     'highlight-on-map', // 在地圖上高亮顯示
+    'show-service-point-detail', // 顯示服務點詳細資訊
 
     // 🔄 操作相關事件
     'reset-view', // 重設視圖
@@ -381,6 +382,7 @@
         :isPanelDragging="isOverallDragging"
         @update:activeBottomTab="$emit('update:activeBottomTab', $event)"
         @highlight-on-map="$emit('highlight-on-map', $event)"
+        @show-service-point-detail="$emit('show-service-point-detail', $event)"
         @reset-view="$emit('reset-view')"
       />
     </div>

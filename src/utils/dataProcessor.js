@@ -1,10 +1,56 @@
+// tab20 顏色陣列
+const TAB20_COLORS = [
+  'tab20-1',
+  'tab20-2',
+  'tab20-3',
+  'tab20-4',
+  'tab20-5',
+  'tab20-6',
+  'tab20-7',
+  'tab20-8',
+  'tab20-9',
+  'tab20-10',
+  'tab20-11',
+  'tab20-12',
+  'tab20-13',
+  'tab20-14',
+  'tab20-15',
+  'tab20-16',
+  'tab20-17',
+  'tab20-18',
+  'tab20-19',
+  'tab20-20',
+];
+
+// 根據服務人員ID生成一致的顏色
+function getColorForServiceProvider(serviceProviderId) {
+  // 將ID轉換為數字，然後取模得到顏色索引
+  let hash = 0;
+  for (let i = 0; i < serviceProviderId.length; i++) {
+    hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
+    hash = hash & hash; // 轉換為32位整數
+  }
+  const colorIndex = Math.abs(hash) % TAB20_COLORS.length;
+  return TAB20_COLORS[colorIndex];
+}
+
+// 統一的顏色獲取函數 - 確保所有圖層物件使用相同顏色
+function getUnifiedLayerColor(serviceProviderId, colorMap) {
+  // 優先級：colorMap > 服務人員ID生成的顏色
+  if (colorMap && colorMap.has(serviceProviderId)) {
+    return colorMap.get(serviceProviderId);
+  }
+
+  // 如果沒有colorMap，使用服務人員ID生成的顏色
+  return getColorForServiceProvider(serviceProviderId);
+}
+
 // 新基準中央服務紀錄
-export async function loadNewStandardCentralServiceData(layer, dateFilter = null) {
+export async function loadNewStandardCentralServiceData(layer, dateFilter = null, colorMap = null) {
   try {
     const layerId = layer.layerId;
-    const colorName = layer.colorName;
 
-    const filePath = `/long-term-care-web-taichung/data/geojson/${layer.fileName}`;
+    const filePath = `/long-term-care-web-taichung/data/json/${layer.fileName}`;
 
     const response = await fetch(filePath);
 
@@ -56,6 +102,9 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
       // 為每個服務人員創建獨立的圖層
       const serviceProviderId = serviceProvider.服務人員身分證;
+
+      // 使用統一的顏色獲取函數 - 確保所有物件使用相同顏色
+      const unifiedColor = getUnifiedLayerColor(serviceProviderId, colorMap);
       if (!serviceProviderLayers.has(serviceProviderId)) {
         serviceProviderLayers.set(serviceProviderId, {
           type: 'FeatureCollection',
@@ -63,7 +112,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
         });
       }
 
-      if (serviceProvider.data && Array.isArray(serviceProvider.data)) {
+      if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
         // 1. 處理 route 路線（如果存在）
         if (
           serviceProvider.route &&
@@ -80,9 +129,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                   layerId: layerId,
                   layerName: `${layer.layerName}_路線`,
                   name: `服務路線_${serviceProvider.服務人員身分證}`,
-                  strokeColor: getComputedStyle(document.documentElement)
-                    .getPropertyValue(`--my-color-${colorName}`)
-                    .trim(),
+                  strokeColor: unifiedColor, // 使用顏色名稱，方便統一處理
+                  routeColor: unifiedColor, // 添加routeColor屬性，使用統一的顏色
                   strokeWidth: 3,
                   strokeOpacity: 0.8,
                   serviceProviderId: serviceProvider.服務人員身分證,
@@ -103,8 +151,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           });
         }
 
-        // 2. 處理服務點（data 裡面的點）
-        const servicePoints = serviceProvider.data.filter((record) => record.datail);
+        // 2. 處理服務點（service_points 裡面的點）
+        const servicePoints = serviceProvider.service_points.filter((record) => record.datail);
 
         if (servicePoints.length > 0) {
           // 按服務時間排序
@@ -132,9 +180,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     layerId: layerId,
                     layerName: layer.layerName,
                     name: serviceRecord.datail.姓名,
-                    fillColor: getComputedStyle(document.documentElement)
-                      .getPropertyValue(`--my-color-${colorName}`)
-                      .trim(),
+                    fillColor: unifiedColor, // 使用顏色名稱，方便統一處理
                     serviceProviderId: serviceProvider.服務人員身分證,
                     routeOrder: index + 1,
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
@@ -162,7 +208,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           serviceProviderData.set(serviceProvider.服務人員身分證, {
             '#': serviceProviderData.size + 1,
             color: getComputedStyle(document.documentElement)
-              .getPropertyValue(`--my-color-${colorName}`)
+              .getPropertyValue(`--my-color-${unifiedColor}`)
               .trim(),
             服務人員身分證: serviceProvider.服務人員身分證,
             服務日期: serviceProvider['服務日期(請輸入7碼)'],

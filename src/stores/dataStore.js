@@ -38,12 +38,19 @@ export const useDataStore = defineStore(
       'tab20-20',
     ];
 
-    // 獲取下一可用顏色的函數
-    let colorIndex = 0;
-    const getNextColor = () => {
-      const color = layerColors[colorIndex % layerColors.length];
-      colorIndex++;
-      return color;
+    // 記錄服務人員ID與顏色的映射
+    const serviceProviderColorMap = new Map();
+
+    // 根據服務人員ID獲取顏色（確保一致性）- 使用和dataProcessor相同的邏輯
+    const getColorForServiceProvider = (serviceProviderId) => {
+      // 使用確定性的哈希算法，確保同一個ID總是得到相同顏色
+      let hash = 0;
+      for (let i = 0; i < serviceProviderId.length; i++) {
+        hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
+        hash = hash & hash; // 轉換為32位整數
+      }
+      const colorIndex = Math.abs(hash) % layerColors.length;
+      return layerColors[colorIndex];
     };
 
     // 在新的分組結構中搜尋指定 ID 的圖層
@@ -166,10 +173,11 @@ export const useDataStore = defineStore(
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
-            colorName: 'tab20-2',
-            fileName: '新基準中央服務紀錄_final_route.json',
+            colorName: 'tab20-2', // 預設顏色，實際會被每個服務人員的顏色覆蓋
+            fileName: '新基準中央服務紀錄_all.json',
           },
-          dateStr
+          dateStr,
+          serviceProviderColorMap // 傳遞顏色映射
         );
 
         // 找到服務記錄群組
@@ -202,7 +210,7 @@ export const useDataStore = defineStore(
                 legendData: null,
                 loader: loadNewStandardCentralServiceData,
                 serviceProviderId: serviceLayer.serviceProviderId,
-                colorName: getNextColor(), // 使用不同的顏色
+                colorName: getColorForServiceProvider(serviceLayer.serviceProviderId), // 使用一致的顏色
                 type: 'point',
                 shape: 'circle',
               };
@@ -233,9 +241,9 @@ export const useDataStore = defineStore(
       const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
-        // 重置顏色索引，確保下次載入時顏色重新從頭開始分配
-        colorIndex = 0;
-        console.log('📅 已清除所有服務人員圖層');
+        // 重置顏色索引和顏色映射，確保下次載入時顏色重新從頭開始分配
+        serviceProviderColorMap.clear();
+        console.log('📅 已清除所有服務人員圖層和顏色映射');
       }
     };
 

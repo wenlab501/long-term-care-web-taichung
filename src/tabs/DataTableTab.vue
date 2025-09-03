@@ -2,7 +2,7 @@
   import { ref, computed, defineEmits, onMounted, watch } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
 
-  const emit = defineEmits(['highlight-on-map']);
+  const emit = defineEmits(['highlight-on-map', 'show-service-point-detail']);
 
   const dataStore = useDataStore();
 
@@ -137,6 +137,9 @@
   const handleHighlight = (item, layer) => {
     console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
 
+    // 檢查是否為 service_points 的點擊（根據圖層名稱判斷）
+    const isServicePointsClick = layer.layerName && layer.layerName.includes('service-points');
+
     // 對於新基準中央服務紀錄圖層，需要特殊處理
     if (layer.layerId === 'new-standard-central-service') {
       // 傳遞服務人員的詳細資訊
@@ -156,6 +159,41 @@
       // 添加小延遲，確保地圖已準備就緒
       setTimeout(() => {
         console.log('🎯 DataTableTab: 正在發送 highlight-on-map 事件');
+        emit('highlight-on-map', highlightData);
+      }, 50);
+    } else if (isServicePointsClick) {
+      // 處理 service_points 的點擊
+      console.log('🎯 DataTableTab: 檢測到 service_points 點擊:', item);
+
+      const servicePointData = {
+        type: 'service-point',
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+        item: item,
+        // 從 item 中提取服務點的詳細資訊
+        servicePointInfo: {
+          name: item.姓名 || item.name,
+          address: item.個案居住地址 || item.address,
+          time: item.時間 || item.time,
+          serviceType: item.服務項目代碼 || item.serviceType,
+          order: item.順序 || item.order,
+          lat: item.緯度 || item.lat,
+          lng: item.經度 || item.lon,
+        },
+      };
+
+      // 發送服務點詳細資訊事件
+      emit('show-service-point-detail', servicePointData);
+
+      // 同時發送地圖高亮事件
+      const highlightData = {
+        id: item.id || item['#'] || item.編號,
+        layerId: layer.layerId,
+        layerName: layer.layerName,
+        item: item,
+      };
+
+      setTimeout(() => {
         emit('highlight-on-map', highlightData);
       }, 50);
     } else {
