@@ -34,7 +34,17 @@
 
     if (isServiceProviderLayer) {
       // 服務人員圖層只顯示指定的欄位
-      return ['#', '編號', '姓名', '性別', '個案居住地址', '起始時間', '結束時間', '總時間'];
+      return [
+        '#',
+        '編號',
+        '姓名',
+        '性別',
+        '個案居住地址',
+        '起始時間',
+        '結束時間',
+        '總時間',
+        '服務數量',
+      ];
     }
 
     // 其他圖層使用原來的動態欄位邏輯
@@ -218,6 +228,8 @@
             }
           }
           return 'N/A';
+        case '服務數量':
+          return (item.service_items_count ?? item.服務數量 ?? '0').toString();
         default:
           return item[column] || 'N/A';
       }

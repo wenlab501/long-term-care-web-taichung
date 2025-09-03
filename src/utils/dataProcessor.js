@@ -193,6 +193,9 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     address: serviceRecord.datail.個案居住地址,
                     // 添加 service_items 資料
                     service_items: serviceRecord.service_items || [],
+                    service_items_count: Array.isArray(serviceRecord.service_items)
+                      ? serviceRecord.service_items.length
+                      : 0,
                     // 添加其他原始資料欄位
                     編號: serviceRecord.datail.編號,
                     姓名: serviceRecord.datail.姓名,
@@ -268,6 +271,9 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               min_start: point.min_start,
               hour_end: point.hour_end,
               min_end: point.min_end,
+              service_items_count: Array.isArray(point.service_items)
+                ? point.service_items.length
+                : 0,
             })),
           });
         }
@@ -361,6 +367,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 min_end: point.min_end,
                 // 添加 service_items
                 service_items: serviceItems,
+                service_items_count: Array.isArray(serviceItems) ? serviceItems.length : 0,
                 color: serviceProviderInfo.color,
               };
             })

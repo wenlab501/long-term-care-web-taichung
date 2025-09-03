@@ -39,6 +39,27 @@
         return layer;
       });
 
+      // 右側標色需與地圖一致：優先使用 feature 上的 fillColor/routeColor，其次使用 layer.colorName
+      const selectedLayerColor = computed(() => {
+        const layer = selectedLayer.value;
+        if (!layer) return 'var(--my-color-gray-300)';
+        if (
+          layer.geoJsonData &&
+          layer.geoJsonData.features &&
+          layer.geoJsonData.features.length > 0
+        ) {
+          const f =
+            layer.geoJsonData.features.find(
+              (ff) => ff.properties && (ff.properties.fillColor || ff.properties.routeColor)
+            ) || layer.geoJsonData.features[0];
+          const props = f.properties || {};
+          if (props.fillColor) return `var(--my-color-${props.fillColor})`;
+          if (props.routeColor) return `var(--my-color-${props.routeColor})`;
+        }
+        if (layer.colorName) return `var(--my-color-${layer.colorName})`;
+        return 'var(--my-color-gray-300)';
+      });
+
       /**
        * 🏷️ 圖層名稱計算屬性 (Layer Name Computed Property)
        * 根據 selectedFeature.properties.layerId 從 dataStore 的 layers 中找到對應的圖層名稱
@@ -352,6 +373,7 @@
       return {
         selectedFeature, // 選中物件
         selectedLayer, // 選中圖層
+        selectedLayerColor, // 圖層顯示顏色（與地圖一致）
         layerName, // 圖層名稱
         hasProperties, // 是否有屬性
         isAnalysisObject, // 是否為分析圖層物件
@@ -440,9 +462,7 @@
         <div
           v-if="selectedLayer"
           :style="{
-            backgroundColor: selectedLayer.colorName
-              ? `var(--my-color-${selectedLayer.colorName})`
-              : 'var(--my-color-gray-300)',
+            backgroundColor: selectedLayerColor,
             minHeight: '4px',
           }"
         ></div>
@@ -851,42 +871,31 @@
           <template v-if="isServiceItemsObject">
             <hr class="my-3" />
             <div class="my-title-sm-black mb-3">
-              <i class="fas fa-list me-2"></i>
-              服務項目列表 ({{ selectedFeature.properties.serviceItems.length }} 項)
+              服務項目列表 ({{ selectedFeature.properties.serviceItems.length }})
             </div>
 
             <div v-if="selectedFeature.properties.serviceItems.length > 0" class="mb-3">
-              <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                  <thead class="table-light">
-                    <tr>
-                      <th scope="col" class="text-center">#</th>
-                      <th scope="col">服務項目代碼</th>
-                      <th scope="col">服務類別</th>
-                      <th scope="col">數量</th>
-                      <th scope="col">單價</th>
-                      <th scope="col">服務時間</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(item, index) in selectedFeature.properties.serviceItems"
-                      :key="item.row_id || index"
-                    >
-                      <td class="text-center">{{ index + 1 }}</td>
-                      <td>{{ item['服務項目代碼'] || item.serviceType || 'N/A' }}</td>
-                      <td>
-                        {{ item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A' }}
-                      </td>
-                      <td>{{ item['數量\n僅整數'] || item.quantity || 'N/A' }}</td>
-                      <td>{{ item.單價 || item.unitPrice || 'N/A' }}</td>
-                      <td>
-                        {{ item.hour_start || 'N/A' }}:{{ item.min_start || '00' }} -
-                        {{ item.hour_end || 'N/A' }}:{{ item.min_end || '00' }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div
+                v-for="(item, index) in selectedFeature.properties.serviceItems"
+                :key="item.row_id || index"
+                class="mb-2 p-2 border rounded"
+              >
+                <div class="d-flex align-items-center mb-2">
+                  <span class="badge bg-primary me-2">{{ index + 1 }}</span>
+                  <span class="fw-bold">{{
+                    item['服務項目代碼'] || item.serviceType || 'N/A'
+                  }}</span>
+                </div>
+                <DetailItem
+                  label="服務類別"
+                  :value="item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A'"
+                />
+                <DetailItem label="數量" :value="item['數量\n僅整數'] || item.quantity || 'N/A'" />
+                <DetailItem label="單價" :value="item.單價 || item.unitPrice || 'N/A'" />
+                <DetailItem
+                  label="服務時間"
+                  :value="`${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`"
+                />
               </div>
             </div>
 

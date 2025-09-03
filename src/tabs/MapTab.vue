@@ -67,6 +67,40 @@
       // 🎯 地圖視圖狀態管理 (Map View State Management)
       let previousViewState = null; // 保存高亮前的視圖狀態
 
+      // 🎯 單一高亮追蹤（確保同時只會有一個點被放大）
+      let currentHighlightedElement = null;
+      const clearCurrentHighlight = () => {
+        try {
+          if (currentHighlightedElement) {
+            const prevDiv = currentHighlightedElement.querySelector('div');
+            if (prevDiv) {
+              prevDiv.style.transform = '';
+              prevDiv.style.boxShadow = '';
+              prevDiv.style.border = '';
+            }
+            currentHighlightedElement.style.zIndex = '';
+          }
+        } catch (e) {
+          // ignore
+        }
+        currentHighlightedElement = null;
+      };
+      const applyPointHighlight = (element, scale = 2.0, borderPx = 2) => {
+        if (!element) return;
+        if (currentHighlightedElement && currentHighlightedElement !== element) {
+          clearCurrentHighlight();
+        }
+        const innerDiv = element.querySelector('div');
+        if (innerDiv) {
+          innerDiv.style.transition = 'transform 0.15s ease-in-out';
+          innerDiv.style.transform = `scale(${scale})`;
+          innerDiv.style.boxShadow = '';
+          if (borderPx) innerDiv.style.border = `${borderPx}px solid #ffffff`;
+        }
+        element.style.zIndex = 1000;
+        currentHighlightedElement = element;
+      };
+
       // 📊 計算屬性：檢查是否有任何圖層可見 (Computed Property: Check if Any Layer is Visible)
       const isAnyLayerVisible = computed(
         () => dataStore.getAllLayers().some((l) => l.visible && l.geoJsonData) // 檢查所有圖層中是否有可見且有資料的圖層
@@ -420,7 +454,7 @@
                 const icon = L.divIcon({
                   html: `
                   <div class="d-flex align-items-center justify-content-center my-font-size-xs fw-bold"
-                       style="background: ${pointColor}; color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                       style="background: ${pointColor}; color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white;">
                     ${routeOrder}
                   </div>
                   `,
@@ -449,7 +483,6 @@
                      background-color: ${pointColor};
                      width: 8px;
                      height: 8px;
-                     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                    ">
                    </div>`, // HTML 內容：圓形標記
                   className: '', // 移除不必要的 CSS 類名
@@ -976,18 +1009,11 @@
                     fillOpacity: this.options?.fillOpacity,
                   };
 
-                  // 如果是點物件，進行高亮顯示
+                  // 如果是點物件，進行高亮顯示，並顯示 tooltip（detail）
                   const element = this.getElement && this.getElement();
                   if (element) {
-                    const innerIconDiv = element.querySelector('div');
-                    if (innerIconDiv) {
-                      innerIconDiv.style.transition =
-                        'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out';
-                      innerIconDiv.style.transform = 'scale(2.0)'; // 明顯放大
-                      innerIconDiv.style.boxShadow = '0 0 15px #2196F3, 0 0 30px #2196F3'; // 藍色光暈表示選中
-                      innerIconDiv.style.border = '2px solid #ffffff'; // 白色邊框
-                      innerIconDiv.style.zIndex = '1000';
-                    }
+                    // 確保同時間只有一個視覺高亮
+                    applyPointHighlight(element, 2.0, 2);
                     element.style.zIndex = 1000;
                   }
 
@@ -1033,11 +1059,17 @@
                     emit('show-service-point-detail', serviceItemsData);
                     console.log('🎯 MapTab: 已發送 show-service-point-detail 事件');
 
-                    // 縮放到該服務點
+                    // 縮放到該服務點並顯示 tooltip
                     if (feature.geometry && feature.geometry.type === 'Point') {
                       const [lng, lat] = feature.geometry.coordinates;
                       mapInstance.setView([lat, lng], 16);
                       console.log('🎯 MapTab: 地圖已移動到服務點位置:', [lat, lng]);
+                      const props = feature.properties || {};
+                      const tooltipHtml = `\n                        <div class=\"my-font-size-sm\">\n                          <div><strong>${props.姓名 || props.name || ''}</strong></div>\n                          <div>${props.address || props.個案居住地址 || ''}</div>\n                          <div>${props.serviceTime || props.時間 || ''}</div>\n                        </div>`;
+                      if (this.bindTooltip) {
+                        this.bindTooltip(tooltipHtml, { permanent: false, direction: 'top' });
+                        this.openTooltip && this.openTooltip();
+                      }
                     }
                   } catch (error) {
                     console.error('❌ MapTab: 創建服務項目資料時發生錯誤:', error);
@@ -1459,6 +1491,7 @@
             console.log('🎯 MapTab: 移動地圖到座標:', lat, lon);
 
             // 移動地圖視圖到服務點位置
+            saveCurrentViewState();
             mapInstance.setView([lat, lon], 16);
 
             // 尋找並高亮地圖上對應的服務點
@@ -1492,15 +1525,7 @@
                     if (layer.getElement) {
                       const element = layer.getElement();
                       if (element) {
-                        const innerIconDiv = element.querySelector('div');
-                        if (innerIconDiv) {
-                          innerIconDiv.style.transition =
-                            'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out';
-                          innerIconDiv.style.transform = 'scale(2.5)'; // 更明顯的放大
-                          innerIconDiv.style.boxShadow = '';
-                          innerIconDiv.style.zIndex = '1000';
-                          innerIconDiv.style.border = '3px solid #ffffff'; // 白色邊框
-                        }
+                        applyPointHighlight(element, 2.4, 3);
                         element.style.zIndex = 1000;
                       }
                     }
@@ -1545,6 +1570,14 @@
                 )
                 .openPopup();
             }
+
+            // 自動復原：若這只是高亮而非選取，短時間後恢復
+            setTimeout(() => {
+              if (!dataStore.selectedFeature) {
+                resetAllLayerStyles();
+                restorePreviousViewState();
+              }
+            }, 1500);
           } else {
             console.warn('⚠️ MapTab: 服務項目沒有有效的座標信息');
           }
@@ -1565,9 +1598,6 @@
 
         // 執行高亮顯示的核心邏輯函數
         const performHighlight = () => {
-          // 首先清除選中狀態
-          dataStore.setSelectedFeature(null);
-
           // 重置所有圖層樣式
           resetAllLayerStyles();
 
@@ -1632,9 +1662,7 @@
 
           // 如果找到目標圖層和要素，執行高亮顯示
           if (targetLayer && targetFeature) {
-            // 設置選中的特徵到資料存儲
-            dataStore.setSelectedFeature(targetFeature); // 更新選中要素狀態
-            console.log('🎯 設置選中特徵到 store'); // 輸出設置訊息
+            // 僅做視覺高亮，不改變 store 選取狀態（避免非選取情境無法自動復原）
 
             // 根據要素類型執行不同的高亮效果
             if (targetLayer.feature?.geometry?.type === 'Point') {
@@ -1698,10 +1726,26 @@
               // 延遲打開彈窗以確保地圖移動完成
               setTimeout(() => {
                 if (targetLayer.openPopup) {
-                  // 檢查圖層是否有打開彈窗方法
-                  targetLayer.openPopup(); // 打開彈窗
+                  targetLayer.openPopup();
+                }
+                // 若此為點位且具有 datail 資料，動態建立 tooltip
+                const f = targetLayer.feature;
+                const hasDetail = f && f.properties && (f.properties.編號 || f.properties.name);
+                if (hasDetail && targetLayer.getLatLng) {
+                  const props = f.properties;
+                  const tooltipHtml = `\n                    <div class="my-font-size-sm">\n                      <div><strong>${props.姓名 || props.name || ''}</strong></div>\n                      <div>${props.address || props.個案居住地址 || ''}</div>\n                      <div>${props.serviceTime || props.時間 || ''}</div>\n                    </div>`;
+                  targetLayer.bindTooltip(tooltipHtml, { permanent: false, direction: 'top' });
+                  targetLayer.openTooltip();
                 }
               }, 500); // 延遲 500ms
+
+              // 自動復原：若在短時間內沒有產生選取，回到先前視圖並清理高亮
+              setTimeout(() => {
+                if (!dataStore.selectedFeature) {
+                  resetAllLayerStyles();
+                  restorePreviousViewState();
+                }
+              }, 1500);
             }
 
             console.log('✅ 顯示位置功能完成'); // 輸出完成訊息
