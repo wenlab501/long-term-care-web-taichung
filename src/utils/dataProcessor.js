@@ -1,79 +1,17 @@
-/**
- * D3.js category20b 顏色陣列
- * 對應輸入圖片中的顏色順序，提供20種不同的顏色給圖層使用
- * 順序：藍色系(4) -> 橘色系(4) -> 綠色系(4) -> 紫色系(4) -> 灰色系(4)
- */
-const CATEGORY20B_COLORS = [
-  'category20b-1', // #3182bd - 深藍
-  'category20b-2', // #6baed6 - 中藍
-  'category20b-3', // #9ecae1 - 淺藍
-  'category20b-4', // #c6dbef - 極淺藍
-  'category20b-5', // #e6550d - 深橘
-  'category20b-6', // #fd8d3c - 中橘
-  'category20b-7', // #fdae6b - 淺橘
-  'category20b-8', // #fdd0a2 - 極淺橘
-  'category20b-9', // #31a354 - 深綠
-  'category20b-10', // #74c476 - 中綠
-  'category20b-11', // #a1d99b - 淺綠
-  'category20b-12', // #c7e9c0 - 極淺綠
-  'category20b-13', // #756bb1 - 深紫
-  'category20b-14', // #9e9ac8 - 中紫
-  'category20b-15', // #bcbddc - 淺紫
-  'category20b-16', // #dadaeb - 極淺紫
-  'category20b-17', // #636363 - 深灰
-  'category20b-18', // #969696 - 中灰
-  'category20b-19', // #bdbdbd - 淺灰
-  'category20b-20', // #d9d9d9 - 極淺灰
-];
+// 注意：getColorForServiceProvider 函數已移除
+// 現在顏色分配統一在 dataStore.js 中處理
 
-/**
- * 根據服務人員ID生成一致的顏色（與dataStore.js保持一致）
- * @param {string} serviceProviderId - 服務人員身分證字號
- * @param {Map} colorMap - 顏色映射表（可選）
- * @returns {string} 顏色名稱
- */
-function getColorForServiceProvider(serviceProviderId, colorMap = null) {
-  // 如果有colorMap且包含該服務人員的顏色，使用colorMap
-  if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
-    return colorMap.get(serviceProviderId);
-  }
-
-  // 使用確定性的哈希算法，確保同一個ID總是得到相同顏色
-  // 注意：這裡不使用日期，確保跨日期顏色一致
-  let hash = 0;
-  for (let i = 0; i < serviceProviderId.length; i++) {
-    hash = (hash << 5) - hash + serviceProviderId.charCodeAt(i);
-    hash = hash & hash; // 轉換為32位整數
-  }
-  const colorIndex = Math.abs(hash) % CATEGORY20B_COLORS.length;
-  return CATEGORY20B_COLORS[colorIndex];
-}
-
-/**
- * 統一的顏色獲取函數 - 確保所有圖層物件使用相同顏色
- * @param {string} serviceProviderId - 服務人員身分證字號
- * @param {Map} colorMap - 顏色映射表
- * @returns {string} 顏色名稱
- */
-function getUnifiedLayerColor(serviceProviderId, colorMap) {
-  // 優先級：colorMap > 服務人員ID生成的顏色
-  if (colorMap && colorMap.has && colorMap.has(serviceProviderId)) {
-    return colorMap.get(serviceProviderId);
-  }
-
-  // 如果沒有colorMap，使用服務人員ID生成的顏色
-  return getColorForServiceProvider(serviceProviderId);
-}
+// 注意：getUnifiedLayerColor 函數已移除
+// 現在顏色分配統一在 dataStore.js 中處理
 
 /**
  * 新基準中央服務紀錄數據加載函數
  * 處理長照服務人員的服務記錄，包含路線、服務點和服務項目
  * @param {Object} layer - 圖層配置物件
  * @param {string|null} dateFilter - 日期篩選器 (格式: YYYYMMDD)
- * @param {Map|null} colorMap - 顏色映射表
  * @returns {Promise<Object>} 包含 GeoJSON 數據和表格數據的物件
  */
-export async function loadNewStandardCentralServiceData(layer, dateFilter = null, colorMap = null) {
+export async function loadNewStandardCentralServiceData(layer, dateFilter = null) {
   try {
     const layerId = layer.layerId;
 
