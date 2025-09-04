@@ -179,7 +179,7 @@ export const useDataStore = defineStore(
           {
             layerId: '新基準中央服務紀錄',
             colorName: 'category20b-1', // 預設顏色，會在後面重新分配
-            fileName: '新基準中央服務紀錄_all.json',
+            fileName: '新基準中央服務紀錄_all_2.json',
           },
           dateStr,
           null // 不再需要顏色映射
