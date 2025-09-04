@@ -67,39 +67,7 @@
       // 🎯 地圖視圖狀態管理 (Map View State Management)
       let previousViewState = null; // 保存高亮前的視圖狀態
 
-      // 🎯 單一高亮追蹤（確保同時只會有一個點被放大）
-      let currentHighlightedElement = null;
-      const clearCurrentHighlight = () => {
-        try {
-          if (currentHighlightedElement) {
-            const prevDiv = currentHighlightedElement.querySelector('div');
-            if (prevDiv) {
-              prevDiv.style.transform = '';
-              prevDiv.style.boxShadow = '';
-              prevDiv.style.border = '';
-            }
-            currentHighlightedElement.style.zIndex = '';
-          }
-        } catch (e) {
-          // ignore
-        }
-        currentHighlightedElement = null;
-      };
-      const applyPointHighlight = (element, scale = 2.0, borderPx = 2) => {
-        if (!element) return;
-        if (currentHighlightedElement && currentHighlightedElement !== element) {
-          clearCurrentHighlight();
-        }
-        const innerDiv = element.querySelector('div');
-        if (innerDiv) {
-          innerDiv.style.transition = 'transform 0.15s ease-in-out';
-          innerDiv.style.transform = `scale(${scale})`;
-          innerDiv.style.boxShadow = '';
-          if (borderPx) innerDiv.style.border = `${borderPx}px solid #ffffff`;
-        }
-        element.style.zIndex = 1000;
-        currentHighlightedElement = element;
-      };
+      // 移除高亮相關邏輯，因為現在使用 time_total 來決定大小
 
       // 📊 計算屬性：檢查是否有任何圖層可見 (Computed Property: Check if Any Layer is Visible)
       const isAnyLayerVisible = computed(
@@ -439,8 +407,20 @@
               // 一般點類型
               // 檢查是否為新基準中央服務紀錄且有路線順序
               if (feature.properties.routeOrder) {
-                // 新基準中央服務紀錄點位：顯示路線順序
+                // 新基準中央服務紀錄點位：根據 time_total 決定大小
                 const routeOrder = feature.properties.routeOrder;
+                const timeTotal = feature.properties.time_total || 0;
+
+                // 根據 time_total 計算圓圈大小 (最小 12px，最大 40px)
+                const minSize = 12;
+                const maxSize = 40;
+                const minTime = 0;
+                const maxTime = 400; // 根據實際數據調整最大時間為 400 分鐘
+
+                const normalizedTime = Math.min(Math.max(timeTotal, minTime), maxTime);
+                const size = minSize + (normalizedTime / maxTime) * (maxSize - minSize);
+                const fontSize = Math.max(8, Math.min(14, size * 0.4)); // 字體大小隨圓圈大小調整
+
                 // 優先使用feature.properties中的顏色，如果沒有則使用layer的colorName
                 let pointColor = `var(--my-color-${colorName})`; // 預設使用layer顏色
 
@@ -451,17 +431,18 @@
                   // 如果有routeColor，使用它
                   pointColor = `var(--my-color-${feature.properties.routeColor})`;
                 }
+
                 const icon = L.divIcon({
                   html: `
-                  <div class="d-flex align-items-center justify-content-center my-font-size-xs fw-bold"
-                       style="background: ${pointColor}; color: white; border-radius: 50%; width: 20px; height: 20px; border: 2px solid white;">
+                  <div class="d-flex align-items-center justify-content-center fw-bold"
+                       style="background: ${pointColor}; color: white; border-radius: 50%; width: ${size}px; height: ${size}px; border: 2px solid white; font-size: ${fontSize}px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                     ${routeOrder}
                   </div>
                   `,
                   className: 'service-route-point-icon',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12],
-                  popupAnchor: [0, -12],
+                  iconSize: [size + 4, size + 4], // 稍微大一點以包含邊框
+                  iconAnchor: [(size + 4) / 2, (size + 4) / 2],
+                  popupAnchor: [0, -(size + 4) / 2],
                 });
                 return L.marker(latlng, { icon });
               } else {
@@ -1009,13 +990,7 @@
                     fillOpacity: this.options?.fillOpacity,
                   };
 
-                  // 如果是點物件，進行高亮顯示，並顯示 tooltip（detail）
-                  const element = this.getElement && this.getElement();
-                  if (element) {
-                    // 確保同時間只有一個視覺高亮
-                    applyPointHighlight(element, 2.0, 2);
-                    element.style.zIndex = 1000;
-                  }
+                  // 不再需要高亮顯示，因為大小本身就代表了重要性
 
                   // 將圖層置於最前方
                   if (this.bringToFront) {
@@ -1065,10 +1040,24 @@
                       mapInstance.setView([lat, lng], 16);
                       console.log('🎯 MapTab: 地圖已移動到服務點位置:', [lat, lng]);
                       const props = feature.properties || {};
-                      const tooltipHtml = `\n                        <div class=\"my-font-size-sm\">\n                          <div><strong>${props.姓名 || props.name || ''}</strong></div>\n                          <div>${props.address || props.個案居住地址 || ''}</div>\n                          <div>${props.serviceTime || props.時間 || ''}</div>\n                        </div>`;
-                      if (this.bindTooltip) {
-                        this.bindTooltip(tooltipHtml, { permanent: false, direction: 'top' });
-                        this.openTooltip && this.openTooltip();
+                      const tooltipHtml = `
+                        <div class="my-font-size-sm">
+                          <div><strong>${props.姓名 || props.name || ''}</strong></div>
+                          <div>編號: ${props.編號 || props.id || ''}</div>
+                          <div>性別: ${props.性別 || props.gender || ''}</div>
+                          <div>${props.個案居住地址 || props.address || ''}</div>
+                          <div>時間: ${props.起始時間 || props.startTime || ''} - ${props.結束時間 || props.endTime || ''}</div>
+                          <div>總時間: ${props.總時間 || props.totalTime || ''}</div>
+                        </div>`;
+                      // 使用 popup 而不是 tooltip，只有被選取時才顯示
+                      if (this.bindPopup) {
+                        this.bindPopup(tooltipHtml, {
+                          closeButton: false,
+                          autoClose: false,
+                          closeOnClick: false,
+                          className: 'service-point-popup',
+                        });
+                        this.openPopup && this.openPopup();
                       }
                     }
                   } catch (error) {
@@ -1192,15 +1181,7 @@
                     }
                   }
                 } else if (type === 'point') {
-                  // 一般點類型處理
-                  const element = layer.getElement && layer.getElement();
-                  if (element) {
-                    const innerIconDiv = element.querySelector('div');
-                    if (innerIconDiv) {
-                      innerIconDiv.style.transform = '';
-                      innerIconDiv.style.boxShadow = '';
-                    }
-                  }
+                  // 一般點類型不需要特殊處理，因為大小是固定的
                 } else if (type === 'polygon') {
                   // 多邊形類型處理
                   if (layer._originalStyle) {
@@ -1210,9 +1191,12 @@
                   }
                 }
 
-                // 關閉所有打開的彈出視窗
+                // 關閉所有打開的彈出視窗和提示
                 if (layer.closePopup) {
                   layer.closePopup();
+                }
+                if (layer.closeTooltip) {
+                  layer.closeTooltip();
                 }
               }
             });
@@ -1521,13 +1505,29 @@
                       };
                     }
 
-                    // 高亮地圖上現有的服務點
-                    if (layer.getElement) {
-                      const element = layer.getElement();
-                      if (element) {
-                        applyPointHighlight(element, 2.4, 3);
-                        element.style.zIndex = 1000;
-                      }
+                    // 不再需要高亮顯示，因為大小本身就代表了重要性
+
+                    // 顯示 tooltip（detail 內容）
+                    const props = feature.properties || {};
+                    const tooltipHtml = `
+                      <div class="my-font-size-sm">
+                        <div><strong>${props.姓名 || props.name || ''}</strong></div>
+                        <div>編號: ${props.編號 || props.id || ''}</div>
+                        <div>性別: ${props.性別 || props.gender || ''}</div>
+                        <div>${props.個案居住地址 || props.address || ''}</div>
+                        <div>時間: ${props.起始時間 || props.startTime || ''} - ${props.結束時間 || props.endTime || ''}</div>
+                        <div>總時間: ${props.總時間 || props.totalTime || ''}</div>
+                      </div>`;
+
+                    // 使用 popup 而不是 tooltip，只有被選取時才顯示
+                    if (layer.bindPopup) {
+                      layer.bindPopup(tooltipHtml, {
+                        closeButton: false,
+                        autoClose: false,
+                        closeOnClick: false,
+                        className: 'service-point-popup',
+                      });
+                      layer.openPopup && layer.openPopup();
                     }
 
                     // 將圖層置於最前方
@@ -1733,9 +1733,22 @@
                 const hasDetail = f && f.properties && (f.properties.編號 || f.properties.name);
                 if (hasDetail && targetLayer.getLatLng) {
                   const props = f.properties;
-                  const tooltipHtml = `\n                    <div class="my-font-size-sm">\n                      <div><strong>${props.姓名 || props.name || ''}</strong></div>\n                      <div>${props.address || props.個案居住地址 || ''}</div>\n                      <div>${props.serviceTime || props.時間 || ''}</div>\n                    </div>`;
-                  targetLayer.bindTooltip(tooltipHtml, { permanent: false, direction: 'top' });
-                  targetLayer.openTooltip();
+                  const popupHtml = `
+                    <div class="my-font-size-sm">
+                      <div><strong>${props.姓名 || props.name || ''}</strong></div>
+                      <div>編號: ${props.編號 || props.id || ''}</div>
+                      <div>性別: ${props.性別 || props.gender || ''}</div>
+                      <div>${props.個案居住地址 || props.address || ''}</div>
+                      <div>時間: ${props.起始時間 || props.startTime || ''} - ${props.結束時間 || props.endTime || ''}</div>
+                      <div>總時間: ${props.總時間 || props.totalTime || ''}</div>
+                    </div>`;
+                  targetLayer.bindPopup(popupHtml, {
+                    closeButton: false,
+                    autoClose: false,
+                    closeOnClick: false,
+                    className: 'service-point-popup',
+                  });
+                  targetLayer.openPopup();
                 }
               }, 500); // 延遲 500ms
 

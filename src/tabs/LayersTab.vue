@@ -87,7 +87,12 @@
       <div class="mb-3">
         <div v-for="group in layers" :key="group.groupName" class="p-3">
           <div class="d-flex align-items-center pb-2">
-            <div class="my-title-xs-gray">{{ group.groupName }}</div>
+            <div class="my-title-xs-gray">
+              {{ group.groupName }}
+              <span v-if="group.groupName === '新基準中央服務紀錄' && group.groupLayers.length > 0">
+                ({{ group.groupLayers.length }})
+              </span>
+            </div>
             <!-- 群組開關 - 只有"新基準中央服務紀錄"群組才顯示 -->
             <div
               v-if="group.groupName === '新基準中央服務紀錄' && group.groupLayers.length > 0"
