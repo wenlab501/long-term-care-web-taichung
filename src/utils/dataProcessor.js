@@ -209,6 +209,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     min_start: serviceRecord.min_start,
                     hour_end: serviceRecord.hour_end,
                     min_end: serviceRecord.min_end,
+                    time_total: serviceRecord.time_total,
                   },
                 };
 

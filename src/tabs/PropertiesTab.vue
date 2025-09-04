@@ -886,15 +886,23 @@
                     item['服務項目代碼'] || item.serviceType || 'N/A'
                   }}</span>
                 </div>
+                <DetailItem label="row_id" :value="item.row_id || 'N/A'" />
+                <DetailItem label="身分證字號" :value="item.身分證字號 || 'N/A'" />
+                <DetailItem label="服務日期" :value="item['服務日期(請輸入7碼)'] || 'N/A'" />
                 <DetailItem
                   label="服務類別"
                   :value="item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A'"
                 />
                 <DetailItem label="數量" :value="item['數量\n僅整數'] || item.quantity || 'N/A'" />
                 <DetailItem label="單價" :value="item.單價 || item.unitPrice || 'N/A'" />
+                <DetailItem label="服務人員身分證" :value="item.服務人員身分證 || 'N/A'" />
                 <DetailItem
                   label="服務時間"
                   :value="`${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`"
+                />
+                <DetailItem
+                  label="總時間"
+                  :value="`${item.hour_total || 0}小時${item.min_total || 0}分鐘 (${item.time_total || 0}分鐘)`"
                 />
               </div>
             </div>
