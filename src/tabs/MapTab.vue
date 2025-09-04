@@ -50,8 +50,7 @@
       let mapInstance = null; // 地圖實例，使用普通變數而非 ref 避免響應式開銷
       let currentTileLayer = null; // 當前底圖圖層實例
       let layerGroups = {}; // 存放所有圖層群組的物件
-      let isRoutePlanningClickMode = ref(false); // 是否處於路徑規劃點擊模式
-      let isRouteOptimizationClickMode = ref(false); // 是否處於路徑優化點擊模式
+      // 注意：路徑規劃和路徑優化點擊模式相關變數已移除
 
       // 🖱️ 右鍵菜單相關變數 (Context Menu Related Variables)
       const contextMenu = ref(null); // 右鍵菜單 DOM 引用
@@ -155,19 +154,9 @@
           mapInstance.on('zoomend', handleZoomEnd); // 縮放結束事件
           mapInstance.on('moveend', handleMoveEnd); // 移動結束事件
 
-          // 綁定地圖點擊事件 - 點擊空白處清除選取或添加分析點
+          // 綁定地圖點擊事件 - 點擊空白處清除選取
           mapInstance.on('click', function (e) {
-            if (isRoutePlanningClickMode.value) {
-              // 如果處於路徑規劃點擊模式，添加路徑規劃點並阻止其他事件
-              e.originalEvent.stopPropagation();
-              addRoutePlanningPoint(e.latlng.lat, e.latlng.lng);
-              return false; // 阻止事件繼續傳播
-            } else if (isRouteOptimizationClickMode.value) {
-              // 如果處於路徑優化點擊模式，添加路徑優化點並阻止其他事件
-              e.originalEvent.stopPropagation();
-              addRouteOptimizationPoint(e.latlng.lat, e.latlng.lng);
-              return false; // 阻止事件繼續傳播
-            } else if (!e.originalEvent.target.closest('.leaflet-interactive')) {
+            if (!e.originalEvent.target.closest('.leaflet-interactive')) {
               // 如果點擊的是地圖空白處，清除所有選取和高亮顯示
               console.log('🎯 MapTab: 點擊空白處，清除選取和高亮顯示');
               // 刪除地圖上的任何臨時標記
@@ -197,11 +186,7 @@
           isMapReady.value = true; // 標記地圖已準備就緒
 
           // 如果已經處於點擊模式，確保樣式正確應用
-          if (isRoutePlanningClickMode.value) {
-            const mapContainerEl = mapInstance.getContainer();
-            mapContainerEl.style.cursor = 'crosshair';
-            mapContainerEl.classList.add('route-planning-click-mode-active');
-          }
+          // 注意：路徑規劃點擊模式相關代碼已移除
 
           console.log('[MapTab] 地圖創建成功，初始化完成'); // 輸出成功訊息
           return true; // 返回成功狀態
@@ -767,10 +752,7 @@
             layer.on({
               // 滑鼠懸停事件
               mouseover: function () {
-                // 如果處於點擊模式，禁用 hover 效果
-                if (isRoutePlanningClickMode.value) {
-                  return;
-                }
+                // 注意：路徑規劃點擊模式相關代碼已移除
 
                 // 分析圖層的特殊處理
                 if (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') {
@@ -877,10 +859,7 @@
               },
               // 滑鼠離開事件
               mouseout: function () {
-                // 如果處於點擊模式，禁用 hover 效果
-                if (isRoutePlanningClickMode.value) {
-                  return;
-                }
+                // 注意：路徑規劃點擊模式相關代碼已移除
 
                 // 只有在沒有被選中的情況下才恢復原始樣式
                 const isSelected =
@@ -950,20 +929,10 @@
                 }
               },
               // 點擊事件
-              click: function (e) {
-                // 如果處於路徑規劃點擊模式，阻止圖層選擇並添加路徑規劃點
-                if (isRoutePlanningClickMode.value) {
-                  e.originalEvent.stopPropagation();
-                  addRoutePlanningPoint(e.latlng.lat, e.latlng.lng);
-                  return false; // 阻止事件繼續傳播
-                }
+              click: function () {
+                // 注意：路徑規劃點擊模式相關代碼已移除
 
-                // 如果處於路徑優化點擊模式，阻止圖層選擇並添加路徑優化點
-                if (isRouteOptimizationClickMode.value) {
-                  e.originalEvent.stopPropagation();
-                  addRouteOptimizationPoint(e.latlng.lat, e.latlng.lng);
-                  return false; // 阻止事件繼續傳播
-                }
+                // 注意：路徑優化點擊模式相關代碼已移除
 
                 // 分析點不參與選擇，直接返回
                 if (
@@ -1851,82 +1820,7 @@
 
       // 開始點擊模式
 
-      // 🗺️ ============ 路徑規劃點擊模式相關函數 (Route Planning Click Mode Functions) ============
-
-      // 添加路徑規劃點
-      const addRoutePlanningPoint = async (lat, lng) => {
-        try {
-          const pointId = dataStore.addRoutePlanningPoint(lat, lng);
-          if (pointId) {
-            console.log('🗺️ 成功添加路徑規劃點:', pointId);
-          }
-        } catch (error) {
-          console.error('添加路徑規劃點失敗:', error);
-        }
-      };
-
-      // 開始路徑規劃點擊模式
-      const startRoutePlanningClickMode = () => {
-        // 🔄 互斥邏輯：關閉其他點擊模式
-
-        isRoutePlanningClickMode.value = true;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = 'crosshair';
-          // 為所有子元素設定十字游標
-          mapContainer.classList.add('route-planning-click-mode-active');
-        }
-        console.log('🖱️ 開始路徑規劃點擊模式（自動關閉其他分析模式）');
-      };
-
-      // 完成路徑規劃點選（替代停止函數）
-      const finishRoutePlanningClickMode = async () => {
-        isRoutePlanningClickMode.value = false;
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = '';
-          // 移除十字游標類別
-          mapContainer.classList.remove('route-planning-click-mode-active');
-        }
-
-        // 獲取當前路徑規劃點數量
-        const coordinates = dataStore.getRoutePlanningCoordinates();
-        console.log(`🛑 完成路徑規劃點選，共選擇了 ${coordinates.length} 個路徑點`);
-
-        // 執行路徑規劃計算
-        if (coordinates.length >= 2) {
-          console.log('📍 路徑規劃點坐標:', coordinates);
-          console.log('🚀 開始計算最佳路線...');
-
-          try {
-            // 調用路徑規劃 API 並繪製路線
-            const routeResult = await dataStore.calculateAndDrawRoute('driving-car');
-
-            if (routeResult) {
-              console.log('✅ 路徑規劃成功完成！');
-              console.log(`📏 路線總距離: ${routeResult.distance} 公里`);
-              console.log(`⏱️ 預估行車時間: ${routeResult.duration} 分鐘`);
-              console.log(`🚗 交通方式: 駕車`);
-
-              // 路徑規劃完成，不顯示彈窗，只在控制台記錄
-              console.log(`🎉 路線 ${routeResult.routeNumber || '新增'} 已保存完成`);
-              console.log(`📍 可以繼續添加下一條路線`);
-            } else {
-              console.warn('⚠️ 路徑規劃計算失敗');
-              alert('路徑規劃失敗，請檢查路徑點是否有效或網路連線。');
-            }
-          } catch (error) {
-            console.error('❌ 路徑規劃過程中發生錯誤:', error);
-            alert(`路徑規劃失敗: ${error.message}`);
-          }
-        } else if (coordinates.length === 1) {
-          console.log('⚠️ 路徑規劃至少需要2個點，目前只有1個點');
-          alert('路徑規劃至少需要2個路徑點，請添加更多路徑點。');
-        } else {
-          console.log('⚠️ 沒有選擇任何路徑規劃點');
-          alert('請先在地圖上選擇路徑點。');
-        }
-      };
+      // 注意：路徑規劃和路徑優化相關函數已移除
 
       // 🗑️ 清除分析圖層 (Clear Analysis Layer)
       const clearAnalysisLayer = () => {
@@ -1935,97 +1829,7 @@
         console.log('🗑️ 清除分析圖層');
       };
 
-      // 🗺️ ============ 路徑優化點擊模式相關函數 (Route Optimization Click Mode Functions) ============
-
-      // 添加路徑優化點
-      const addRouteOptimizationPoint = async (lat, lng) => {
-        try {
-          const pointId = dataStore.addRouteOptimizationPoint(lat, lng);
-          if (pointId) {
-            console.log('🗺️ 成功添加路徑優化點:', pointId);
-          }
-        } catch (error) {
-          console.error('添加路徑優化點失敗:', error);
-        }
-      };
-
-      // 開始路徑優化點擊模式
-      const startRouteOptimizationClickMode = () => {
-        // 🔄 互斥邏輯：關閉其他點擊模式
-        if (isRoutePlanningClickMode.value) {
-          finishRoutePlanningClickMode();
-        }
-
-        // 開啟路徑優化點擊模式
-        isRouteOptimizationClickMode.value = true;
-
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = 'crosshair';
-          // 為所有子元素設定十字游標
-          mapContainer.classList.add('route-optimization-click-mode-active');
-        }
-
-        // 清空之前的路徑優化點
-        dataStore.clearRouteOptimizationLayer();
-
-        console.log('🖱️ 開始路徑優化點擊模式（自動關閉其他分析模式）');
-        // 路徑優化點擊模式開始，不顯示彈窗，只在控制台記錄
-      };
-
-      // 完成路徑優化點選
-      const finishRouteOptimizationClickMode = async () => {
-        if (!isRouteOptimizationClickMode.value) {
-          console.warn('⚠️ 當前不在路徑優化點擊模式');
-          return;
-        }
-
-        // 停止路徑優化點擊模式
-        isRouteOptimizationClickMode.value = false;
-        isRoutePlanningClickMode.value = false;
-
-        if (mapInstance) {
-          const mapContainer = mapInstance.getContainer();
-          mapContainer.style.cursor = '';
-          // 移除十字游標類別
-          mapContainer.classList.remove('route-optimization-click-mode-active');
-        }
-
-        // 獲取當前路徑優化點數量
-        const coordinates = dataStore.getRouteOptimizationCoordinates();
-        if (coordinates.length >= 2) {
-          console.log(`🛑 完成路徑優化點選，共選擇了 ${coordinates.length} 個優化點`);
-
-          try {
-            // 執行路徑優化計算
-            const optimizationResult = await dataStore.calculateAndDrawOptimizedRoute();
-            if (optimizationResult) {
-              console.log('✅ 路徑優化成功完成！');
-              console.log('📍 路徑優化點坐標:', coordinates);
-              console.log('📏 優化後距離:', optimizationResult.distance, '公里');
-              console.log('⏱️ 優化後時間:', optimizationResult.duration, '分鐘');
-              console.log('🔄 優化順序:', optimizationResult.optimizedOrder);
-
-              // 顯示路徑優化結果
-              console.log(`🎉 優化路線 ${optimizationResult.routeNumber || '新增'} 已保存完成`);
-              console.log(`📍 可以繼續添加下一條優化路線`);
-
-              // 路徑優化完成，不顯示彈窗，只在控制台記錄
-            } else {
-              console.warn('⚠️ 路徑優化計算失敗');
-              alert('路徑優化失敗，請檢查優化點是否有效或網路連線。');
-            }
-          } catch (error) {
-            console.error('❌ 路徑優化過程中發生錯誤:', error);
-            alert(`路徑優化失敗: ${error.message}`);
-          }
-        } else if (coordinates.length === 1) {
-          console.log('⚠️ 路徑優化至少需要2個點，目前只有1個點');
-          alert('路徑優化至少需要2個優化點，請添加更多優化點。');
-        } else {
-          console.log('⚠️ 沒有選擇任何路徑優化點');
-        }
-      };
+      // 注意：路徑優化相關函數已移除
 
       // 🖱️ 顯示右鍵菜單 (Show Context Menu)
       const showAnalysisContextMenu = (event, feature) => {
@@ -2439,16 +2243,8 @@
         highlightFeature, // 高亮顯示特定要素函數
         invalidateSize, // 刷新地圖尺寸函數
 
-        startRoutePlanningClickMode, // 開始路徑規劃點擊模式函數
-        finishRoutePlanningClickMode, // 完成路徑規劃點選函數
-
-        // 🗺️ 路徑優化點擊模式相關函數
-        startRouteOptimizationClickMode, // 開始路徑優化點擊模式函數
-        finishRouteOptimizationClickMode, // 完成路徑優化點選函數
-
+        // 注意：路徑規劃和路徑優化相關函數已移除
         clearAnalysisLayer, // 清除分析圖層函數
-        isRoutePlanningClickMode, // 路徑規劃點擊模式狀態
-        isRouteOptimizationClickMode, // 路徑優化點擊模式狀態
         defineStore, // 定義存儲實例
 
         // 地圖初始化相關
@@ -2591,41 +2387,7 @@
         顯示全市
       </button>
 
-      <!-- 點選路徑規劃點 -->
-      <button
-        v-if="!isRoutePlanningClickMode"
-        class="btn rounded-pill border-0 my-btn-orange my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="startRoutePlanningClickMode"
-        title="在地圖上點選多個位置進行路徑規劃"
-      >
-        點選路徑規劃點
-      </button>
-      <button
-        v-else
-        class="btn rounded-pill border-0 my-btn-red my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="finishRoutePlanningClickMode"
-        title="完成路徑規劃點選"
-      >
-        路徑規劃點選完成
-      </button>
-
-      <!-- 點選路徑優化點 -->
-      <button
-        v-if="!isRouteOptimizationClickMode"
-        class="btn rounded-pill border-0 my-btn-purple my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="startRouteOptimizationClickMode"
-        title="在地圖上點選多個位置進行路徑優化"
-      >
-        點選路徑優化點
-      </button>
-      <button
-        v-else
-        class="btn rounded-pill border-0 my-btn-red my-font-size-xs text-nowrap my-cursor-pointer"
-        @click="finishRouteOptimizationClickMode"
-        title="完成路徑優化點選"
-      >
-        路徑優化點選完成
-      </button>
+      <!-- 注意：路徑規劃和路徑優化相關按鈕已移除 -->
     </div>
   </div>
 </template>
