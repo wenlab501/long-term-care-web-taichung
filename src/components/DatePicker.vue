@@ -102,8 +102,6 @@
         // 不執行任何操作
       };
 
-
-
       const closeCalendar = (event) => {
         if (!event.target.closest('.date-picker-container')) {
           isOpen.value = false;
@@ -206,10 +204,10 @@
   }
 
   .calendar-day.bg-primary {
-    background-color: var(--my-color-tab20-4) !important; /* 使用紅色作為高亮 */
+    background-color: var(--my-color-red) !important; /* 使用紅色作為高亮 */
     color: white !important;
     font-weight: bold !important;
-    border: 2px solid var(--my-color-tab20-4-hover) !important;
+    border: 2px solid var(--my-color-red-hover) !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
   }
 

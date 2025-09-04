@@ -100,58 +100,58 @@ body {
 }
 
 .my-color-red {
-  color: var(--my-color-tab20-4);
+  color: var(--my-color-red);
 }
 .my-color-pink {
-  color: var(--my-color-tab20-7);
+  color: var(--my-color-pink);
 }
 .my-color-deeporange {
-  color: var(--my-color-tab20-2);
+  color: var(--my-color-orange);
 }
 .my-color-orange {
-  color: var(--my-color-tab20-2);
+  color: var(--my-color-orange);
 }
 .my-color-amber {
-  color: var(--my-color-tab20-9);
+  color: var(--my-color-green);
 }
 .my-color-yellow {
-  color: var(--my-color-tab20-9);
+  color: var(--my-color-green);
 }
 .my-color-lime {
-  color: var(--my-color-tab20-9);
+  color: var(--my-color-green);
 }
 .my-color-light-green {
-  color: var(--my-color-tab20-3);
+  color: var(--my-color-green);
 }
 .my-color-green {
-  color: var(--my-color-tab20-3);
+  color: var(--my-color-green);
 }
 .my-color-teal {
-  color: var(--my-color-tab20-10);
+  color: var(--my-color-blue);
 }
 .my-color-cyan {
-  color: var(--my-color-tab20-10);
+  color: var(--my-color-blue);
 }
 .my-color-lightblue {
-  color: var(--my-color-tab20-1);
+  color: var(--my-color-blue);
 }
 .my-color-blue {
-  color: var(--my-color-tab20-1);
+  color: var(--my-color-blue);
 }
 .my-color-bluegrey {
-  color: var(--my-color-tab20-8);
+  color: var(--my-color-gray-500);
 }
 .my-color-indigo {
-  color: var(--my-color-tab20-1);
+  color: var(--my-color-blue);
 }
 .my-color-deeppurple {
-  color: var(--my-color-tab20-5);
+  color: var(--my-color-purple);
 }
 .my-color-purple {
-  color: var(--my-color-tab20-5);
+  color: var(--my-color-purple);
 }
 .my-color-brown {
-  color: var(--my-color-tab20-6);
+  color: var(--my-color-brown);
 }
 
 /* 文字間距 */
@@ -199,120 +199,120 @@ body {
 }
 
 .my-bgcolor-red {
-  background-color: var(--my-color-tab20-4);
+  background-color: var(--my-color-red);
 }
 .my-bgcolor-pink {
-  background-color: var(--my-color-tab20-7);
+  background-color: var(--my-color-pink);
 }
 .my-bgcolor-deeporange {
-  background-color: var(--my-color-tab20-2);
+  background-color: var(--my-color-orange);
 }
 .my-bgcolor-orange {
-  background-color: var(--my-color-tab20-2);
+  background-color: var(--my-color-orange);
 }
 .my-bgcolor-amber {
-  background-color: var(--my-color-tab20-9);
+  background-color: var(--my-color-green);
 }
 .my-bgcolor-yellow {
-  background-color: var(--my-color-tab20-9);
+  background-color: var(--my-color-green);
 }
 .my-bgcolor-lime {
-  background-color: var(--my-color-tab20-9);
+  background-color: var(--my-color-green);
 }
 .my-bgcolor-light-green {
-  background-color: var(--my-color-tab20-3);
+  background-color: var(--my-color-green);
 }
 .my-bgcolor-green {
-  background-color: var(--my-color-tab20-3);
+  background-color: var(--my-color-green);
 }
 .my-bgcolor-teal {
-  background-color: var(--my-color-tab20-10);
+  background-color: var(--my-color-blue);
 }
 .my-bgcolor-cyan {
-  background-color: var(--my-color-tab20-10);
+  background-color: var(--my-color-blue);
 }
 .my-bgcolor-lightblue {
-  background-color: var(--my-color-tab20-1);
+  background-color: var(--my-color-blue);
 }
 .my-bgcolor-blue {
-  background-color: var(--my-color-tab20-1);
+  background-color: var(--my-color-blue);
 }
 .my-bgcolor-bluegrey {
-  background-color: var(--my-color-tab20-8);
+  background-color: var(--my-color-gray-500);
 }
 .my-bgcolor-indigo {
-  background-color: var(--my-color-tab20-1);
+  background-color: var(--my-color-blue);
 }
 .my-bgcolor-deeppurple {
-  background-color: var(--my-color-tab20-5);
+  background-color: var(--my-color-purple);
 }
 .my-bgcolor-purple {
-  background-color: var(--my-color-tab20-5);
+  background-color: var(--my-color-purple);
 }
 .my-bgcolor-brown {
-  background-color: var(--my-color-tab20-6);
+  background-color: var(--my-color-brown);
 }
 
-/* tab20 格式的背景色類別 */
-.my-bgcolor-tab20-1 {
-  background-color: var(--my-color-tab20-1);
+/* D3.js category20b 格式的背景色類別 */
+.my-bgcolor-category20b-1 {
+  background-color: var(--my-color-category20b-1);
 }
-.my-bgcolor-tab20-2 {
-  background-color: var(--my-color-tab20-2);
+.my-bgcolor-category20b-2 {
+  background-color: var(--my-color-category20b-2);
 }
-.my-bgcolor-tab20-3 {
-  background-color: var(--my-color-tab20-3);
+.my-bgcolor-category20b-3 {
+  background-color: var(--my-color-category20b-3);
 }
-.my-bgcolor-tab20-4 {
-  background-color: var(--my-color-tab20-4);
+.my-bgcolor-category20b-4 {
+  background-color: var(--my-color-category20b-4);
 }
-.my-bgcolor-tab20-5 {
-  background-color: var(--my-color-tab20-5);
+.my-bgcolor-category20b-5 {
+  background-color: var(--my-color-category20b-5);
 }
-.my-bgcolor-tab20-6 {
-  background-color: var(--my-color-tab20-6);
+.my-bgcolor-category20b-6 {
+  background-color: var(--my-color-category20b-6);
 }
-.my-bgcolor-tab20-7 {
-  background-color: var(--my-color-tab20-7);
+.my-bgcolor-category20b-7 {
+  background-color: var(--my-color-category20b-7);
 }
-.my-bgcolor-tab20-8 {
-  background-color: var(--my-color-tab20-8);
+.my-bgcolor-category20b-8 {
+  background-color: var(--my-color-category20b-8);
 }
-.my-bgcolor-tab20-9 {
-  background-color: var(--my-color-tab20-9);
+.my-bgcolor-category20b-9 {
+  background-color: var(--my-color-category20b-9);
 }
-.my-bgcolor-tab20-10 {
-  background-color: var(--my-color-tab20-10);
+.my-bgcolor-category20b-10 {
+  background-color: var(--my-color-category20b-10);
 }
-.my-bgcolor-tab20-11 {
-  background-color: var(--my-color-tab20-11);
+.my-bgcolor-category20b-11 {
+  background-color: var(--my-color-category20b-11);
 }
-.my-bgcolor-tab20-12 {
-  background-color: var(--my-color-tab20-12);
+.my-bgcolor-category20b-12 {
+  background-color: var(--my-color-category20b-12);
 }
-.my-bgcolor-tab20-13 {
-  background-color: var(--my-color-tab20-13);
+.my-bgcolor-category20b-13 {
+  background-color: var(--my-color-category20b-13);
 }
-.my-bgcolor-tab20-14 {
-  background-color: var(--my-color-tab20-14);
+.my-bgcolor-category20b-14 {
+  background-color: var(--my-color-category20b-14);
 }
-.my-bgcolor-tab20-15 {
-  background-color: var(--my-color-tab20-15);
+.my-bgcolor-category20b-15 {
+  background-color: var(--my-color-category20b-15);
 }
-.my-bgcolor-tab20-16 {
-  background-color: var(--my-color-tab20-16);
+.my-bgcolor-category20b-16 {
+  background-color: var(--my-color-category20b-16);
 }
-.my-bgcolor-tab20-17 {
-  background-color: var(--my-color-tab20-17);
+.my-bgcolor-category20b-17 {
+  background-color: var(--my-color-category20b-17);
 }
-.my-bgcolor-tab20-18 {
-  background-color: var(--my-color-tab20-18);
+.my-bgcolor-category20b-18 {
+  background-color: var(--my-color-category20b-18);
 }
-.my-bgcolor-tab20-19 {
-  background-color: var(--my-color-tab20-19);
+.my-bgcolor-category20b-19 {
+  background-color: var(--my-color-category20b-19);
 }
-.my-bgcolor-tab20-20 {
-  background-color: var(--my-color-tab20-20);
+.my-bgcolor-category20b-20 {
+  background-color: var(--my-color-category20b-20);
 }
 
 .my-bgcolor-white-hover {
@@ -428,13 +428,13 @@ body {
 
 .my-btn-red {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-4);
+  background-color: var(--my-color-red);
 }
 
 .my-btn-red:hover,
 .my-btn-red:active {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-4-hover);
+  background-color: var(--my-color-red-hover);
 }
 
 .my-btn-red:disabled {
@@ -444,13 +444,13 @@ body {
 
 .my-btn-green {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-3);
+  background-color: var(--my-color-green);
 }
 
 .my-btn-green:hover,
 .my-btn-green:active {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-3-hover);
+  background-color: var(--my-color-green-hover);
 }
 
 .my-btn-green:disabled {
@@ -460,13 +460,13 @@ body {
 
 .my-btn-blue {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-1);
+  background-color: var(--my-color-blue);
 }
 
 .my-btn-blue:hover,
 .my-btn-blue:active {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-1-hover);
+  background-color: var(--my-color-blue-hover);
 }
 
 .my-btn-blue:disabled {
@@ -476,13 +476,13 @@ body {
 
 .my-btn-orange {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-2);
+  background-color: var(--my-color-orange);
 }
 
 .my-btn-orange:hover,
 .my-btn-orange:active {
   color: var(--my-color-white);
-  background-color: var(--my-color-tab20-2-hover);
+  background-color: var(--my-color-orange-hover);
 }
 
 .my-btn-orange:disabled {
@@ -569,7 +569,7 @@ body {
 }
 
 .my-resizer:hover {
-  background-color: var(--my-color-tab20-1); /* 懸停時的背景色 */
+  background-color: var(--my-color-blue); /* 懸停時的背景色 */
 }
 
 /* 🔧 垂直拖曳調整器 (Vertical Resizer) */
@@ -607,7 +607,7 @@ body {
   .my-resizer-vertical.my-dragging {
     min-width: 12px;
     max-width: 12px;
-    background-color: var(--my-color-tab20-1) !important;
+    background-color: var(--my-color-blue) !important;
   }
 }
 
@@ -630,7 +630,7 @@ body {
   .my-resizer-horizontal.my-dragging {
     min-height: 12px;
     max-height: 12px;
-    background-color: var(--my-color-tab20-1) !important;
+    background-color: var(--my-color-blue) !important;
   }
 }
 
@@ -644,7 +644,7 @@ body {
 }
 
 .my-resizer-left:hover {
-  background-color: var(--my-color-tab20-1); /* 懸停時保持主色 */
+  background-color: var(--my-color-blue); /* 懸停時保持主色 */
 }
 
 .my-resizer-right {
@@ -653,7 +653,7 @@ body {
 }
 
 .my-resizer-right:hover {
-  background-color: var(--my-color-tab20-1); /* 懸停時保持主色 */
+  background-color: var(--my-color-blue); /* 懸停時保持主色 */
 }
 
 .my-resizer-middle {
@@ -663,7 +663,7 @@ body {
 }
 
 .my-resizer-middle:hover {
-  background-color: var(--my-color-tab20-1); /* 懸停時保持主色 */
+  background-color: var(--my-color-blue); /* 懸停時保持主色 */
 }
 
 /* =============================================================================

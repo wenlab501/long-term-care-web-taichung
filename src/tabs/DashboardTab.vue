@@ -170,7 +170,7 @@
       .attr('y', (d, i) => i * barSpacing + (barSpacing - barHeight) / 2)
       .attr('width', (d) => Math.max(0, xScale(d.count))) // 確保寬度不會是負數
       .attr('height', barHeight)
-      .attr('fill', 'var(--my-color-tab20-1)');
+      .attr('fill', 'var(--my-color-blue)');
 
     // 添加數值標籤
     g.selectAll('.label')
