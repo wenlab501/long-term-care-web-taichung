@@ -322,10 +322,10 @@
                 // 分析圓圈：2公里半徑
                 const circle = L.circle(latlng, {
                   radius: feature.properties.radius,
-                  color: 'var(--my-color-tab20-3)',
+                  color: 'var(--my-color-green)',
                   weight: 1,
                   opacity: 0.8,
-                  fillColor: 'var(--my-color-tab20-3)',
+                  fillColor: 'var(--my-color-green)',
                   fillOpacity: 0.2,
                 });
 
@@ -352,10 +352,10 @@
                 // 等時圈分析圓圈：藍色圓圈（回退模式）
                 const circle = L.circle(latlng, {
                   radius: feature.properties.radius,
-                  color: 'var(--my-color-tab20-1)',
+                  color: 'var(--my-color-blue)',
                   weight: 1,
                   opacity: 0.8,
-                  fillColor: 'var(--my-color-tab20-1)',
+                  fillColor: 'var(--my-color-blue)',
                   fillOpacity: 0.2,
                 });
 
@@ -370,7 +370,7 @@
                 // 根據完成狀態選擇不同的樣式
                 const backgroundColor = isCompleted
                   ? 'var(--my-color-gray-500)'
-                  : 'var(--my-color-tab20-2)';
+                  : 'var(--my-color-orange)';
                 const borderColor = isCompleted ? 'var(--my-color-gray-400)' : 'white';
                 const textColor = isCompleted
                   ? 'var(--my-color-gray-200)'
@@ -401,7 +401,7 @@
                 // 根據完成狀態選擇不同的樣式
                 const backgroundColor = isCompleted
                   ? 'var(--my-color-gray-500)'
-                  : 'var(--my-color-tab20-5)';
+                  : 'var(--my-color-purple)';
                 const borderColor = isCompleted ? 'var(--my-color-gray-400)' : 'white';
                 const textColor = isCompleted
                   ? 'var(--my-color-gray-200)'
@@ -427,19 +427,26 @@
               // 一般點類型
               // 檢查是否為新基準中央服務紀錄且有路線順序
               if (feature.properties.routeOrder) {
+                // ============================================
                 // 新基準中央服務紀錄點位：根據 time_total 決定大小
-                const routeOrder = feature.properties.routeOrder;
-                const timeTotal = feature.properties.time_total || 0;
+                // ============================================
+                const routeOrder = feature.properties.routeOrder; // 服務順序編號
+                const timeTotal = feature.properties.time_total || 0; // 服務總時間（分鐘）
 
-                // 根據 time_total 計算圓面積：1小時 = 25px*25px*π
-                // 面積 = π * r²，所以 r = √(面積/π)
-                // 1小時 = 60分鐘，面積 = π * 25² = 1963.5 平方像素
-                const timeInHours = timeTotal / 60; // 轉換為小時
-                const areaPerHour = Math.PI * 25 * 25; // 1小時的面積
-                const totalArea = timeInHours * areaPerHour;
-                const radius = Math.sqrt(totalArea / Math.PI);
-                const size = Math.max(radius * 2, 20); // 最小直徑 20px
-                const fontSize = Math.max(8, Math.min(16, size * 0.3)); // 字體大小隨圓圈大小調整
+                // ============================================
+                // 圓面積計算邏輯：1小時 = 10px × 10px × π
+                // ============================================
+                // 數學原理：
+                // - 圓面積公式：A = π × r²
+                // - 半徑計算：r = √(A/π)
+                // - 直徑計算：d = 2r
+                // - 標準：1小時 = π × 10² = 314.16 平方像素
+                const timeInHours = timeTotal / 60; // 將分鐘轉換為小時
+                const areaPerHour = Math.PI * 10 * 10; // 每小時對應的標準面積
+                const totalArea = timeInHours * areaPerHour; // 總面積 = 時間 × 標準面積
+                const radius = Math.sqrt(totalArea / Math.PI); // 計算半徑
+                const size = Math.max(radius * 2, 20); // 直徑，最小 20px 確保可見性
+                const fontSize = 12; // 固定字體大小 12px，確保所有數字清晰可讀
 
                 // 調試信息
                 console.log(
@@ -518,7 +525,7 @@
             // 新基準中央服務紀錄路線的特殊樣式處理
             if (feature.properties.layerName && feature.properties.layerName.includes('路線')) {
               // 優先使用routeColor，如果沒有則使用strokeColor（顏色名稱），否則使用預設色
-              let routeColor = 'var(--my-color-tab20-2)'; // 預設顏色
+              let routeColor = 'var(--my-color-orange)'; // 預設顏色
 
               if (feature.properties.routeColor) {
                 // 如果有routeColor（顏色名稱），轉換為CSS變數
@@ -541,7 +548,7 @@
             if (layer.isRoutePlanningLayer && feature.properties.type === 'route-line') {
               // 使用圖層的顏色，如果沒有則使用預設色
               const routeColor =
-                feature.properties.routeColor || feature.properties.strokeColor || 'tab20-2';
+                feature.properties.routeColor || feature.properties.strokeColor || 'orange';
               return {
                 color: routeColor.startsWith('--my-color-')
                   ? routeColor
@@ -559,7 +566,7 @@
               feature.properties.type === 'optimized-route-line'
             ) {
               // 使用與圖層相同的顏色系統
-              const routeColor = feature.properties.routeColor || 'tab20-5'; // 預設使用 tab20-5 (紫色)
+              const routeColor = feature.properties.routeColor || 'purple'; // 預設使用 purple
               return {
                 color: `var(--my-color-${routeColor})`, // 使用動態顏色
                 weight: 4, // 路線粗細
@@ -575,10 +582,10 @@
               feature.properties.type === 'isochrone-polygon-analysis'
             ) {
               return {
-                color: 'var(--my-color-tab20-1)',
+                color: 'var(--my-color-blue)',
                 weight: 2,
                 opacity: 0.8,
-                fillColor: 'var(--my-color-tab20-1)',
+                fillColor: 'var(--my-color-blue)',
                 fillOpacity: 0.3,
               };
             }
@@ -837,7 +844,7 @@
                     this.setStyle({
                       weight: 6, // 加粗路線
                       opacity: 1.0, // 增加透明度
-                      color: 'var(--my-color-tab20-2-hover)', // 使用深橘色
+                      color: 'var(--my-color-orange-hover)', // 使用深橘色
                     });
                     this.bringToFront(); // 置於最前層
                   }
@@ -2682,14 +2689,14 @@
 
   /* 🗺️ 路徑優化按鈕樣式 (Route Optimization Button Styles) */
   .my-btn-purple {
-    background-color: var(--my-color-tab20-5, #9467bd);
-    border-color: var(--my-color-tab20-5, #9467bd);
+    background-color: var(--my-color-purple, #9c27b0);
+    border-color: var(--my-color-purple, #9c27b0);
     color: white;
   }
 
   .my-btn-purple:hover {
-    background-color: var(--my-color-tab20-5-hover, #7467bd);
-    border-color: var(--my-color-tab20-5-hover, #7467bd);
+    background-color: var(--my-color-purple-hover, #7b1fa2);
+    border-color: var(--my-color-purple-hover, #7b1fa2);
     color: white;
   }
 

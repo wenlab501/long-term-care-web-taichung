@@ -37,67 +37,80 @@
   --my-color-gray-900: #212121;
   --my-color-black: #000000;
 
-  /* 基本顏色 */
-  --my-color-green: #2ca02c;
+  /* 圖層顏色，按 RGB 順序排列 */
+  --my-color-red: #f44336;
+  --my-color-red-hover: #d32f2f;
 
-  /* 圖層顏色，使用 Python tab20 色系 */
-  --my-color-tab20-1: #1f77b4; /* 藍色 */
-  --my-color-tab20-1-hover: #1f5fb4;
+  --my-color-pink: #e91e63;
+  --my-color-pink-hover: #c2185b;
 
-  --my-color-tab20-2: #ff7f0e; /* 橘色 */
-  --my-color-tab20-2-hover: #ff5f0e;
+  --my-color-deeporange: #ff5722;
+  --my-color-deeporange-hover: #e64a19;
 
-  --my-color-tab20-3: #2ca02c; /* 綠色 */
-  --my-color-tab20-3-hover: #2c802c;
+  --my-color-orange: #ff9800;
+  --my-color-orange-hover: #f57c00;
 
-  --my-color-tab20-4: #d62728; /* 紅色 */
-  --my-color-tab20-4-hover: #b62728;
+  --my-color-amber: #ffc107;
+  --my-color-amber-hover: #ffa000;
 
-  --my-color-tab20-5: #9467bd; /* 紫色 */
-  --my-color-tab20-5-hover: #7467bd;
+  --my-color-yellow: #ffeb3b;
+  --my-color-yellow-hover: #fbc02d;
 
-  --my-color-tab20-6: #8c564b; /* 棕色 */
-  --my-color-tab20-6-hover: #6c564b;
+  --my-color-lime: #cddc39;
+  --my-color-lime-hover: #afb42b;
 
-  --my-color-tab20-7: #e377c2; /* 粉紅色 */
-  --my-color-tab20-7-hover: #c377c2;
+  --my-color-light-green: #8bc34a;
+  --my-color-light-green-hover: #689f38;
 
-  --my-color-tab20-8: #7f7f7f; /* 灰色 */
-  --my-color-tab20-8-hover: #5f7f7f;
+  --my-color-green: #4caf50;
+  --my-color-green-hover: #388e3c;
 
-  --my-color-tab20-9: #bcbd22; /* 黃綠色 */
-  --my-color-tab20-9-hover: #9cbd22;
+  --my-color-teal: #009688;
+  --my-color-teal-hover: #00796b;
 
-  --my-color-tab20-10: #17becf; /* 青色 */
-  --my-color-tab20-10-hover: #17becf;
+  --my-color-cyan: #00bcd4;
+  --my-color-cyan-hover: #0097a7;
 
-  --my-color-tab20-11: #aec7e8; /* 淺藍色 */
-  --my-color-tab20-11-hover: #8ec7e8;
+  --my-color-lightblue: #03a9f4;
+  --my-color-lightblue-hover: #0288d1;
 
-  --my-color-tab20-12: #ffbb78; /* 淺橘色 */
-  --my-color-tab20-12-hover: #ff9b78;
+  --my-color-blue: #2196f3;
+  --my-color-blue-hover: #1976d2;
 
-  --my-color-tab20-13: #98df8a; /* 淺綠色 */
-  --my-color-tab20-13-hover: #78df8a;
+  --my-color-bluegrey: #607d8b;
+  --my-color-bluegrey-hover: #455a64;
 
-  --my-color-tab20-14: #ff9896; /* 淺紅色 */
-  --my-color-tab20-14-hover: #ff7896;
+  --my-color-indigo: #3f51b5;
+  --my-color-indigo-hover: #303f9f;
 
-  --my-color-tab20-15: #c5b0d5; /* 淺紫色 */
-  --my-color-tab20-15-hover: #a5b0d5;
+  --my-color-deeppurple: #673ab7;
+  --my-color-deeppurple-hover: #512da8;
 
-  --my-color-tab20-16: #c49c94; /* 淺棕色 */
-  --my-color-tab20-16-hover: #a49c94;
+  --my-color-purple: #9c27b0;
+  --my-color-purple-hover: #7b1fa2;
 
-  --my-color-tab20-17: #f7b6d2; /* 淺粉紅色 */
-  --my-color-tab20-17-hover: #f796d2;
+  --my-color-brown: #795548;
+  --my-color-brown-hover: #5d4037;
 
-  --my-color-tab20-18: #c7c7c7; /* 淺灰色 */
-  --my-color-tab20-18-hover: #a7c7c7;
-
-  --my-color-tab20-19: #dbdb8d; /* 淺黃綠色 */
-  --my-color-tab20-19-hover: #bbbb8d;
-
-  --my-color-tab20-20: #9edae5; /* 淺青色 */
-  --my-color-tab20-20-hover: #7edae5;
+  /* D3.js category20b 色彩配置，對應輸入圖片的顏色順序 */
+  --my-color-category20b-1: #3182bd; /* 藍色系 - 深藍 */
+  --my-color-category20b-2: #6baed6; /* 藍色系 - 中藍 */
+  --my-color-category20b-3: #9ecae1; /* 藍色系 - 淺藍 */
+  --my-color-category20b-4: #c6dbef; /* 藍色系 - 極淺藍 */
+  --my-color-category20b-5: #e6550d; /* 橘色系 - 深橘 */
+  --my-color-category20b-6: #fd8d3c; /* 橘色系 - 中橘 */
+  --my-color-category20b-7: #fdae6b; /* 橘色系 - 淺橘 */
+  --my-color-category20b-8: #fdd0a2; /* 橘色系 - 極淺橘 */
+  --my-color-category20b-9: #31a354; /* 綠色系 - 深綠 */
+  --my-color-category20b-10: #74c476; /* 綠色系 - 中綠 */
+  --my-color-category20b-11: #a1d99b; /* 綠色系 - 淺綠 */
+  --my-color-category20b-12: #c7e9c0; /* 綠色系 - 極淺綠 */
+  --my-color-category20b-13: #756bb1; /* 紫色系 - 深紫 */
+  --my-color-category20b-14: #9e9ac8; /* 紫色系 - 中紫 */
+  --my-color-category20b-15: #bcbddc; /* 紫色系 - 淺紫 */
+  --my-color-category20b-16: #dadaeb; /* 紫色系 - 極淺紫 */
+  --my-color-category20b-17: #636363; /* 灰色系 - 深灰 */
+  --my-color-category20b-18: #969696; /* 灰色系 - 中灰 */
+  --my-color-category20b-19: #bdbdbd; /* 灰色系 - 淺灰 */
+  --my-color-category20b-20: #d9d9d9; /* 灰色系 - 極淺灰 */
 }

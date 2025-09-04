@@ -14,64 +14,40 @@ export const useDataStore = defineStore(
       },
     ]);
 
-    // 圖層顏色陣列（使用 Python tab20 色系）
+    /**
+     * D3.js category20b 顏色陣列
+     * 對應輸入圖片中的顏色順序，提供20種不同的顏色給圖層使用
+     * 順序：藍色系(4) -> 橘色系(4) -> 綠色系(4) -> 紫色系(4) -> 灰色系(4)
+     */
     const layerColors = [
-      'tab20-1',
-      'tab20-2',
-      'tab20-3',
-      'tab20-4',
-      'tab20-5',
-      'tab20-6',
-      'tab20-7',
-      'tab20-8',
-      'tab20-9',
-      'tab20-10',
-      'tab20-11',
-      'tab20-12',
-      'tab20-13',
-      'tab20-14',
-      'tab20-15',
-      'tab20-16',
-      'tab20-17',
-      'tab20-18',
-      'tab20-19',
-      'tab20-20',
+      'category20b-1', // #3182bd - 深藍
+      'category20b-2', // #6baed6 - 中藍
+      'category20b-3', // #9ecae1 - 淺藍
+      'category20b-4', // #c6dbef - 極淺藍
+      'category20b-5', // #e6550d - 深橘
+      'category20b-6', // #fd8d3c - 中橘
+      'category20b-7', // #fdae6b - 淺橘
+      'category20b-8', // #fdd0a2 - 極淺橘
+      'category20b-9', // #31a354 - 深綠
+      'category20b-10', // #74c476 - 中綠
+      'category20b-11', // #a1d99b - 淺綠
+      'category20b-12', // #c7e9c0 - 極淺綠
+      'category20b-13', // #756bb1 - 深紫
+      'category20b-14', // #9e9ac8 - 中紫
+      'category20b-15', // #bcbddc - 淺紫
+      'category20b-16', // #dadaeb - 極淺紫
+      'category20b-17', // #636363 - 深灰
+      'category20b-18', // #969696 - 中灰
+      'category20b-19', // #bdbdbd - 淺灰
+      'category20b-20', // #d9d9d9 - 極淺灰
     ];
 
-    // 記錄服務人員ID與顏色的映射（全局，不按日期分組）
-    const serviceProviderColorMap = new Map();
+    // 注意：不再需要跨日期的顏色映射，每天重新按順序分配顏色
+    // const serviceProviderColorMap = new Map(); // 已移除
+    // const serviceProviderOrderArray = []; // 已移除
 
-    // 記錄服務人員的全局添加順序（確保跨日期顏色順序一致）
-    const serviceProviderOrderArray = [];
-
-    // 根據服務人員ID獲取顏色（確保跨日期顏色順序一致）
-    const getColorForServiceProvider = (serviceProviderId) => {
-      // 如果該服務人員已經有顏色，返回已有的顏色
-      if (serviceProviderColorMap.has(serviceProviderId)) {
-        return serviceProviderColorMap.get(serviceProviderId);
-      }
-
-      // 如果該服務人員還沒有順序記錄，將其添加到全局順序列表中
-      if (!serviceProviderOrderArray.includes(serviceProviderId)) {
-        serviceProviderOrderArray.push(serviceProviderId);
-      }
-
-      // 根據服務人員在全局順序列表中的位置來分配顏色
-      const orderIndex = serviceProviderOrderArray.indexOf(serviceProviderId);
-      const colorIndex = orderIndex % layerColors.length;
-
-      // 使用順序位置對應的顏色
-      const assignedColor = layerColors[colorIndex];
-
-      // 記錄該服務人員的顏色分配
-      serviceProviderColorMap.set(serviceProviderId, assignedColor);
-
-      console.log(
-        `🎨 為服務人員 ${serviceProviderId} 分配顏色: ${assignedColor} (全局順序位置: ${orderIndex})`
-      );
-
-      return assignedColor;
-    };
+    // 注意：getColorForServiceProvider 函數已移除
+    // 現在每天重新按照服務人員順序分配 category20b 顏色
 
     // 在新的分組結構中搜尋指定 ID 的圖層
     const findLayerById = (layerId) => {
@@ -105,26 +81,12 @@ export const useDataStore = defineStore(
 
       console.log('🔧 DataStore: 找到圖層', layer.layerName, '當前狀態:', layer.visible);
 
-      const wasVisible = layer.visible;
       // 切換可見性狀態
       layer.visible = !layer.visible;
       console.log('🔧 DataStore: 新狀態:', layer.visible);
 
-      // 對於服務人員圖層，當第一次設為可見時才分配顏色
-      if (
-        !wasVisible &&
-        layer.visible &&
-        layer.layerId &&
-        layer.layerId.startsWith('service-provider-')
-      ) {
-        console.log('🎨 服務人員圖層第一次顯示，為其分配顏色');
-        // 使用圖層中儲存的服務日期來分配顏色
-        const serviceDate = layer.serviceDate || selectedServiceDate.value || 'default';
-        layer.colorName = getColorForServiceProvider(layer.serviceProviderId);
-        console.log(
-          `🎨 為服務人員 ${layer.serviceProviderId} (日期: ${serviceDate}) 分配顏色: ${layer.colorName}`
-        );
-      }
+      // 注意：服務人員圖層的顏色已在載入時分配，不需要在這裡動態分配
+      // 移除了原本的動態顏色分配邏輯
 
       // 服務人員圖層已經在創建時載入好了數據，這裡只需要處理可見性切換
       console.log(`🔄 圖層 "${layer.layerName}" 可見性切換為:`, layer.visible);
@@ -151,24 +113,10 @@ export const useDataStore = defineStore(
 
       // 設置所有圖層的可見性
       group.groupLayers.forEach((layer) => {
-        const wasVisible = layer.visible;
         layer.visible = newVisibility;
 
-        // 對於服務人員圖層，當第一次設為可見時才分配顏色
-        if (
-          !wasVisible &&
-          layer.visible &&
-          layer.layerId &&
-          layer.layerId.startsWith('service-provider-')
-        ) {
-          console.log('🎨 服務人員圖層第一次顯示，為其分配顏色');
-          // 使用圖層中儲存的服務日期來分配顏色
-          const serviceDate = layer.serviceDate || selectedServiceDate.value || 'default';
-          layer.colorName = getColorForServiceProvider(layer.serviceProviderId);
-          console.log(
-            `🎨 為服務人員 ${layer.serviceProviderId} (日期: ${serviceDate}) 分配顏色: ${layer.colorName}`
-          );
-        }
+        // 注意：服務人員圖層的顏色已在載入時分配，不需要在這裡動態分配
+        // 移除了原本的動態顏色分配邏輯
 
         console.log(`🔄 圖層 "${layer.layerName}" 可見性設為:`, newVisibility);
       });
@@ -226,15 +174,15 @@ export const useDataStore = defineStore(
         console.log('📅 dataStore 接收到的日期參數:', dateStr);
         console.log('📅 將用此日期查詢 JSON 中的服務日期(請輸入7碼)');
 
-        // 傳遞全局顏色映射
+        // 載入服務數據（不需要傳遞顏色映射，每天重新分配）
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
-            colorName: 'tab20-1', // 預設顏色，實際會被每個服務人員的顏色覆蓋
+            colorName: 'category20b-1', // 預設顏色，會在後面重新分配
             fileName: '新基準中央服務紀錄_all.json',
           },
           dateStr,
-          serviceProviderColorMap // 傳遞全局顏色映射
+          null // 不再需要顏色映射
         );
 
         // 找到服務記錄群組
@@ -247,7 +195,51 @@ export const useDataStore = defineStore(
           if (result.serviceProviderLayers && result.serviceProviderLayers.length > 0) {
             console.log('📅 找到', result.serviceProviderLayers.length, '個服務人員');
 
-            result.serviceProviderLayers.forEach((serviceLayer) => {
+            // ============================================
+            // 確保服務人員圖層按照固定順序排列
+            // 這樣每一天的圖層都會按照 category20b 顏色順序顯示
+            // ============================================
+
+            // 1. 先收集所有服務人員ID並排序
+            const serviceProviderIds = result.serviceProviderLayers
+              .map((layer) => layer.serviceProviderId)
+              .sort(); // 按字母順序排序，確保一致性
+
+            console.log('📅 服務人員ID排序:', serviceProviderIds);
+
+            // 2. 按照當天的順序分配顏色（每天重新開始）
+            // 不需要跨日期保持相同顏色，每天按照出現順序分配 category20b 顏色
+            console.log('🎨 為當天服務人員分配顏色（按順序）');
+
+            // 3. 按照固定順序創建圖層並分配顏色
+            serviceProviderIds.forEach((serviceProviderId, index) => {
+              // 找到對應的服務圖層數據
+              const serviceLayer = result.serviceProviderLayers.find(
+                (layer) => layer.serviceProviderId === serviceProviderId
+              );
+
+              if (!serviceLayer) return;
+
+              // 直接按照當天的順序分配顏色（不考慮跨日期一致性）
+              const colorIndex = index % layerColors.length;
+              const assignedColor = layerColors[colorIndex];
+
+              // ============================================
+              // 更新 GeoJSON features 中的顏色屬性
+              // 確保左側面板和地圖顯示一致的顏色
+              // ============================================
+              if (serviceLayer.geoJsonData && serviceLayer.geoJsonData.features) {
+                serviceLayer.geoJsonData.features.forEach((feature) => {
+                  if (feature.properties) {
+                    if (feature.geometry.type === 'Point') {
+                      feature.properties.fillColor = assignedColor;
+                    } else if (feature.geometry.type === 'LineString') {
+                      feature.properties.routeColor = assignedColor;
+                    }
+                  }
+                });
+              }
+
               const serviceLayerId = `service-provider-${serviceLayer.serviceProviderId}`;
               const serviceLayerObj = {
                 layerId: serviceLayerId,
@@ -268,17 +260,19 @@ export const useDataStore = defineStore(
                 loader: loadNewStandardCentralServiceData,
                 serviceProviderId: serviceLayer.serviceProviderId,
                 serviceDate: dateStr, // 儲存服務日期，用於動態分配顏色
-                colorName: 'tab20-1', // 臨時使用預設顏色，實際顏色會在顯示時動態分配
+                colorName: assignedColor, // 使用分配的顏色
                 type: 'point',
                 shape: 'circle',
               };
 
               // 添加到群組的圖層列表中
               serviceRecordGroup.groupLayers.push(serviceLayerObj);
-              console.log('📅 創建服務人員圖層:', serviceLayer.serviceProviderId);
+              console.log(
+                `📅 創建服務人員圖層: ${serviceLayer.serviceProviderId} (索引: ${index}, 顏色: ${assignedColor}, 已更新GeoJSON顏色)`
+              );
             });
 
-            // 顏色映射已經在 getColorForServiceProvider 中更新，無需額外操作
+            // 顏色已在上方直接分配，無需額外操作
           } else {
             console.log('📅 沒有找到該日期的服務人員數據');
           }
@@ -301,10 +295,8 @@ export const useDataStore = defineStore(
       const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
-        // 清除全局顏色映射和順序記錄，確保下次載入時顏色重新從頭開始分配
-        serviceProviderColorMap.clear();
-        serviceProviderOrderArray.length = 0;
-        console.log('📅 已清除所有服務人員圖層、顏色映射和順序記錄');
+        // 清除服務人員圖層（每天重新載入和分配顏色）
+        console.log('📅 已清除所有服務人員圖層');
       }
     };
 
