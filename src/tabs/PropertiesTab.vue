@@ -880,12 +880,6 @@
                 :key="item.row_id || index"
                 class="mb-2 p-2 border rounded"
               >
-                <div class="d-flex align-items-center mb-2">
-                  <span class="badge bg-primary me-2">{{ index + 1 }}</span>
-                  <span class="fw-bold">{{
-                    item['服務項目代碼'] || item.serviceType || 'N/A'
-                  }}</span>
-                </div>
                 <DetailItem label="row_id" :value="item.row_id || 'N/A'" />
                 <DetailItem label="身分證字號" :value="item.身分證字號 || 'N/A'" />
                 <DetailItem label="服務日期" :value="item['服務日期(請輸入7碼)'] || 'N/A'" />
