@@ -173,6 +173,13 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     hour_end: serviceRecord.hour_end,
                     min_end: serviceRecord.min_end,
                     time_total: serviceRecord.time_total,
+                    // 交通時間與完整 detail 物件
+                    hour_traffic: serviceRecord.hour_traffic || 0,
+                    min_traffic: serviceRecord.min_traffic || 0,
+                    time_traffic:
+                      serviceRecord.time_traffic ||
+                      (serviceRecord.hour_traffic || 0) * 60 + (serviceRecord.min_traffic || 0),
+                    detail: serviceRecord.detail,
                   },
                 };
 
@@ -353,15 +360,29 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 min_start: point.min_start,
                 hour_end: point.hour_end,
                 min_end: point.min_end,
-                // 添加 service_items
-                service_items: serviceItems,
-                service_items_count: Array.isArray(serviceItems) ? serviceItems.length : 0,
-                color: serviceProviderInfo.color,
-                // 交通時間欄位（從 point 聚合/帶入）
+                // 交通時間欄位
                 交通時間: point.交通時間,
                 交通時間分鐘: point.交通時間分鐘,
                 hour_traffic: point.hour_traffic,
                 min_traffic: point.min_traffic,
+                // 原始 detail 物件，方便右側面板顯示
+                detail: {
+                  編號: point.編號,
+                  姓名: point.姓名,
+                  性別: point.性別,
+                  個案戶籍縣市: point.個案戶籍縣市,
+                  鄉鎮區: point.鄉鎮區,
+                  里別: point.里別,
+                  個案戶籍地址: point.個案戶籍地址,
+                  個案居住縣市: point.個案居住縣市,
+                  個案居住地址: point.地址,
+                  Lat: point.緯度,
+                  Lon: point.經度,
+                },
+                // 添加 service_items
+                service_items: serviceItems,
+                service_items_count: Array.isArray(serviceItems) ? serviceItems.length : 0,
+                color: serviceProviderInfo.color,
               };
             })
           : [];

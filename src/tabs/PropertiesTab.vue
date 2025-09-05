@@ -454,17 +454,24 @@
             </template>
           </template>
 
-          <!-- 注意：路徑規劃路線相關的模板已移除 -->
-
-          <!-- 注意：路徑規劃點相關的模板已移除 -->
-
-          <!-- 注意：路徑優化路線相關的模板已移除 -->
-
-          <!-- 注意：路徑優化點相關的模板已移除 -->
-
-          <!-- 📋 服務項目列表顯示 -->
+          <!-- 📋 服務點 detail + 服務項目列表顯示 -->
           <template v-if="isServiceItemsObject">
             <hr class="my-3" />
+            <!-- 先顯示 service_point 的 detail 所有欄位 -->
+            <div class="my-title-sm-black mb-2">服務點資料</div>
+            <div class="mb-3">
+              <div v-if="selectedFeature.properties.detail">
+                <div
+                  v-for="(value, key) in selectedFeature.properties.detail"
+                  :key="key"
+                  class="mb-1"
+                >
+                  <DetailItem :label="key" :value="String(value)" />
+                </div>
+              </div>
+              <div v-else class="text-muted small">此服務點缺少 detail 資料</div>
+            </div>
+
             <div class="my-title-sm-black mb-3">
               服務項目列表 ({{ selectedFeature.properties.serviceItems.length }})
             </div>
@@ -478,6 +485,7 @@
                 <DetailItem label="row_id" :value="item.row_id || 'N/A'" />
                 <DetailItem label="身分證字號" :value="item.身分證字號 || 'N/A'" />
                 <DetailItem label="服務日期" :value="item['服務日期(請輸入7碼)'] || 'N/A'" />
+                <DetailItem label="服務項目代碼" :value="item.服務項目代碼 || 'N/A'" />
                 <DetailItem
                   label="服務類別"
                   :value="item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A'"
