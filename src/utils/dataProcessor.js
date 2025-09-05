@@ -79,46 +79,49 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       }
 
       if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-        // 1. 處理 route 路線（如果存在）
+        // 1. 處理 service_points_routes 路線（如果存在）
         if (
-          serviceProvider.route &&
-          serviceProvider.route.features &&
-          Array.isArray(serviceProvider.route.features)
+          serviceProvider.service_points_routes &&
+          Array.isArray(serviceProvider.service_points_routes)
         ) {
-          serviceProvider.route.features.forEach((routeFeature) => {
-            if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
-              const routeFeatureData = {
-                type: 'Feature',
-                geometry: routeFeature.geometry,
-                properties: {
-                  id: `route_${serviceProvider.服務人員身分證}`,
-                  layerId: layerId,
-                  layerName: `${layer.layerName}_路線`,
-                  name: `服務路線_${serviceProvider.服務人員身分證}`,
-                  strokeColor: unifiedColor, // 使用顏色名稱，方便統一處理
-                  routeColor: unifiedColor, // 添加routeColor屬性，使用統一的顏色
-                  strokeWidth: 3,
-                  strokeOpacity: 0.8,
-                  serviceProviderId: serviceProvider.服務人員身分證,
-                  serviceDate: serviceProvider['服務日期(請輸入7碼)'],
-                  pointCount: routeFeature.geometry.coordinates.length,
-                  distance: routeFeature.properties?.summary?.distance || 0,
-                  duration: routeFeature.properties?.summary?.duration || 0,
-                  segments: routeFeature.properties?.segments?.length || 0,
-                  ...routeFeature.properties,
-                },
-              };
+          serviceProvider.service_points_routes.forEach((routeCollection) => {
+            if (routeCollection.features && Array.isArray(routeCollection.features)) {
+              routeCollection.features.forEach((routeFeature) => {
+                if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
+                  const routeFeatureData = {
+                    type: 'Feature',
+                    geometry: routeFeature.geometry,
+                    properties: {
+                      id: `route_${serviceProvider.服務人員身分證}`,
+                      layerId: layerId,
+                      layerName: `${layer.layerName}_路線`,
+                      name: `服務路線_${serviceProvider.服務人員身分證}`,
+                      strokeColor: unifiedColor, // 使用顏色名稱，方便統一處理
+                      routeColor: unifiedColor, // 添加routeColor屬性，使用統一的顏色
+                      strokeWidth: 3,
+                      strokeOpacity: 0.8,
+                      serviceProviderId: serviceProvider.服務人員身分證,
+                      serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                      pointCount: routeFeature.geometry.coordinates.length,
+                      distance: routeFeature.properties?.summary?.distance || 0,
+                      duration: routeFeature.properties?.summary?.duration || 0,
+                      segments: routeFeature.properties?.segments?.length || 0,
+                      ...routeFeature.properties,
+                    },
+                  };
 
-              // 添加到對應的服務人員圖層
-              serviceProviderLayers.get(serviceProviderId).features.push(routeFeatureData);
-              // 也添加到總圖層
-              allGeoJsonData.features.push(routeFeatureData);
+                  // 添加到對應的服務人員圖層
+                  serviceProviderLayers.get(serviceProviderId).features.push(routeFeatureData);
+                  // 也添加到總圖層
+                  allGeoJsonData.features.push(routeFeatureData);
+                }
+              });
             }
           });
         }
 
         // 2. 處理服務點（service_points 裡面的點）
-        const servicePoints = serviceProvider.service_points.filter((record) => record.datail);
+        const servicePoints = serviceProvider.service_points.filter((record) => record.detail);
 
         if (servicePoints.length > 0) {
           // 按服務時間排序
@@ -130,9 +133,9 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
           // 3. 在地圖上繪製有座標的服務點
           servicePoints.forEach((serviceRecord, index) => {
-            if (serviceRecord.datail.Lat && serviceRecord.datail.Lon) {
-              const lat = parseFloat(serviceRecord.datail.Lat);
-              const lon = parseFloat(serviceRecord.datail.Lon);
+            if (serviceRecord.detail.Lat && serviceRecord.detail.Lon) {
+              const lat = parseFloat(serviceRecord.detail.Lat);
+              const lon = parseFloat(serviceRecord.detail.Lon);
 
               if (!isNaN(lat) && !isNaN(lon)) {
                 const pointFeatureData = {
@@ -145,26 +148,26 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     id: `point_${serviceProvider.服務人員身分證}_${index}`,
                     layerId: layerId,
                     layerName: layer.layerName,
-                    name: serviceRecord.datail.姓名,
+                    name: serviceRecord.detail.姓名,
                     fillColor: unifiedColor, // 使用顏色名稱，方便統一處理
                     serviceProviderId: serviceProvider.服務人員身分證,
                     routeOrder: index + 1,
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
-                    address: serviceRecord.datail.個案居住地址,
+                    address: serviceRecord.detail.個案居住地址,
                     // 添加 service_items 資料
                     service_items: serviceRecord.service_items || [],
                     service_items_count: Array.isArray(serviceRecord.service_items)
                       ? serviceRecord.service_items.length
                       : 0,
                     // 添加其他原始資料欄位
-                    編號: serviceRecord.datail.編號,
-                    姓名: serviceRecord.datail.姓名,
-                    性別: serviceRecord.datail.性別,
-                    個案戶籍縣市: serviceRecord.datail.個案戶籍縣市,
-                    鄉鎮區: serviceRecord.datail.鄉鎮區,
-                    里別: serviceRecord.datail.里別,
-                    個案戶籍地址: serviceRecord.datail.個案戶籍地址,
-                    個案居住縣市: serviceRecord.datail.個案居住縣市,
+                    編號: serviceRecord.detail.編號,
+                    姓名: serviceRecord.detail.姓名,
+                    性別: serviceRecord.detail.性別,
+                    個案戶籍縣市: serviceRecord.detail.個案戶籍縣市,
+                    鄉鎮區: serviceRecord.detail.鄉鎮區,
+                    里別: serviceRecord.detail.里別,
+                    個案戶籍地址: serviceRecord.detail.個案戶籍地址,
+                    個案居住縣市: serviceRecord.detail.個案居住縣市,
                     hour_start: serviceRecord.hour_start,
                     min_start: serviceRecord.min_start,
                     hour_end: serviceRecord.hour_end,
@@ -187,7 +190,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
           // 找到第一個有座標的服務點作為地圖定位點
           const firstPointWithCoords = servicePoints.find(
-            (point) => point.datail.Lat && point.datail.Lon
+            (point) => point.detail.Lat && point.detail.Lon
           );
 
           serviceProviderData.set(serviceProvider.服務人員身分證, {
@@ -197,44 +200,68 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               .trim(),
             服務人員身分證: serviceProvider.服務人員身分證,
             服務日期: serviceProvider['服務日期(請輸入7碼)'],
-            服務點位數: servicePoints.length,
-            開始時間: `${firstService.hour_start}:${firstService.min_start.toString().padStart(2, '0')}`,
-            結束時間: `${lastService.hour_start}:${lastService.min_start.toString().padStart(2, '0')}`,
-            第一個服務點: firstService.datail.姓名,
-            最後一個服務點: lastService.datail.姓名,
+            服務點位數: serviceProvider.service_points_count || servicePoints.length,
+            開始時間: `${serviceProvider.hour_start}:${serviceProvider.min_start.toString().padStart(2, '0')}`,
+            結束時間: `${serviceProvider.hour_end}:${serviceProvider.min_end.toString().padStart(2, '0')}`,
+            總服務時間: `${serviceProvider.hour_total}小時${serviceProvider.min_total}分鐘`,
+            總時間分鐘: serviceProvider.time_total || 0,
+            交通時間: (() => {
+              // 計算服務人員的總交通時間（所有服務點的交通時間總和）
+              const totalTrafficMinutes = servicePoints.reduce((total, point) => {
+                return total + (point.hour_traffic || 0) * 60 + (point.min_traffic || 0);
+              }, 0);
+              const hours = Math.floor(totalTrafficMinutes / 60);
+              const minutes = totalTrafficMinutes % 60;
+              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+            })(),
+            交通時間分鐘: servicePoints.reduce((total, point) => {
+              return total + (point.hour_traffic || 0) * 60 + (point.min_traffic || 0);
+            }, 0),
+            服務數量: servicePoints.reduce(
+              (total, point) => total + (point.service_items_count || 0),
+              0
+            ),
+            第一個服務點: firstService.detail.姓名,
+            最後一個服務點: lastService.detail.姓名,
             // 用於地圖定位的第一個服務點
             firstServicePoint: firstPointWithCoords
               ? {
-                  lat: parseFloat(firstPointWithCoords.datail.Lat),
-                  lon: parseFloat(firstPointWithCoords.datail.Lon),
-                  name: firstPointWithCoords.datail.姓名,
-                  address: firstPointWithCoords.datail.個案居住地址,
+                  lat: parseFloat(firstPointWithCoords.detail.Lat),
+                  lon: parseFloat(firstPointWithCoords.detail.Lon),
+                  name: firstPointWithCoords.detail.姓名,
+                  address: firstPointWithCoords.detail.個案居住地址,
                   time: `${firstPointWithCoords.hour_start}:${firstPointWithCoords.min_start.toString().padStart(2, '0')}`,
                 }
               : null,
             // 用於 Right Panel 的所有服務點
             allServicePoints: servicePoints.map((point, index) => ({
               順序: index + 1,
-              姓名: point.datail.姓名,
-              地址: point.datail.個案居住地址,
+              姓名: point.detail.姓名,
+              地址: point.detail.個案居住地址,
               時間: `${point.hour_start}:${point.min_start.toString().padStart(2, '0')}`,
-              編號: point.datail.編號,
-              性別: point.datail.性別,
-              個案戶籍縣市: point.datail.個案戶籍縣市,
-              鄉鎮區: point.datail.鄉鎮區,
-              里別: point.datail.里別,
-              個案戶籍地址: point.datail.個案戶籍地址,
-              個案居住縣市: point.datail.個案居住縣市,
-              緯度: point.datail.Lat ? parseFloat(point.datail.Lat) : null,
-              經度: point.datail.Lon ? parseFloat(point.datail.Lon) : null,
+              編號: point.detail.編號,
+              性別: point.detail.性別,
+              個案戶籍縣市: point.detail.個案戶籍縣市,
+              鄉鎮區: point.detail.鄉鎮區,
+              里別: point.detail.里別,
+              個案戶籍地址: point.detail.個案戶籍地址,
+              個案居住縣市: point.detail.個案居住縣市,
+              緯度: point.detail.Lat ? parseFloat(point.detail.Lat) : null,
+              經度: point.detail.Lon ? parseFloat(point.detail.Lon) : null,
               // 添加時間相關欄位
               hour_start: point.hour_start,
               min_start: point.min_start,
               hour_end: point.hour_end,
               min_end: point.min_end,
-              service_items_count: Array.isArray(point.service_items)
-                ? point.service_items.length
-                : 0,
+              service_items_count:
+                point.service_items_count ||
+                (Array.isArray(point.service_items) ? point.service_items.length : 0),
+              service_items: point.service_items || [],
+              總服務時間分鐘: point.time_total || 0,
+              交通時間: `${point.hour_traffic || 0}小時${point.min_traffic || 0}分鐘`,
+              交通時間分鐘: (point.hour_traffic || 0) * 60 + (point.min_traffic || 0),
+              hour_traffic: point.hour_traffic || 0,
+              min_traffic: point.min_traffic || 0,
             })),
           });
         }
@@ -330,6 +357,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 service_items: serviceItems,
                 service_items_count: Array.isArray(serviceItems) ? serviceItems.length : 0,
                 color: serviceProviderInfo.color,
+                // 交通時間欄位（從 point 聚合/帶入）
+                交通時間: point.交通時間,
+                交通時間分鐘: point.交通時間分鐘,
+                hour_traffic: point.hour_traffic,
+                min_traffic: point.min_traffic,
               };
             })
           : [];

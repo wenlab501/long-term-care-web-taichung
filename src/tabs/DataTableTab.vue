@@ -43,6 +43,7 @@
         '起始時間',
         '結束時間',
         '總時間',
+        '交通時間',
         '服務數量',
       ];
     }
@@ -228,6 +229,18 @@
             }
           }
           return 'N/A';
+        case '交通時間':
+          // 優先使用已格式化的交通時間
+          if (item.交通時間) {
+            return item.交通時間;
+          } else if (item.hour_traffic !== undefined && item.min_traffic !== undefined) {
+            const hours = item.hour_traffic || 0;
+            const minutes = item.min_traffic || 0;
+            if (hours > 0 || minutes > 0) {
+              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+            }
+          }
+          return '0分鐘';
         case '服務數量':
           return (item.service_items_count ?? item.服務數量 ?? '0').toString();
         default:
