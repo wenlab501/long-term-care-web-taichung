@@ -146,11 +146,6 @@
       const distanceModalPosition = ref({ lat: 0, lng: 0 }); // 點擊位置的座標
       const distanceInput = ref(''); // 距離輸入值
 
-      // 📊 等時分析 Modal 相關變數 (Isochrone Analysis Modal Related Variables)
-      const showIsochroneModal = ref(false); // 是否顯示等時分析 modal
-      const isochroneModalPosition = ref({ lat: 0, lng: 0 }); // 點擊位置的座標
-      const isochroneInput = ref(''); // 車程時間輸入值
-
       // 🗺️ 地圖互動函數 (Map Interaction Functions)
 
       /**
@@ -327,69 +322,6 @@
        */
       const handleDistanceCancel = () => {
         showDistanceModal.value = false;
-      };
-
-      // 📊 等時分析 Modal 處理函數 (Isochrone Analysis Modal Handler Functions)
-      /**
-       * 📊 顯示等時分析 Modal
-       * @param {number} lat - 緯度
-       * @param {number} lng - 經度
-       */
-      const openIsochroneModal = (lat, lng) => {
-        console.log('🔍 openIsochroneModal 被調用:', { lat, lng });
-        isochroneModalPosition.value = { lat, lng };
-        isochroneInput.value = '15'; // 預設為 15 分鐘
-        showIsochroneModal.value = true;
-        console.log('🔍 等時分析 Modal 狀態已設定:', {
-          showIsochroneModal: showIsochroneModal.value,
-          isochroneInput: isochroneInput.value,
-          isochroneModalPosition: isochroneModalPosition.value,
-        });
-      };
-
-      /**
-       * 📊 處理等時分析輸入確認
-       */
-      const handleIsochroneConfirm = () => {
-        console.log('🔍 handleIsochroneConfirm 被調用');
-        const timeMinutes = parseFloat(isochroneInput.value);
-        console.log('🔍 解析的車程時間:', timeMinutes);
-        console.log('🔍 當前座標:', isochroneModalPosition.value);
-
-        if (timeMinutes && timeMinutes > 0) {
-          try {
-            const result = dataStore.addIsochroneAnalysisPoint(
-              isochroneModalPosition.value.lat,
-              isochroneModalPosition.value.lng,
-              timeMinutes
-            );
-            console.log('🔍 addIsochroneAnalysisPoint 結果:', result);
-          } catch (error) {
-            console.error('❌ addIsochroneAnalysisPoint 錯誤:', error);
-          }
-
-          // 關閉 modal
-          showIsochroneModal.value = false;
-          // 通知地圖組件停止點擊模式
-          if (middlePanelRef.value && middlePanelRef.value.stopIsochroneClickMode) {
-            console.log('🔍 調用 middlePanelRef.stopIsochroneClickMode');
-            middlePanelRef.value.stopIsochroneClickMode();
-          } else if (mobileUpperViewRef.value && mobileUpperViewRef.value.stopIsochroneClickMode) {
-            console.log('🔍 調用 mobileUpperViewRef.stopIsochroneClickMode');
-            mobileUpperViewRef.value.stopIsochroneClickMode();
-          } else {
-            console.warn('⚠️ 無法找到 stopIsochroneClickMode 方法');
-          }
-        } else {
-          console.warn('⚠️ 車程時間無效:', timeMinutes);
-        }
-      };
-
-      /**
-       * 📊 處理等時分析輸入取消
-       */
-      const handleIsochroneCancel = () => {
-        showIsochroneModal.value = false;
       };
 
       // 📏 視窗大小變化處理 (Window Resize Handler)
@@ -858,14 +790,6 @@
         openDistanceModal, // 顯示距離輸入 modal
         handleDistanceConfirm, // 處理距離輸入確認
         handleDistanceCancel, // 處理距離輸入取消
-
-        // 📊 等時分析 Modal 相關
-        showIsochroneModal, // 是否顯示等時分析 modal
-        isochroneModalPosition, // 點擊位置的座標
-        isochroneInput, // 車程時間輸入值
-        openIsochroneModal, // 顯示等時分析 modal
-        handleIsochroneConfirm, // 處理等時分析輸入確認
-        handleIsochroneCancel, // 處理等時分析輸入取消
       };
     },
   };
@@ -959,64 +883,6 @@
       </div>
     </div>
 
-    <!-- 📊 等時分析 Modal -->
-    <div
-      v-if="showIsochroneModal"
-      class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-      style="background-color: rgba(0, 0, 0, 0.7); z-index: 9999"
-    >
-      <!-- 📄 等時分析內容卡片 -->
-      <div class="text-center my-bgcolor-white p-4 rounded shadow">
-        <!-- 📊 標題區域 -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="my-title-md-black mb-0">車程時間</h5>
-          <button
-            type="button"
-            class="btn-close"
-            @click="handleIsochroneCancel"
-            aria-label="Close"
-          ></button>
-        </div>
-
-        <!-- 📝 輸入區域 -->
-        <div class="d-flex align-items-center gap-2 my-4">
-          <span class="my-title-sm-gray text-nowrap">時間</span>
-          <input
-            type="number"
-            class="form-control text-center my-font-size-md"
-            id="isochroneInput"
-            v-model="isochroneInput"
-            placeholder="例如：15"
-            min="1"
-            step="1"
-            @keyup.enter="handleIsochroneConfirm"
-          />
-          <span class="my-title-sm-gray text-nowrap">分鐘</span>
-        </div>
-
-        <!-- 📝 按鈕區域 -->
-        <div class="d-flex gap-2 justify-content-end">
-          <button
-            type="button"
-            class="btn my-font-size-sm my-btn-white"
-            @click="handleIsochroneCancel"
-          >
-            <i class="fas fa-times me-2"></i>
-            取消
-          </button>
-          <button
-            type="button"
-            class="btn my-font-size-sm my-btn-blue"
-            @click="handleIsochroneConfirm"
-            :disabled="!isochroneInput || isochroneInput === ''"
-          >
-            <i class="fas fa-check me-2"></i>
-            確認
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- 📱 主要內容區域 (Main Content Area) -->
     <!-- 使用計算高度為 footer 留出空間，避免擋住滾動條 -->
     <div class="d-flex flex-column overflow-hidden">
@@ -1081,7 +947,6 @@
             @highlight-feature="handleHighlight"
             @show-service-point-detail="handleShowServicePointDetail"
             @open-distance-modal="openDistanceModal"
-            @open-isochrone-modal="openIsochroneModal"
           />
 
           <!-- 🔧 右側拖曳調整器 (Right Panel Resizer) -->
@@ -1137,7 +1002,6 @@
               @update:activeMarkers="activeMarkers = $event"
               @show-service-point-detail="handleShowServicePointDetail"
               @open-distance-modal="openDistanceModal"
-              @open-isochrone-modal="openIsochroneModal"
             />
           </div>
 
