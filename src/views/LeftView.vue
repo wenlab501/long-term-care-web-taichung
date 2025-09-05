@@ -103,10 +103,10 @@
     <!-- 📅 服務日期選擇區域 -->
     <div class="px-3 pb-3">
       <div class="mb-2">
-        <label class="my-title-xs-gray mb-1 d-block">服務日期篩選</label>
+        <label class="my-title-xs-gray mb-1 d-block">選擇服務日期</label>
         <DatePicker
           v-model="selectedServiceDate"
-          placeholder="選擇服務日期 (7碼格式)"
+          placeholder="選擇服務日期"
           @date-selected="handleDateSelected"
         />
       </div>
