@@ -95,14 +95,6 @@
         return selectedFeature.value?.properties?.layerId === 'analysis-layer';
       });
 
-      /**
-       * 🚗 是否為等時圈分析圖層物件 (Is Isochrone Analysis Layer Object)
-       * 檢查選中物件是否為等時圈分析圖層的物件
-       */
-      const isIsochroneAnalysisObject = computed(() => {
-        return selectedFeature.value?.properties?.layerId === 'isochrone-analysis-layer';
-      });
-
       // 注意：路徑規劃和路徑優化相關的計算屬性已移除
 
       /**
@@ -157,19 +149,19 @@
 
       /**
        * 📍 範圍內點位清單 (Points In Range List)
-       * 獲取分析圖層物件範圍內的點清單（支援數據分析和等時圈分析）
+       * 獲取分析圖層物件範圍內的點清單
        */
       const pointsInRange = computed(() => {
-        if (!isAnalysisObject.value && !isIsochroneAnalysisObject.value) return [];
+        if (!isAnalysisObject.value) return [];
         return selectedFeature.value?.properties?.pointsInRange || [];
       });
 
       /**
        * 🏢 範圍內多邊形清單 (Polygon In Range List)
-       * 獲取分析圖層物件範圍內的多邊形清單（支援數據分析和等時圈分析）
+       * 獲取分析圖層物件範圍內的多邊形清單
        */
       const polygonInRange = computed(() => {
-        if (!isAnalysisObject.value && !isIsochroneAnalysisObject.value) return [];
+        if (!isAnalysisObject.value) return [];
         return selectedFeature.value?.properties?.polygonInRange || [];
       });
 
@@ -185,19 +177,19 @@
 
       /**
        * 📊 圖層統計 (Layer Statistics)
-       * 獲取範圍內各圖層的統計信息（點物件）（支援數據分析和等時圈分析）
+       * 獲取範圍內各圖層的統計信息（點物件）
        */
       const layerStats = computed(() => {
-        if (!isAnalysisObject.value && !isIsochroneAnalysisObject.value) return {};
+        if (!isAnalysisObject.value) return {};
         return selectedFeature.value?.properties?.layerStats || {};
       });
 
       /**
        * 🏢 多邊形圖層統計 (Polygon Layer Statistics)
-       * 獲取範圍內各圖層的統計信息（多邊形物件）（支援數據分析和等時圈分析）
+       * 獲取範圍內各圖層的統計信息（多邊形物件）
        */
       const polygonStats = computed(() => {
-        if (!isAnalysisObject.value && !isIsochroneAnalysisObject.value) return {};
+        if (!isAnalysisObject.value) return {};
         return selectedFeature.value?.properties?.polygonStats || {};
       });
 
@@ -238,7 +230,6 @@
         layerName, // 圖層名稱
         hasProperties, // 是否有屬性
         isAnalysisObject, // 是否為分析圖層物件
-        isIsochroneAnalysisObject, // 是否為等時圈分析圖層物件
         // 注意：路徑規劃和路徑優化相關的計算屬性已移除
         isServiceProviderObject, // 是否為服務人員物件
         isServiceItemsObject, // 是否為服務項目列表物件
@@ -332,12 +323,9 @@
             />
           </template>
 
-          <!-- 🎯 分析圖層專用：範圍內物件清單（支援數據分析和等時圈分析） -->
+          <!-- 🎯 分析圖層專用：範圍內物件清單 -->
           <template
-            v-if="
-              (isAnalysisObject || isIsochroneAnalysisObject) &&
-              (pointsInRange.length > 0 || polygonInRange.length > 0)
-            "
+            v-if="isAnalysisObject && (pointsInRange.length > 0 || polygonInRange.length > 0)"
           >
             <!-- 📍 點物件清單 -->
             <template v-if="pointsInRange.length > 0">

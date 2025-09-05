@@ -36,7 +36,6 @@
       'update:activeMarkers',
       'show-service-point-detail',
       'open-distance-modal',
-      'open-isochrone-modal',
     ],
 
     // 🔧 組件設定函數 (Component Setup Function)
@@ -316,36 +315,6 @@
 
                 return circle;
               }
-            } else if (layer.isIsochroneAnalysisLayer) {
-              if (feature.properties.type === 'isochrone-point-analysis') {
-                // 等時圈分析點：藍色加號標記
-                const icon = L.divIcon({
-                  html: `
-                  <div class="d-flex align-items-center justify-content-center my-color-blue my-font-size-sm">
-                    <i class="fas fa-plus"></i>
-                  </div>
-                  `,
-                  className: 'isochrone-analysis-point-icon',
-                  iconSize: [16, 16],
-                  iconAnchor: [8, 8],
-                  popupAnchor: [0, -8],
-                });
-                const marker = L.marker(latlng, { icon });
-
-                return marker;
-              } else if (feature.properties.type === 'isochrone-circle-analysis') {
-                // 等時圈分析圓圈：藍色圓圈（回退模式）
-                const circle = L.circle(latlng, {
-                  radius: feature.properties.radius,
-                  color: 'var(--my-color-blue)',
-                  weight: 1,
-                  opacity: 0.8,
-                  fillColor: 'var(--my-color-blue)',
-                  fillOpacity: 0.2,
-                });
-
-                return circle;
-              }
             } else if (layer.isRoutePlanningLayer) {
               if (feature.properties.type === 'route-planning-point') {
                 // 路徑規劃點：橘色數字標記
@@ -561,19 +530,6 @@
                 dashArray: null, // 實線
               };
             }
-            // 等時圈多邊形的特殊樣式處理
-            if (
-              layer.isIsochroneAnalysisLayer &&
-              feature.properties.type === 'isochrone-polygon-analysis'
-            ) {
-              return {
-                color: 'var(--my-color-blue)',
-                weight: 2,
-                opacity: 0.8,
-                fillColor: 'var(--my-color-blue)',
-                fillOpacity: 0.3,
-              };
-            }
             // 只有polygon返回預設樣式物件
             if (layer.type == 'polygon') {
               //if (feature.properties.fillColor) {
@@ -618,22 +574,6 @@
               `,
                 {
                   className: 'analysis-popup',
-                  offset: [0, -5], // 調整偏移量
-                  closeButton: true,
-                  autoClose: false,
-                  closeOnClick: false,
-                }
-              );
-            } else if (layer.isIsochroneAnalysisLayer) {
-              layer.bindPopup(
-                `
-                <div class="">
-                  <div class="my-title-xs-gray pb-2">${layerName}</div>
-                  <div class="my-content-sm-black">${feature.properties.name}</div>
-                </div>
-              `,
-                {
-                  className: 'isochrone-analysis-popup',
                   offset: [0, -5], // 調整偏移量
                   closeButton: true,
                   autoClose: false,
@@ -774,40 +714,6 @@
                     });
                   }
                 } else if (
-                  layer.isIsochroneAnalysisLayer ||
-                  feature.properties.layerId === 'isochrone-analysis-layer'
-                ) {
-                  if (feature.properties.type === 'isochrone-point-analysis') {
-                    // 等時圈分析點不需要懸停效果，直接返回
-                    return;
-                  } else if (feature.properties.type === 'isochrone-circle-analysis') {
-                    // 等時圈分析圓圈懸停效果
-                    if (!this._originalStyle) {
-                      this._originalStyle = {
-                        weight: this.options.weight,
-                        color: this.options.color,
-                        fillOpacity: this.options.fillOpacity,
-                      };
-                    }
-                    this.setStyle({
-                      weight: 2,
-                      fillOpacity: 0.4,
-                    });
-                  } else if (feature.properties.type === 'isochrone-polygon-analysis') {
-                    // 等時圈多邊形懸停效果
-                    if (!this._originalStyle) {
-                      this._originalStyle = {
-                        weight: this.options.weight,
-                        color: this.options.color,
-                        fillOpacity: this.options.fillOpacity,
-                      };
-                    }
-                    this.setStyle({
-                      weight: 3,
-                      fillOpacity: 0.5,
-                    });
-                  }
-                } else if (
                   layer.isRoutePlanningLayer ||
                   feature.properties.layerId === 'route-planning-layer'
                 ) {
@@ -879,24 +785,6 @@
                       }
                     }
                   } else if (
-                    layer.isIsochroneAnalysisLayer ||
-                    feature.properties.layerId === 'isochrone-analysis-layer'
-                  ) {
-                    if (feature.properties.type === 'isochrone-point-analysis') {
-                      // 等時圈分析點不需要恢復效果，直接返回
-                      return;
-                    } else if (feature.properties.type === 'isochrone-circle-analysis') {
-                      // 等時圈分析圓圈恢復
-                      if (this._originalStyle) {
-                        this.setStyle(this._originalStyle);
-                      }
-                    } else if (feature.properties.type === 'isochrone-polygon-analysis') {
-                      // 等時圈多邊形恢復
-                      if (this._originalStyle) {
-                        this.setStyle(this._originalStyle);
-                      }
-                    }
-                  } else if (
                     layer.isRoutePlanningLayer ||
                     feature.properties.layerId === 'route-planning-layer'
                   ) {
@@ -938,15 +826,6 @@
                 if (
                   (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') &&
                   feature.properties.type === 'point-analysis'
-                ) {
-                  return;
-                }
-
-                // 等時圈分析點不參與選擇，直接返回
-                if (
-                  (layer.isIsochroneAnalysisLayer ||
-                    feature.properties.layerId === 'isochrone-analysis-layer') &&
-                  feature.properties.type === 'isochrone-point-analysis'
                 ) {
                   return;
                 }
@@ -1104,16 +983,6 @@
                   feature.properties.type === 'circle-analysis'
                 ) {
                   showAnalysisContextMenu(e.originalEvent, feature);
-                }
-
-                // 只有等時圈分析圖層的圓圈或多邊形才顯示右鍵菜單
-                if (
-                  (layer.isIsochroneAnalysisLayer ||
-                    feature.properties.layerId === 'isochrone-analysis-layer') &&
-                  (feature.properties.type === 'isochrone-circle-analysis' ||
-                    feature.properties.type === 'isochrone-polygon-analysis')
-                ) {
-                  showIsochroneAnalysisContextMenu(e.originalEvent, feature);
                 }
               },
             });
@@ -1846,21 +1715,6 @@
         console.log('🖱️ 顯示分析要素右鍵菜單:', feature.properties.name);
       };
 
-      // 🖱️ 顯示等時圈分析右鍵菜單 (Show Isochrone Analysis Context Menu)
-      const showIsochroneAnalysisContextMenu = (event, feature) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        selectedAnalysisFeature.value = feature;
-        contextMenuPosition.value = {
-          x: event.pageX || event.clientX,
-          y: event.pageY || event.clientY,
-        };
-        showContextMenu.value = true;
-
-        console.log('🖱️ 顯示等時圈分析要素右鍵菜單:', feature.properties.name);
-      };
-
       // 🗑️ 刪除單個分析點 (Delete Single Analysis Point)
       const deleteAnalysisPoint = () => {
         if (!selectedAnalysisFeature.value) return;
@@ -1870,10 +1724,6 @@
 
         let pointId;
         if (feature.properties.type === 'circle-analysis') {
-          pointId = feature.properties.id;
-        } else if (feature.properties.type === 'isochrone-circle-analysis') {
-          pointId = feature.properties.id;
-        } else if (feature.properties.type === 'isochrone-polygon-analysis') {
           pointId = feature.properties.id;
         } else {
           pointId = feature.properties.parentId;
@@ -1885,9 +1735,6 @@
         if (layerId === 'analysis-layer') {
           dataStore.deleteAnalysisPoint(pointId);
           console.log('🗑️ 刪除分析點:', pointId);
-        } else if (layerId === 'isochrone-analysis-layer') {
-          dataStore.deleteIsochroneAnalysisPoint(pointId);
-          console.log('🗑️ 刪除等時圈分析點:', pointId);
         }
 
         // 隱藏右鍵菜單
@@ -2419,12 +2266,6 @@
     border: none !important;
   }
 
-  /* 🎯 等時圈分析點圖標樣式 (Isochrone Analysis Point Icon Styles) */
-  :deep(.isochrone-analysis-point-icon) {
-    background: transparent !important;
-    border: none !important;
-  }
-
   /* 🗺️ 路徑規劃點圖標樣式 (Route Planning Point Icon Styles) */
   :deep(.route-planning-point-icon) {
     background: transparent !important;
@@ -2434,12 +2275,6 @@
   /* 🖱️ 點擊模式樣式 (Click Mode Styles) */
   .click-mode-active,
   .click-mode-active * {
-    cursor: crosshair !important;
-  }
-
-  /* 🖱️ 等時圈點擊模式樣式 (Isochrone Click Mode Styles) */
-  .isochrone-click-mode-active,
-  .isochrone-click-mode-active * {
     cursor: crosshair !important;
   }
 
