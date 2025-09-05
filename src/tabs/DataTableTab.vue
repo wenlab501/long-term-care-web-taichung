@@ -483,7 +483,7 @@
                         <div
                           style="min-width: 6px"
                           :style="{
-                            backgroundColor: item['color'],
+                            backgroundColor: getLayerColor(layer),
                           }"
                         ></div>
                         <div class="my-content-xs-black w-100 px-3 py-2">
