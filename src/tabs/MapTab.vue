@@ -35,7 +35,6 @@
       'update:currentCoords',
       'update:activeMarkers',
       'show-service-point-detail',
-      'open-distance-modal',
     ],
 
     // 🔧 組件設定函數 (Component Setup Function)
