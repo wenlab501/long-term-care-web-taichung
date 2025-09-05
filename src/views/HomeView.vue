@@ -141,11 +141,6 @@
       /** 🖱️ 側邊面板拖曳進行中狀態 */
       const isSidePanelDragging = ref(false);
 
-      // 📊 距離輸入 Modal 相關變數 (Distance Input Modal Related Variables)
-      const showDistanceModal = ref(false); // 是否顯示距離輸入 modal
-      const distanceModalPosition = ref({ lat: 0, lng: 0 }); // 點擊位置的座標
-      const distanceInput = ref(''); // 距離輸入值
-
       // 🗺️ 地圖互動函數 (Map Interaction Functions)
 
       /**
@@ -255,73 +250,6 @@
         // 四捨五入到一位小數
         leftViewWidth.value = Math.round(leftViewWidth.value * 10) / 10;
         rightViewWidth.value = Math.round(rightViewWidth.value * 10) / 10;
-      };
-
-      // 📊 距離輸入 Modal 處理函數 (Distance Input Modal Handler Functions)
-      /**
-       * 📊 顯示距離輸入 Modal
-       * @param {number} lat - 緯度
-       * @param {number} lng - 經度
-       */
-      const openDistanceModal = (lat, lng) => {
-        console.log('🔍 openDistanceModal 被調用:', { lat, lng });
-        distanceModalPosition.value = { lat, lng };
-        distanceInput.value = '2'; // 預設為 2 公里
-        showDistanceModal.value = true;
-        console.log('🔍 Modal 狀態已設定:', {
-          showDistanceModal: showDistanceModal.value,
-          distanceInput: distanceInput.value,
-          distanceModalPosition: distanceModalPosition.value,
-        });
-      };
-
-      /**
-       * 📊 處理距離輸入確認
-       */
-      const handleDistanceConfirm = () => {
-        console.log('🔍 handleDistanceConfirm 被調用');
-        const distance = parseFloat(distanceInput.value);
-        console.log('🔍 解析的距離:', distance);
-        console.log('🔍 當前座標:', distanceModalPosition.value);
-
-        if (distance && distance > 0) {
-          // 將公里轉換為米，然後使用輸入的距離添加分析點
-          const radiusInMeters = distance * 1000;
-          console.log('🔍 轉換為米:', radiusInMeters);
-
-          try {
-            const result = dataStore.addAnalysisPoint(
-              distanceModalPosition.value.lat,
-              distanceModalPosition.value.lng,
-              radiusInMeters
-            );
-            console.log('🔍 addAnalysisPoint 結果:', result);
-          } catch (error) {
-            console.error('❌ addAnalysisPoint 錯誤:', error);
-          }
-
-          // 關閉 modal
-          showDistanceModal.value = false;
-          // 通知地圖組件停止點擊模式
-          if (middlePanelRef.value && middlePanelRef.value.stopClickMode) {
-            console.log('🔍 調用 middlePanelRef.stopClickMode');
-            middlePanelRef.value.stopClickMode();
-          } else if (mobileUpperViewRef.value && mobileUpperViewRef.value.stopClickMode) {
-            console.log('🔍 調用 mobileUpperViewRef.stopClickMode');
-            mobileUpperViewRef.value.stopClickMode();
-          } else {
-            console.warn('⚠️ 無法找到 stopClickMode 方法');
-          }
-        } else {
-          console.warn('⚠️ 距離無效:', distance);
-        }
-      };
-
-      /**
-       * 📊 處理距離輸入取消
-       */
-      const handleDistanceCancel = () => {
-        showDistanceModal.value = false;
       };
 
       // 📏 視窗大小變化處理 (Window Resize Handler)
@@ -782,14 +710,6 @@
         // 🗺️ 地圖相關函數
         retryMapInitialization, // 重試地圖初始化
         getMapInitStatus, // 獲取地圖初始化狀態
-
-        // 📊 距離輸入 Modal 相關
-        showDistanceModal, // 是否顯示距離輸入 modal
-        distanceModalPosition, // 點擊位置的座標
-        distanceInput, // 距離輸入值
-        openDistanceModal, // 顯示距離輸入 modal
-        handleDistanceConfirm, // 處理距離輸入確認
-        handleDistanceCancel, // 處理距離輸入取消
       };
     },
   };
@@ -808,80 +728,6 @@
       :showProgress="showLoadingProgress"
       :subText="loadingSubText"
     />
-
-    <!-- 📊 距離輸入 Modal -->
-    <div
-      v-if="showDistanceModal"
-      class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-      style="background-color: rgba(0, 0, 0, 0.7); z-index: 9999"
-    >
-      <!-- 📄 距離輸入內容卡片 -->
-      <div class="text-center my-bgcolor-white p-4 rounded shadow">
-        <!-- 📊 標題區域 -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="my-title-md-black mb-0">分析範圍</h5>
-          <button
-            type="button"
-            class="btn-close"
-            @click="handleDistanceCancel"
-            aria-label="Close"
-          ></button>
-        </div>
-
-        <!-- 📝 輸入區域 -->
-        <div class="d-flex align-items-center gap-2 my-4">
-          <span class="my-title-sm-gray text-nowrap">半徑</span>
-          <input
-            type="number"
-            class="form-control text-center my-font-size-md"
-            id="distanceInput"
-            v-model="distanceInput"
-            placeholder="例如：2.5"
-            min="0.1"
-            step="0.1"
-            @keyup.enter="handleDistanceConfirm"
-          />
-          <span class="my-title-sm-gray text-nowrap">公里</span>
-          <!-- 點擊位置 -->
-          <!--
-          <div class="form-text text-start mt-2">
-            點擊位置：{{
-              distanceModalPosition.lat ? distanceModalPosition.lat.toFixed(6) : '0.000000'
-            }}, {{ distanceModalPosition.lng ? distanceModalPosition.lng.toFixed(6) : '0.000000' }}
-          </div>
-          -->
-        </div>
-
-        <!-- 📝 按鈕區域 -->
-        <div class="d-flex gap-2 justify-content-end">
-          <button
-            type="button"
-            class="btn my-font-size-sm my-btn-white"
-            @click="handleDistanceCancel"
-          >
-            <i class="fas fa-times me-2"></i>
-            取消
-          </button>
-          <button
-            type="button"
-            class="btn my-font-size-sm my-btn-blue"
-            @click="handleDistanceConfirm"
-            :disabled="!distanceInput || distanceInput === ''"
-            :title="
-              '距離輸入: ' +
-              distanceInput +
-              ', 長度: ' +
-              distanceInput.length +
-              ', 數值: ' +
-              parseFloat(distanceInput)
-            "
-          >
-            <i class="fas fa-check me-2"></i>
-            確認
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- 📱 主要內容區域 (Main Content Area) -->
     <!-- 使用計算高度為 footer 留出空間，避免擋住滾動條 -->
@@ -946,7 +792,6 @@
             @highlight-on-map="handleHighlight"
             @highlight-feature="handleHighlight"
             @show-service-point-detail="handleShowServicePointDetail"
-            @open-distance-modal="openDistanceModal"
           />
 
           <!-- 🔧 右側拖曳調整器 (Right Panel Resizer) -->
@@ -1001,7 +846,6 @@
               @update:currentCoords="currentCoords = $event"
               @update:activeMarkers="activeMarkers = $event"
               @show-service-point-detail="handleShowServicePointDetail"
-              @open-distance-modal="openDistanceModal"
             />
           </div>
 

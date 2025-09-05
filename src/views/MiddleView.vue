@@ -349,7 +349,6 @@
         @update:currentCoords="$emit('update:currentCoords', $event)"
         @update:activeMarkers="$emit('update:activeMarkers', $event)"
         @show-service-point-detail="$emit('show-service-point-detail', $event)"
-        @open-distance-modal="(lat, lng) => $emit('open-distance-modal', lat, lng)"
       />
     </div>
 

@@ -42,7 +42,6 @@
       'update:currentCoords', // 更新當前座標
       'update:activeMarkers', // 更新作用中標記數量
       'show-service-point-detail', // 顯示服務點詳細資訊
-      'open-distance-modal', // 打開距離輸入模態框
     ],
 
     /**
@@ -271,7 +270,6 @@
           @update:currentCoords="$emit('update:currentCoords', $event)"
           @update:activeMarkers="$emit('update:activeMarkers', $event)"
           @show-service-point-detail="$emit('show-service-point-detail', $event)"
-          @open-distance-modal="(lat, lng) => $emit('open-distance-modal', lat, lng)"
         />
       </div>
 
