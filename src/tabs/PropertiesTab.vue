@@ -426,38 +426,35 @@
                 </table>
               </div>
 
-              <!-- 選中個案的詳細信息 -->
+              <!-- 選中個案的詳細信息（僅顯示指定欄位） -->
               <template v-if="selectedServicePoint">
                 <hr class="my-3" />
                 <div class="my-title-xs-gray mb-3">
                   個案詳細信息 - {{ selectedServicePoint.姓名 }}
                 </div>
                 <DetailItem label="編號" :value="selectedServicePoint.編號" />
-                <DetailItem label="姓名" :value="selectedServicePoint.姓名" />
-                <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
-                <DetailItem label="性別" :value="selectedServicePoint.性別" />
-                <DetailItem label="服務時間" :value="selectedServicePoint.時間" />
-                <DetailItem
-                  label="交通時間"
-                  :value="`${selectedServicePoint.hour_traffic || 0}h${selectedServicePoint.min_traffic || 0}m`"
-                />
-                <DetailItem label="個案戶籍縣市" :value="selectedServicePoint.個案戶籍縣市" />
-                <DetailItem label="鄉鎮區" :value="selectedServicePoint.鄉鎮區" />
-                <DetailItem label="里別" :value="selectedServicePoint.里別" />
+                <div class="pb-2">
+                  <div class="my-title-xs-gray pb-1">姓名</div>
+                  <div class="my-content-sm-black pb-1">
+                    <span
+                      :class="
+                        selectedServicePoint.性別 === '男性'
+                          ? 'my-color-blue'
+                          : selectedServicePoint.性別 === '女性'
+                            ? 'my-color-red'
+                            : ''
+                      "
+                    >
+                      {{ selectedServicePoint.姓名
+                      }}<template v-if="selectedServicePoint.性別 === '男性'"> (M)</template
+                      ><template v-else-if="selectedServicePoint.性別 === '女性'"> (F)</template>
+                    </span>
+                  </div>
+                </div>
                 <DetailItem label="個案戶籍地址" :value="selectedServicePoint.個案戶籍地址" />
-                <DetailItem label="個案居住縣市" :value="selectedServicePoint.個案居住縣市" />
-                <DetailItem label="個案居住地址" :value="selectedServicePoint.地址" />
                 <DetailItem
-                  label="緯度"
-                  :value="
-                    selectedServicePoint.緯度 ? selectedServicePoint.緯度.toFixed(6) : '無座標'
-                  "
-                />
-                <DetailItem
-                  label="經度"
-                  :value="
-                    selectedServicePoint.經度 ? selectedServicePoint.經度.toFixed(6) : '無座標'
-                  "
+                  label="個案居住地址"
+                  :value="selectedServicePoint.個案居住地址 || selectedServicePoint.地址"
                 />
               </template>
             </template>
@@ -466,54 +463,111 @@
           <!-- 📋 服務點 detail + 服務項目列表顯示 -->
           <template v-if="isServiceItemsObject">
             <hr class="my-3" />
-            <!-- 先顯示 service_point 的 detail 所有欄位 -->
+            <!-- 服務點資料：僅顯示指定欄位 -->
             <div class="my-title-sm-black mb-2">服務點資料</div>
             <div class="mb-3">
               <div v-if="selectedFeature.properties.detail">
-                <div
-                  v-for="(value, key) in selectedFeature.properties.detail"
-                  :key="key"
-                  class="mb-1"
-                >
-                  <DetailItem :label="key" :value="String(value)" />
+                <DetailItem
+                  label="編號"
+                  :value="selectedFeature.properties.detail.編號 || '無資料'"
+                />
+                <div class="pb-2">
+                  <div class="my-title-xs-gray pb-1">姓名</div>
+                  <div class="my-content-sm-black pb-1">
+                    <span
+                      :class="
+                        selectedFeature.properties.detail.性別 === '男性'
+                          ? 'my-color-blue'
+                          : selectedFeature.properties.detail.性別 === '女性'
+                            ? 'my-color-red'
+                            : ''
+                      "
+                    >
+                      {{ selectedFeature.properties.detail.姓名 || '無資料'
+                      }}<template v-if="selectedFeature.properties.detail.性別 === '男性'">
+                        (M)</template
+                      ><template v-else-if="selectedFeature.properties.detail.性別 === '女性'">
+                        (F)</template
+                      >
+                    </span>
+                  </div>
                 </div>
+                <DetailItem
+                  label="個案戶籍地址"
+                  :value="selectedFeature.properties.detail.個案戶籍地址 || '無資料'"
+                />
+                <DetailItem
+                  label="個案居住地址"
+                  :value="selectedFeature.properties.detail.個案居住地址 || '無資料'"
+                />
               </div>
               <div v-else class="text-muted small">此服務點缺少 detail 資料</div>
             </div>
+
+            <hr class="my-3" />
 
             <div class="my-title-sm-black mb-3">
               服務項目列表 ({{ selectedFeature.properties.serviceItems.length }})
             </div>
 
             <div v-if="selectedFeature.properties.serviceItems.length > 0" class="mb-3">
-              <div
-                v-for="(item, index) in selectedFeature.properties.serviceItems"
-                :key="item.row_id || index"
-                class="mb-2 p-2 border rounded"
-              >
-                <DetailItem label="row_id" :value="item.row_id || 'N/A'" />
-                <DetailItem label="身分證字號" :value="item.身分證字號 || 'N/A'" />
-                <DetailItem label="服務日期" :value="item['服務日期(請輸入7碼)'] || 'N/A'" />
-                <DetailItem label="服務項目代碼" :value="item.服務項目代碼 || 'N/A'" />
-                <DetailItem
-                  label="服務類別"
-                  :value="item['服務類別\n1.補助\n2.自費'] || item.serviceCategory || 'N/A'"
-                />
-                <DetailItem label="數量" :value="item['數量\n僅整數'] || item.quantity || 'N/A'" />
-                <DetailItem label="單價" :value="item.單價 || item.unitPrice || 'N/A'" />
-                <DetailItem label="服務人員身分證" :value="item.服務人員身分證 || 'N/A'" />
-                <DetailItem
-                  label="服務時間"
-                  :value="`${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`"
-                />
-                <DetailItem
-                  label="總時間"
-                  :value="`${item.hour_total || 0}h${item.min_total || 0}m (${item.time_total || 0}m)`"
-                />
-                <DetailItem
-                  label="交通時間"
-                  :value="`${item.hour_traffic || 0}h${item.min_traffic || 0}m`"
-                />
+              <div class="table-responsive">
+                <table class="table w-100 mb-0">
+                  <thead class="sticky-top my-table-thead">
+                    <tr class="text-center text-nowrap">
+                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
+                        <span class="my-title-xs-gray text-nowrap">row_id</span>
+                      </th>
+                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
+                        <span class="my-title-xs-gray text-nowrap">服務項目代碼</span>
+                      </th>
+                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
+                        <span class="my-title-xs-gray text-nowrap">單價</span>
+                      </th>
+                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
+                        <span class="my-title-xs-gray text-nowrap">服務時間</span>
+                      </th>
+                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
+                        <span class="my-title-xs-gray text-nowrap">總時間</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(item, index) in selectedFeature.properties.serviceItems"
+                      :key="item.row_id || index"
+                      class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
+                    >
+                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                        <div class="my-content-xs-black px-3 py-2">
+                          {{ item.row_id || 'N/A' }}
+                        </div>
+                      </td>
+                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                        <div class="my-content-xs-black px-3 py-2">
+                          {{ item.服務項目代碼 || 'N/A' }}
+                        </div>
+                      </td>
+                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                        <div class="my-content-xs-black px-3 py-2">
+                          {{ item.單價 || item.unitPrice || 'N/A' }}
+                        </div>
+                      </td>
+                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                        <div class="my-content-xs-black px-3 py-2">
+                          {{
+                            `${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`
+                          }}
+                        </div>
+                      </td>
+                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                        <div class="my-content-xs-black px-3 py-2">
+                          {{ `${item.hour_total || 0}h${item.min_total || 0}m` }}
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -567,4 +621,8 @@
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+  .my-table-thead {
+    border-bottom: 2px solid var(--my-color-gray-300) !important;
+  }
+</style>

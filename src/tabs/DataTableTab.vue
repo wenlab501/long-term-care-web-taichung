@@ -45,19 +45,8 @@
       (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
     if (isServiceLayer) {
-      // 服務人員圖層只顯示指定的欄位
-      return [
-        '#',
-        '編號',
-        '姓名',
-        '性別',
-        '個案居住地址',
-        '起始時間',
-        '結束時間',
-        '總時間',
-        '交通時間',
-        '服務數量',
-      ];
+      // 服務人員圖層只顯示指定的欄位（合併起始/結束為「服務時間」，姓名與性別合併為姓名一欄並以顏色表示）
+      return ['#', '編號', '姓名', '個案居住地址', '服務時間', '總時間', '交通時間', '服務數量'];
     }
 
     // 其他圖層使用原來的動態欄位邏輯
@@ -214,22 +203,38 @@
           return item['#'] || (index + 1).toString();
         case '編號':
           return item.編號 || 'N/A';
-        case '姓名':
-          return item.姓名 || 'N/A';
-        case '性別':
-          return item.性別 || 'N/A';
+        case '姓名': {
+          const name = item.姓名 || 'N/A';
+          const gender = item.性別 || '';
+          const colorClass =
+            gender === '男性' ? 'my-color-blue' : gender === '女性' ? 'my-color-red' : '';
+          const abbr = gender === '男性' ? 'M' : gender === '女性' ? 'F' : '';
+          // 顯示 姓名 (M/F)，並以顏色標示性別
+          return `<span class="${colorClass}">${name}${abbr ? ` (${abbr})` : ''}</span>`;
+        }
         case '個案居住地址':
           return item.個案居住地址 || 'N/A';
-        case '起始時間':
-          return item.時間 || item.起始時間 || 'N/A';
-        case '結束時間':
-          // 優先使用已計算的結束時間，否則從 hour_end 和 min_end 計算
-          if (item.結束時間) {
-            return item.結束時間;
-          } else if (item.hour_end !== undefined && item.min_end !== undefined) {
-            return `${item.hour_end}:${item.min_end.toString().padStart(2, '0')}`;
-          }
-          return 'N/A';
+        case '服務時間': {
+          // 組合「起始時間 - 結束時間」
+          const start = (() => {
+            if (item.時間) return item.時間; // 若時間已包含起始，仍優先使用
+            if (item.起始時間) return item.起始時間;
+            if (item.hour_start !== undefined && item.min_start !== undefined) {
+              return `${item.hour_start}:${String(item.min_start).padStart(2, '0')}`;
+            }
+            return 'N/A';
+          })();
+
+          const end = (() => {
+            if (item.結束時間) return item.結束時間;
+            if (item.hour_end !== undefined && item.min_end !== undefined) {
+              return `${item.hour_end}:${String(item.min_end).padStart(2, '0')}`;
+            }
+            return 'N/A';
+          })();
+
+          return `${start} - ${end}`;
+        }
         case '總時間':
           // 優先使用已計算的總時間，否則從時間差計算
           if (item.總時間) {
@@ -528,9 +533,15 @@
                           "
                           >-</template
                         >
-                        <template v-else>{{
-                          getColumnDisplayValue(item, column, layer, rowIndex)
-                        }}</template>
+                        <template v-else>
+                          <span
+                            v-if="column === '姓名'"
+                            v-html="getColumnDisplayValue(item, column, layer, rowIndex)"
+                          ></span>
+                          <span v-else>{{
+                            getColumnDisplayValue(item, column, layer, rowIndex)
+                          }}</span>
+                        </template>
                       </div>
                     </td>
                   </template>
