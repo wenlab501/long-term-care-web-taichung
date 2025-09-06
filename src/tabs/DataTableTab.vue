@@ -288,7 +288,7 @@
    * @param {Object} item - 要高亮的項目
    * @param {Object} layer - 圖層物件
    */
-  const handleHighlight = (item, layer) => {
+  const handleHighlight = (item, layer, rowIndex = 0) => {
     console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
 
     // 檢查是否已經選取了相同的要素
@@ -341,6 +341,7 @@
         layerId: layer.layerId,
         layerName: layer.layerName,
         item: item,
+        rowIndex: rowIndex,
         serviceProviderId: layer.serviceProviderId,
         serviceDate: layer.serviceDate,
         coordinates: {
@@ -501,8 +502,8 @@
                   class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
                   @click="
                     () => {
-                      console.log('🔥 表格行被點擊了!', item, layer);
-                      handleHighlight(item, layer);
+                      console.log('🔥 表格行被點擊了!', item, layer, rowIndex);
+                      handleHighlight(item, layer, rowIndex);
                     }
                   "
                 >
