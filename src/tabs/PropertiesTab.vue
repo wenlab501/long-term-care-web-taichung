@@ -572,6 +572,10 @@
                     </span>
                   </div>
                 </div>
+                <DetailItem
+                  label="身分證字號"
+                  :value="selectedServicePoint.身分證字號 || '無資料'"
+                />
                 <DetailItem label="個案戶籍地址" :value="selectedServicePoint.個案戶籍地址" />
                 <DetailItem
                   label="個案居住地址"
@@ -604,8 +608,8 @@
                             : ''
                       "
                     >
-                      {{ selectedFeature.properties.detail.姓名 || '無資料'
-                      }}<template v-if="selectedFeature.properties.detail.性別 === '男性'">
+                      {{ selectedFeature.properties.detail.姓名 || '無資料' }}
+                      <template v-if="selectedFeature.properties.detail.性別 === '男性'">
                         (M)</template
                       ><template v-else-if="selectedFeature.properties.detail.性別 === '女性'">
                         (F)</template
@@ -613,6 +617,19 @@
                     </span>
                   </div>
                 </div>
+                <DetailItem
+                  label="身分證字號"
+                  :value="
+                    selectedFeature.properties['身分證字號'] ||
+                    (Array.isArray(selectedFeature.properties.serviceItems)
+                      ? selectedFeature.properties.serviceItems[0]?.['身分證字號']
+                      : null) ||
+                    (Array.isArray(selectedFeature.properties.service_items)
+                      ? selectedFeature.properties.service_items[0]?.['身分證字號']
+                      : null) ||
+                    '無資料'
+                  "
+                />
                 <DetailItem
                   label="個案戶籍地址"
                   :value="selectedFeature.properties.detail.個案戶籍地址 || '無資料'"
