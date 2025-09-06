@@ -1,40 +1,77 @@
 /**
- * dataStore.js
+ * =============================================================================
+ * 📦 dataStore.js - 主要資料狀態管理中心
+ * =============================================================================
  *
- * Purpose:
- * - Centralized application state using Pinia.
- * - Manages layer groups, visibility, selected features, and service-date filtering.
- * - Loads and prepares data for "新基準中央服務紀錄" including colors and table data.
+ * 用途：使用 Pinia 進行集中化的應用程式狀態管理
  *
- * Refactor Notes (non-functional):
- * - Added module header, section separators, and JSDoc-style comments for maintainability.
- * - Logic, UI, and outputs are unchanged.
+ * 主要功能：
+ * - 🗂️ 圖層群組和可見性管理
+ * - 🎯 選中特徵和服務點管理
+ * - 📅 服務日期篩選功能
+ * - 🎨 顏色映射和主題管理
+ * - 📊 服務記錄資料載入和處理
+ * - 📍 空間分析工具函數
+ *
+ * 技術特性：
+ * - 🔄 響應式狀態管理
+ * - 💾 持久化儲存支援
+ * - 🎯 計算屬性優化
+ * - 🔍 資料篩選和查詢
+ *
+ * @author 長期照護資源分析系統團隊
+ * @version 2.0.0
  */
+
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-
 import { loadNewStandardCentralServiceData } from '../utils/dataProcessor.js';
 
-// 主要數據存儲定義 (Main Data Store Definition)
+/**
+ * =============================================================================
+ * 🚀 資料存儲定義 (Data Store Definition)
+ * =============================================================================
+ */
+
+/**
+ * @typedef {Object} LayerGroup
+ * @property {string} groupName - 群組名稱
+ * @property {Array<LayerInfo>} groupLayers - 群組內的圖層清單
+ */
+
+/**
+ * @typedef {Object} LayerInfo
+ * @property {string} layerId - 圖層唯一識別碼
+ * @property {string} layerName - 圖層顯示名稱
+ * @property {boolean} visible - 是否可見
+ * @property {boolean} isLoaded - 是否已載入
+ * @property {boolean} isLoading - 是否正在載入
+ * @property {string} colorName - 顏色名稱
+ * @property {string} type - 圖層類型 ('point', 'line', 'polygon')
+ * @property {Object} geoJsonData - GeoJSON 資料
+ * @property {Array} tableData - 表格資料
+ * @property {Object} summaryData - 摘要統計資料
+ */
+
 export const useDataStore = defineStore(
   'data',
   () => {
-    // =============================================================
-    // Layer Groups & Colors
-    // =============================================================
-    const layers = ref([
-      {
-        groupName: '新基準中央服務紀錄',
-        groupLayers: [], // 動態添加服務人員圖層
-      },
-    ]);
+    // =============================================================================
+    // 🎨 常量定義 (Constants Definition)
+    // =============================================================================
 
     /**
-     * D3.js category20b 顏色陣列
-     * 對應輸入圖片中的顏色順序，提供20種不同的顏色給圖層使用
-     * 順序：藍色系(4) -> 橘色系(4) -> 綠色系(4) -> 紫色系(4) -> 灰色系(4)
+     * D3.js category20b 色彩配置
+     * 提供 20 種視覺上易於區分的顏色，按色系分組
+     *
+     * 顏色順序：
+     * - 藍色系 (4): 深藍 → 中藍 → 淺藍 → 極淺藍
+     * - 橘色系 (4): 深橘 → 中橘 → 淺橘 → 極淺橘
+     * - 綠色系 (4): 深綠 → 中綠 → 淺綠 → 極淺綠
+     * - 紫色系 (4): 深紫 → 中紫 → 淺紫 → 極淺紫
+     * - 灰色系 (4): 深灰 → 中灰 → 淺灰 → 極淺灰
      */
-    const layerColors = [
+    const COLOR_PALETTE = Object.freeze([
       'category20b-1', // #3182bd - 深藍
       'category20b-2', // #6baed6 - 中藍
       'category20b-3', // #9ecae1 - 淺藍
@@ -55,44 +92,71 @@ export const useDataStore = defineStore(
       'category20b-18', // #969696 - 中灰
       'category20b-19', // #bdbdbd - 淺灰
       'category20b-20', // #d9d9d9 - 極淺灰
-    ];
+    ]);
 
-    // 注意：不再需要跨日期的顏色映射，每天重新按順序分配顏色
-    // const serviceProviderColorMap = new Map(); // 已移除
-    // const serviceProviderOrderArray = []; // 已移除
-
-    // 注意：getColorForServiceProvider 函數已移除
-    // 現在每天重新按照服務人員順序分配 category20b 顏色
-
-    // =============================================================
-    // Layer Lookup & Utilities
-    // =============================================================
     /**
-     * 根據 ID 在群組內搜尋圖層 (Find Layer By Id)
-     * @param {string} layerId
-     * @returns {Object|null}
+     * 預設圖層群組配置
+     */
+    const DEFAULT_LAYER_GROUPS = Object.freeze([
+      {
+        groupName: '新基準中央服務紀錄',
+        groupLayers: [], // 動態添加服務人員圖層
+        description: '長期照護服務人員的服務記錄資料',
+        icon: 'fas fa-hands-helping',
+      },
+    ]);
+
+    // =============================================================================
+    // 📊 狀態定義 (State Definition)
+    // =============================================================================
+
+    /**
+     * 圖層群組資料
+     * @type {import('vue').Ref<LayerGroup[]>}
+     */
+    const layers = ref([...DEFAULT_LAYER_GROUPS]);
+
+    // =============================================================================
+    // 🔍 圖層查找和實用工具函數 (Layer Lookup & Utility Functions)
+    // =============================================================================
+
+    /**
+     * 根據圖層 ID 查找圖層
+     *
+     * @param {string} layerId - 圖層唯一識別碼
+     * @returns {LayerInfo|null} 找到的圖層物件，若找不到則返回 null
+     *
+     * @example
+     * const layer = findLayerById('service-provider-123');
+     * if (layer) {
+     *   console.log(layer.layerName);
+     * }
      */
     const findLayerById = (layerId) => {
+      if (!layerId || typeof layerId !== 'string') {
+        console.warn('🔍 findLayerById: 無效的圖層 ID', layerId);
+        return null;
+      }
+
       for (const group of layers.value) {
-        for (const layer of group.groupLayers) {
-          if (layer.layerId === layerId) {
-            return layer;
-          }
+        const foundLayer = group.groupLayers.find((layer) => layer.layerId === layerId);
+        if (foundLayer) {
+          return foundLayer;
         }
       }
+
       return null;
     };
 
     /**
-     * 從分組結構中提取所有圖層的扁平陣列 (Get All Layers)
-     * @returns {Array<Object>}
+     * 獲取所有圖層的扁平陣列
+     *
+     * @returns {Array<LayerInfo>} 所有圖層的陣列
      */
     const getAllLayers = () => {
-      const allLayers = [];
-      for (const group of layers.value) {
-        allLayers.push(...group.groupLayers);
-      }
-      return allLayers;
+      return layers.value.reduce((allLayers, group) => {
+        return allLayers.concat(group.groupLayers);
+      }, []);
     };
 
     // =============================================================
@@ -262,8 +326,8 @@ export const useDataStore = defineStore(
               if (!serviceLayer) return;
 
               // 直接按照當天的順序分配顏色（不考慮跨日期一致性）
-              const colorIndex = index % layerColors.length;
-              const assignedColor = layerColors[colorIndex];
+              const colorIndex = index % COLOR_PALETTE.length;
+              const assignedColor = COLOR_PALETTE[colorIndex];
 
               // ============================================
               // 更新 GeoJSON features 中的顏色屬性

@@ -54,7 +54,7 @@
     setup(props, { emit }) {
       // 📦 資料存儲實例 (Data Store Instance)
       const dataStore = useDataStore(); // 獲取 Pinia 資料存儲實例
-      const defineStore = useDefineStore(); // 獲取定義存儲實例
+      const mapStore = useDefineStore(); // 獲取地圖存儲實例
 
       // 🗺️ 地圖相關變數 (Map Related Variables)
       const mapContainer = ref(null); // 地圖容器 DOM 元素引用
@@ -156,10 +156,10 @@
         try {
           console.log('[MapTab] 開始創建 Leaflet 地圖實例');
 
-          // 創建 Leaflet 地圖實例，使用 defineStore 中保存的視圖狀態
+          // 創建 Leaflet 地圖實例，使用 mapStore 中保存的視圖狀態
           mapInstance = L.map(mapContainer.value, {
-            center: defineStore.mapView.center, // 使用保存的地圖中心點
-            zoom: defineStore.mapView.zoom, // 使用保存的縮放等級
+            center: mapStore.mapView.center, // 使用保存的地圖中心點
+            zoom: mapStore.mapView.zoom, // 使用保存的縮放等級
             zoomControl: false, // 禁用預設縮放控制項
             attributionControl: false, // 禁用預設版權資訊控制項
             fadeAnimation: true, // 啟用淡入淡出動畫
@@ -233,8 +233,8 @@
           // 確保地圖實例存在
           const zoom = mapInstance.getZoom();
           const center = mapInstance.getCenter();
-          // 保存地圖視圖狀態到 defineStore
-          defineStore.setMapView([center.lat, center.lng], zoom);
+          // 保存地圖視圖狀態到 mapStore
+          mapStore.setMapView([center.lat, center.lng], zoom);
           emit('update:zoomLevel', zoom); // 發送縮放等級更新事件
         }
       };
@@ -245,8 +245,8 @@
           // 確保地圖實例存在
           const center = mapInstance.getCenter();
           const zoom = mapInstance.getZoom();
-          // 保存地圖視圖狀態到 defineStore
-          defineStore.setMapView([center.lat, center.lng], zoom);
+          // 保存地圖視圖狀態到 mapStore
+          mapStore.setMapView([center.lat, center.lng], zoom);
           emit('update:currentCoords', center); // 發送座標更新事件
         }
       };
@@ -264,7 +264,7 @@
         }
 
         // 步驟二：查找新的底圖設定
-        const config = defineStore.basemaps.find((b) => b.value === defineStore.selectedBasemap);
+        const config = mapStore.basemaps.find((b) => b.value === mapStore.selectedBasemap);
 
         // 步驟三：只有在找到設定檔(config)且 URL 不是空值(falsy)時，才加入新的圖層
         // 由於空字串 '' 是 falsy 值，這個判斷式會自動過濾掉 url 為 '' 的情況。
@@ -276,10 +276,10 @@
         // 動態設定地圖容器背景色
         const mapContainerElement = mapContainer.value;
         if (mapContainerElement) {
-          if (defineStore.selectedBasemap === 'blank') {
+          if (mapStore.selectedBasemap === 'blank') {
             // 空白地圖時設為白色背景
             mapContainerElement.style.backgroundColor = 'var(--my-color-white)';
-          } else if (defineStore.selectedBasemap === 'black') {
+          } else if (mapStore.selectedBasemap === 'black') {
             // 全黑底圖時設為黑色背景
             mapContainerElement.style.backgroundColor = 'var(--my-color-gray-800)';
           } else {
@@ -1030,8 +1030,8 @@
         if (mapInstance && previousViewState) {
           console.log('🎯 恢復之前的視圖狀態:', previousViewState);
           mapInstance.setView(previousViewState.center, previousViewState.zoom);
-          // 同時更新 defineStore 中的值，保持一致性
-          defineStore.setMapView(previousViewState.center, previousViewState.zoom);
+          // 同時更新 mapStore 中的值，保持一致性
+          mapStore.setMapView(previousViewState.center, previousViewState.zoom);
           previousViewState = null; // 清除保存的狀態
         }
       };
@@ -1254,8 +1254,8 @@
         // 回到預設的地圖中心和縮放等級
         mapInstance.setView(defaultCenter, defaultZoom);
 
-        // 同時更新 defineStore 中的值，保持一致性
-        defineStore.setMapView(defaultCenter, defaultZoom);
+        // 同時更新 mapStore 中的值，保持一致性
+        mapStore.setMapView(defaultCenter, defaultZoom);
       };
 
       // 🎯 高亮顯示特定要素函數 (Highlight Specific Feature Function)
@@ -1800,14 +1800,14 @@
 
       // 🔄 切換底圖函數 (Change Basemap Function)
       const changeBasemap = (basemapType) => {
-        defineStore.setSelectedBasemap(basemapType); // 使用 store action 更新底圖狀態
+        mapStore.setSelectedBasemap(basemapType); // 使用 store action 更新底圖狀態
         setBasemap(); // 應用底圖變更
       };
 
       // 🏷️ 獲取底圖標籤函數 (Get Basemap Label Function)
       const getBasemapLabel = (value) => {
-        // 從 defineStore 中獲取底圖標籤
-        const basemap = defineStore.basemaps.find((b) => b.value === value);
+        // 從 mapStore 中獲取底圖標籤
+        const basemap = mapStore.basemaps.find((b) => b.value === value);
         return basemap ? basemap.label : value;
       };
 
@@ -2025,7 +2025,7 @@
 
       // 👀 監聽器：監聽底圖變化 (Watcher: Watch Basemap Changes)
       watch(
-        () => defineStore.selectedBasemap,
+        () => mapStore.selectedBasemap,
         () => {
           if (isMapReady.value) {
             setBasemap(); // 當底圖變化時重新設定
@@ -2101,7 +2101,7 @@
       return {
         mapContainer, // 地圖容器 DOM 元素引用
         mapContainerId, // 動態地圖容器 ID
-        selectedBasemap: computed(() => defineStore.selectedBasemap), // 選定的底圖類型響應式變數
+        selectedBasemap: computed(() => mapStore.selectedBasemap), // 選定的底圖類型響應式變數
         changeBasemap, // 切換底圖函數
         getBasemapLabel, // 獲取底圖標籤函數
         showAllFeatures, // 顯示全部要素函數
@@ -2112,7 +2112,7 @@
 
         // 注意：路徑規劃和路徑優化相關函數已移除
         clearAnalysisLayer, // 清除分析圖層函數
-        defineStore, // 定義存儲實例
+        mapStore, // 定義存儲實例
 
         // 地圖初始化相關
         mapInitStatus, // 地圖初始化狀態
@@ -2223,7 +2223,7 @@
             {{ getBasemapLabel(selectedBasemap) }}
           </button>
           <ul class="dropdown-menu">
-            <li v-for="basemap in defineStore.basemaps" :key="basemap.value">
+            <li v-for="basemap in mapStore.basemaps" :key="basemap.value">
               <a
                 class="dropdown-item my-content-xs-black py-1"
                 href="#"
