@@ -85,6 +85,18 @@
       });
 
       /**
+       * 🏷️ 圖層類型標籤計算屬性 (Layer Type Label Computed Property)
+       * 根據當前的篩選狀態動態顯示圖層類型（服務人員 或 服務日期）
+       */
+      const layerTypeLabel = computed(() => {
+        if (dataStore.isServiceProviderFilterActive) {
+          return '服務人員';
+        } else {
+          return '服務日期';
+        }
+      });
+
+      /**
        * 📋 是否有屬性計算屬性 (Has Properties Computed Property)
        * 檢查選中物件是否包含有效的屬性資料
        *
@@ -246,6 +258,7 @@
         selectedLayer, // 選中圖層
         selectedLayerColor, // 圖層顯示顏色（與地圖一致）
         layerName, // 圖層名稱
+        layerTypeLabel, // 圖層類型標籤（服務人員 或 服務日期）
         hasProperties, // 是否有屬性
         isAnalysisObject, // 是否為分析圖層物件
         // 注意：路徑規劃和路徑優化相關的計算屬性已移除
@@ -333,7 +346,7 @@
         ></div>
 
         <div class="p-3">
-          <DetailItem label="圖層" :value="layerName" />
+          <DetailItem :label="layerTypeLabel" :value="layerName" />
           <template v-if="hasProperties">
             <DetailItem
               v-for="(value, key) in selectedFeature.properties.propertyData"

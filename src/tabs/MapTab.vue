@@ -83,7 +83,10 @@
       // Popup Content Helpers
       // =============================================================
       // 🎯 創建共用的 popup 內容函數，顯示完整的 detail 內容
-      const createServicePointContent = (props) => {
+      const createServicePointContent = (props, index = 0) => {
+        // 處理 # 欄位顯示 - 優先使用資料中的 # 欄位
+        const itemNumber = props['#'] || (index + 1).toString();
+
         // 處理姓名和性別顯示
         const name = props.姓名 || props.name || '';
         const gender = props.性別 || props.gender || '';
@@ -134,15 +137,63 @@
           return 'N/A';
         })();
 
+        // 處理交通時間顯示
+        const trafficTime = (() => {
+          if (props.交通時間) return props.交通時間;
+          if (props.hour_traffic !== undefined && props.min_traffic !== undefined) {
+            const hours = props.hour_traffic || 0;
+            const minutes = props.min_traffic || 0;
+            if (hours > 0 || minutes > 0) {
+              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
+            }
+          }
+          return 'N/A';
+        })();
+
+        // 處理服務數量顯示
+        const serviceCount = (() => {
+          return (
+            props.service_items_count ??
+            (Array.isArray(props.service_items) ? props.service_items.length : null) ??
+            props.服務數量 ??
+            0
+          ).toString();
+        })();
+
         return `
-          <div class="my-font-size-sm">
-            <div><strong>編號:</strong> ${props.編號 || props.id || 'N/A'}</div>
-            <div><strong>姓名:</strong> <span class="${colorClass}">${nameWithGender || 'N/A'}</span></div>
-            <div><strong>服務日期:</strong> ${dataStore.selectedServiceDate || 'N/A'}</div>
-            <div><strong>戶籍地址:</strong> ${props.個案戶籍地址 || 'N/A'}</div>
-            <div><strong>居住地址:</strong> ${props.個案居住地址 || props.address || 'N/A'}</div>
-            <div><strong>服務時間:</strong> ${serviceTime}</div>
-            <div><strong>總時間:</strong> ${totalTime}</div>
+          <div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">#</div>
+              <div class="my-content-sm-black pb-1">${itemNumber}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">編號</div>
+              <div class="my-content-sm-black pb-1">${props.編號 || props.id || 'N/A'}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">姓名</div>
+              <div class="my-content-sm-black pb-1"><span class="${colorClass}">${nameWithGender || 'N/A'}</span></div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">個案居住地址</div>
+              <div class="my-content-sm-black pb-1">${props.個案居住地址 || props.address || 'N/A'}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">服務時間</div>
+              <div class="my-content-sm-black pb-1">${serviceTime}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">總時間</div>
+              <div class="my-content-sm-black pb-1">${totalTime}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">交通時間</div>
+              <div class="my-content-sm-black pb-1">${trafficTime}</div>
+            </div>
+            <div class="pb-2">
+              <div class="my-title-xs-gray pb-1">服務數量</div>
+              <div class="my-content-sm-black pb-1">${serviceCount}</div>
+            </div>
           </div>`;
       };
 
@@ -1070,7 +1121,7 @@
                       const props = feature.properties || {};
                       // 顯示 popup（完整的 detail 內容）
                       if (this.bindPopup) {
-                        const popupContent = createServicePointContent(props);
+                        const popupContent = createServicePointContent(props, 0);
                         this.bindPopup(popupContent, {
                           closeButton: false,
                           autoClose: false,
@@ -1490,7 +1541,7 @@
             saveCurrentViewState();
             mapInstance.setView([lat, lon], 16);
 
-            // 尋找並高亮地圖上對應的服務點
+            // 尋找現有的服務點標記並為其添加 popup
             let foundAndHighlighted = false;
             const targetLayerGroup = layerGroups[highlightData.layerId];
 
@@ -1498,6 +1549,8 @@
               console.log('🎯 MapTab: 在圖層中尋找對應的服務點');
 
               targetLayerGroup.eachLayer((layer) => {
+                if (foundAndHighlighted) return; // 找到第一個就停止
+
                 const feature = layer.feature;
                 if (feature && feature.properties && feature.geometry) {
                   // 使用緯度和經度來匹配對應的服務點
@@ -1506,22 +1559,14 @@
 
                   // 檢查座標是否匹配（允許小數點差異）
                   if (Math.abs(featureLat - lat) < 0.0001 && Math.abs(featureLon - lon) < 0.0001) {
-                    console.log('✅ 找到匹配的服務點，開始高亮');
+                    console.log('✅ 找到匹配的服務點，添加 popup');
 
-                    // 保存原始樣式
-                    if (!layer._originalStyle) {
-                      layer._originalStyle = {
-                        weight: layer.options?.weight,
-                        color: layer.options?.color,
-                        fillOpacity: layer.options?.fillOpacity,
-                      };
-                    }
-
-                    // 完全移除高亮顯示
-
-                    // 顯示 popup（完整的 detail 內容）
-                    const props = feature.properties || {};
-                    const popupContent = createServicePointContent(props);
+                    // 只添加 popup，不修改樣式
+                    const props = highlightData.item || {};
+                    const popupContent = createServicePointContent(
+                      props,
+                      highlightData.rowIndex || 0
+                    );
 
                     if (layer.bindPopup) {
                       layer.bindPopup(popupContent, {
@@ -1534,37 +1579,33 @@
                       layer.openPopup && layer.openPopup();
                     }
 
-                    // 將圖層置於最前方
-                    if (layer.bringToFront) {
-                      layer.bringToFront();
-                    }
-
                     foundAndHighlighted = true;
-                    console.log('✅ 服務點高亮完成');
-                    return false; // 找到後停止搜尋
+                    console.log('✅ popup 添加完成');
                   }
                 }
               });
             }
 
-            // 如果沒有找到現有服務點，創建臨時標記來顯示位置
+            // 如果沒有找到現有服務點，創建臨時 popup
             if (!foundAndHighlighted) {
-              console.log('⚠️ 沒有找到現有服務點，創建臨時高亮標記');
-              const item = highlightData.item;
+              console.log('⚠️ 沒有找到現有服務點，創建臨時 popup');
 
-              const highlightMarker = L.marker([lat, lon], {
+              // 創建一個不可見的臨時標記來承載 popup
+              const item = highlightData.item;
+              const tempMarker = L.marker([lat, lon], {
+                opacity: 0, // 完全透明，不影響地圖顯示
                 icon: L.divIcon({
-                  className: 'highlight-service-point-marker',
-                  html: `<div style="background-color: #ff6b6b; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid #ffffff; font-size: 12px;">${item.routeOrder || item.順序 || '★'}</div>`,
-                  iconSize: [30, 30],
-                  iconAnchor: [15, 15],
+                  className: 'temp-popup-marker',
+                  html: '',
+                  iconSize: [1, 1],
+                  iconAnchor: [0, 0],
                 }),
               }).addTo(mapInstance);
 
-              // 添加彈出視窗（使用 createServicePointContent 保持一致性）
+              // 添加彈出視窗
               const props = item;
-              const popupContent = createServicePointContent(props);
-              highlightMarker
+              const popupContent = createServicePointContent(props, highlightData.rowIndex || 0);
+              tempMarker
                 .bindPopup(popupContent, {
                   closeButton: false,
                   autoClose: false,
@@ -1575,11 +1616,23 @@
                 .openPopup();
             }
 
+            // 移除重複的 popup 創建邏輯
+
             // 自動復原：若這只是高亮而非選取，短時間後恢復
             setTimeout(() => {
               if (!dataStore.selectedFeature) {
-                resetAllLayerStyles();
                 restorePreviousViewState();
+                // 移除臨時標記（不可見的 popup 承載標記）
+                mapInstance.eachLayer((layer) => {
+                  if (
+                    layer.options &&
+                    layer.options.icon &&
+                    (layer.options.icon.options.className === 'temp-popup-marker' ||
+                      layer.options.icon.options.className === 'highlight-service-point-marker')
+                  ) {
+                    mapInstance.removeLayer(layer);
+                  }
+                });
               }
             }, 1500);
           } else {
@@ -1738,7 +1791,7 @@
                 if (hasDetail && targetLayer.getLatLng) {
                   const props = f.properties;
                   // 顯示 popup（完整的 detail 內容）
-                  const popupContent = createServicePointContent(props);
+                  const popupContent = createServicePointContent(props, 0);
                   targetLayer.bindPopup(popupContent, {
                     closeButton: false,
                     autoClose: false,
