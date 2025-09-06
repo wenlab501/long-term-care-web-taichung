@@ -513,9 +513,6 @@
                       <thead class="sticky-top my-table-thead">
                         <tr class="text-center text-nowrap">
                           <th class="p-1">
-                            <span class="my-title-xs-gray text-nowrap">row_id</span>
-                          </th>
-                          <th class="p-1">
                             <span class="my-title-xs-gray text-nowrap">服務項目代碼</span>
                           </th>
                           <th class="p-1">
@@ -527,6 +524,9 @@
                           <th class="p-1">
                             <span class="my-title-xs-gray text-nowrap">總時間</span>
                           </th>
+                          <!-- <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">row_id</span>
+                          </th> -->
                         </tr>
                       </thead>
                       <tbody>
@@ -535,14 +535,6 @@
                           :key="item.row_id || index"
                           class="text-center text-nowrap border-bottom"
                         >
-                          <td
-                            class="border-0 text-nowrap text-truncate p-0"
-                            style="max-width: 80px"
-                          >
-                            <div class="my-content-xs-black px-3 py-2">
-                              {{ item.row_id || 'N/A' }}
-                            </div>
-                          </td>
                           <td
                             class="border-0 text-nowrap text-truncate p-0"
                             style="max-width: 80px"
@@ -577,6 +569,14 @@
                               {{ `${item.hour_total || 0}h${item.min_total || 0}m` }}
                             </div>
                           </td>
+                          <!-- <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{ item.row_id || 'N/A' }}
+                            </div>
+                          </td> -->
                         </tr>
                       </tbody>
                     </table>
