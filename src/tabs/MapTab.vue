@@ -83,7 +83,7 @@
             <div>居住里別: ${props['里別.1'] || ''}</div>
             <div>居住地址: ${props.個案居住地址 || props.address || ''}</div>
             <div>服務時間: ${props.hour_start || ''}:${props.min_start?.toString().padStart(2, '0') || '00'} - ${props.hour_end || ''}:${props.min_end?.toString().padStart(2, '0') || '00'}</div>
-            <div>總時間: ${props.time_total || ''} 分鐘</div>
+            <div>總時間: ${props.time_total || ''}m</div>
           </div>`;
       };
 
@@ -641,9 +641,9 @@
                   <div class="">
                     <div class="my-title-xs-gray pb-2">${layerName}</div>
                     <div class="my-content-sm-black">${feature.properties.name}</div>
-                    <div class="my-content-xs-gray pt-1">總距離: ${feature.properties.distance} 公里</div>
-                    <div class="my-content-xs-gray">預估時間: ${feature.properties.duration} 分鐘</div>
-                    <div class="my-content-xs-gray">路徑點數: ${feature.properties.waypoints} 個</div>
+                    <div class="my-content-xs-gray pt-1">總距離: ${feature.properties.distance} km</div>
+                    <div class="my-content-xs-gray">預估時間: ${feature.properties.duration} m</div>
+                    <div class="my-content-xs-gray">路徑點數: ${feature.properties.waypoints}</div>
                   </div>
                 `,
                   {
