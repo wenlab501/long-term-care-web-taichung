@@ -265,6 +265,18 @@ export const useDataStore = defineStore(
     const isServiceProviderFilterActive = ref(false); // 服務人員篩選是否啟用
     const availableServiceProviders = ref([]); // 可用的服務人員清單
 
+    // 📑 左側面板分頁狀態 (Left Panel Tab State)
+    const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
+
+    /**
+     * 🔄 設置左側面板活躍分頁 (Set Active Left Tab)
+     * @param {string} tabName - 分頁名稱 ('date' 或 'server')
+     */
+    const setActiveLeftTab = (tabName) => {
+      activeLeftTab.value = tabName;
+      console.log('📑 設置左側面板分頁:', tabName);
+    };
+
     const setSelectedFeature = (feature) => {
       selectedFeature.value = feature;
     };
@@ -928,6 +940,10 @@ export const useDataStore = defineStore(
       loadServiceProviderDateLayers,
       clearServiceProviderDateLayers,
       hideAllLayersOnMap,
+
+      // 📑 左側面板分頁相關
+      activeLeftTab,
+      setActiveLeftTab,
 
       calculatePointsInRange, // 計算範圍內的點
       calculatePolygonInRange, // 計算範圍內的多邊形

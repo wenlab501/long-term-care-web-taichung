@@ -217,8 +217,8 @@
     background-color: var(--my-color-red) !important; /* 使用紅色作為高亮 */
     color: white !important;
     font-weight: bold !important;
-    border: 2px solid var(--my-color-red-hover) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    /* border: 2px solid var(--my-color-red-hover) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important; */
   }
 
   .calendar-container {

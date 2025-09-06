@@ -9,7 +9,8 @@
    * Notes:
    * - Updated to support tab system similar to UpperView.vue
    */
-  import { ref } from 'vue';
+  import { computed } from 'vue';
+  import { useDataStore } from '../stores/dataStore.js';
   import DateLayersTab from '../tabs/DateLayersTab.vue';
   import ServerLayersTab from '../tabs/ServerLayersTab.vue';
 
@@ -47,9 +48,12 @@
      * 使用 Composition API 設定組件邏輯
      */
     setup(props, { emit }) {
+      // 📦 取得 Pinia 數據存儲實例
+      const dataStore = useDataStore();
+
       // 📑 分頁狀態管理 (Tab State Management)
-      /** 🗂️ 左側分頁狀態 (預設為日期圖層分頁) */
-      const activeLeftTab = ref('date');
+      /** 🗂️ 左側分頁狀態 (從 dataStore 獲取，使用 computed 確保響應式) */
+      const activeLeftTab = computed(() => dataStore.activeLeftTab);
 
       /**
        * 📋 清除服務點詳細資訊
@@ -63,15 +67,10 @@
        * @param {string} tabName - 分頁名稱 ('date' 或 'server')
        */
       const switchLeftTab = (tabName) => {
-        activeLeftTab.value = tabName;
-        // 切換左側分頁時清空地圖顯示
-        try {
-          const { useDataStore } = require('../stores/dataStore.js');
-          const store = useDataStore();
-          store.hideAllLayersOnMap();
-        } catch (e) {
-          // no-op
-        }
+        dataStore.setActiveLeftTab(tabName);
+        // 切換左側分頁時清空地圖顯示和選中物件
+        dataStore.hideAllLayersOnMap();
+        dataStore.setSelectedFeature(null);
       };
 
       // 📤 返回響應式數據給模板使用

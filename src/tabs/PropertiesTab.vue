@@ -85,15 +85,112 @@
       });
 
       /**
-       * 🏷️ 圖層類型標籤計算屬性 (Layer Type Label Computed Property)
-       * 根據當前的篩選狀態動態顯示圖層類型（服務人員 或 服務日期）
+       * 🏷️ 服務人員標籤計算屬性 (Service Provider Label Computed Property)
+       * 獲取當前選中的服務人員信息
        */
-      const layerTypeLabel = computed(() => {
-        if (dataStore.isServiceProviderFilterActive) {
-          return '服務人員';
-        } else {
-          return '服務日期';
+      const serviceProviderLabel = computed(() => {
+        // 優先從 bottom panel 選中的物件獲取服務人員信息
+        if (selectedFeature.value?.properties) {
+          const props = selectedFeature.value.properties;
+
+          // 從選中物件的屬性中獲取服務人員身分證
+          if (props.serviceProviderId) {
+            return props.serviceProviderId;
+          }
+
+          if (props.服務人員身分證) {
+            return props.服務人員身分證;
+          }
+
+          // 如果是 detail 物件，從 detail 中獲取
+          if (props.detail?.服務人員身分證) {
+            return props.detail.服務人員身分證;
+          }
         }
+
+        // 回退到 left panel 的選擇
+        if (dataStore.selectedServiceProvider) {
+          return dataStore.selectedServiceProvider;
+        }
+
+        // 如果是在日期篩選模式下（服務日期 tab 活躍），顯示 "所有服務人員"
+        if (dataStore.isDateFilterActive && !dataStore.isServiceProviderFilterActive) {
+          return '所有服務人員';
+        }
+
+        // 其他情況顯示未選擇
+        return '未選擇';
+      });
+
+      /**
+       * 🏷️ 服務日期標籤計算屬性 (Service Date Label Computed Property)
+       * 獲取當前選中的服務日期信息
+       */
+      const serviceDateLabel = computed(() => {
+        // 優先從 bottom panel 選中的物件獲取服務日期信息
+        if (selectedFeature.value?.properties) {
+          const props = selectedFeature.value.properties;
+
+          // 從選中物件的屬性中獲取服務日期
+          if (props.serviceDate) {
+            return props.serviceDate;
+          }
+
+          if (props['服務日期(請輸入7碼)']) {
+            return props['服務日期(請輸入7碼)'];
+          }
+
+          // 如果是 detail 物件，從 detail 中獲取
+          if (props.detail?.['服務日期(請輸入7碼)']) {
+            return props.detail['服務日期(請輸入7碼)'];
+          }
+
+          // 也檢查其他可能的服務日期欄位
+          if (props.服務日期) {
+            return props.服務日期;
+          }
+
+          if (props.detail?.服務日期) {
+            return props.detail.服務日期;
+          }
+        }
+
+        // 回退到 left panel 的選擇
+        if (dataStore.selectedServiceDate) {
+          return dataStore.selectedServiceDate;
+        }
+
+        // 如果在服務人員模式下但沒有選擇日期
+        if (dataStore.isServiceProviderFilterActive) {
+          return '所有日期';
+        }
+
+        return '未選擇';
+      });
+
+      /**
+       * 📑 根據左側面板活躍分頁決定標籤順序 (Label Order Based on Active Left Tab)
+       * 當左側面板是 'date' 時，先顯示服務日期，再顯示服務人員
+       * 當左側面板是 'server' 時，先顯示服務人員，再顯示服務日期
+       */
+      const firstLabel = computed(() => {
+        return dataStore.activeLeftTab === 'date' ? '服務日期' : '服務人員';
+      });
+
+      const secondLabel = computed(() => {
+        return dataStore.activeLeftTab === 'date' ? '服務人員' : '服務日期';
+      });
+
+      const firstValue = computed(() => {
+        return dataStore.activeLeftTab === 'date'
+          ? serviceDateLabel.value
+          : serviceProviderLabel.value;
+      });
+
+      const secondValue = computed(() => {
+        return dataStore.activeLeftTab === 'date'
+          ? serviceProviderLabel.value
+          : serviceDateLabel.value;
       });
 
       /**
@@ -147,16 +244,6 @@
 
         const result =
           type === 'service-items' && Array.isArray(serviceItems) && serviceItemsLength > 0;
-
-        console.log('📋 PropertiesTab isServiceItemsObject 詳細檢查:', {
-          selectedFeature: selectedFeature.value,
-          selectedFeatureProps: selectedFeatureProps,
-          type: type,
-          serviceItems: serviceItems,
-          serviceItemsLength: serviceItemsLength,
-          isArray: Array.isArray(serviceItems),
-          result: result,
-        });
 
         return result;
       });
@@ -258,7 +345,12 @@
         selectedLayer, // 選中圖層
         selectedLayerColor, // 圖層顯示顏色（與地圖一致）
         layerName, // 圖層名稱
-        layerTypeLabel, // 圖層類型標籤（服務人員 或 服務日期）
+        serviceProviderLabel, // 服務人員標籤
+        serviceDateLabel, // 服務日期標籤
+        firstLabel, // 第一個標籤（根據左側面板分頁決定）
+        secondLabel, // 第二個標籤（根據左側面板分頁決定）
+        firstValue, // 第一個值（根據左側面板分頁決定）
+        secondValue, // 第二個值（根據左側面板分頁決定）
         hasProperties, // 是否有屬性
         isAnalysisObject, // 是否為分析圖層物件
         // 注意：路徑規劃和路徑優化相關的計算屬性已移除
@@ -335,6 +427,7 @@
 
 <template>
   <div class="h-100 flex-grow-1 d-flex flex-column my-bgcolor-gray-200">
+    <!-- 當有選中物件時顯示詳細資訊 -->
     <div v-if="selectedFeature" class="my-bgcolor-white h-100">
       <div>
         <div
@@ -346,7 +439,8 @@
         ></div>
 
         <div class="p-3">
-          <DetailItem :label="layerTypeLabel" :value="layerName" />
+          <DetailItem :label="firstLabel" :value="firstValue" />
+          <DetailItem :label="secondLabel" :value="secondValue" />
           <template v-if="hasProperties">
             <DetailItem
               v-for="(value, key) in selectedFeature.properties.propertyData"
