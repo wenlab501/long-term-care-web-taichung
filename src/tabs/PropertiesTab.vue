@@ -1,4 +1,14 @@
 <script>
+  /**
+   * PropertiesTab.vue
+   *
+   * Purpose:
+   * - Displays details for the currently selected feature (layer meta, detail list, service info).
+   * - Shows analysis-in-range summaries when selecting analysis features.
+   *
+   * Notes:
+   * - Non-functional refactor: documentation added only; logic and UI remain unchanged.
+   */
   import DetailItem from '../components/DetailItem.vue';
   import { useDataStore } from '../stores/dataStore';
   import { computed, ref } from 'vue';

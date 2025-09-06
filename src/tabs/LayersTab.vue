@@ -1,4 +1,14 @@
 <script>
+  /**
+   * LayersTab.vue
+   *
+   * Purpose:
+   * - Lists layer groups and layers with visibility toggles.
+   * - Hosts the service-date picker to load day-specific provider layers.
+   *
+   * Notes:
+   * - Refactor only adds comments and headers; behavior and UI unchanged.
+   */
   import { computed, ref, onMounted } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIcon } from '../utils/utils.js';

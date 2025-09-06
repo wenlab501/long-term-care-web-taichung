@@ -1,4 +1,13 @@
 <script>
+  /**
+   * LeftView.vue
+   *
+   * Purpose:
+   * - Hosts the left panel including the layer list and optional service point detail.
+   *
+   * Notes:
+   * - Documentation only; behavior and UI are unchanged.
+   */
   import LayersTab from '../tabs/LayersTab.vue';
 
   export default {
