@@ -40,9 +40,11 @@
    */
   const getLayerColumns = (layer) => {
     // 檢查是否為服務人員圖層（新基準中央服務紀錄）
-    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
+    const isServiceLayer =
+      layer.layerId &&
+      (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
-    if (isServiceProviderLayer) {
+    if (isServiceLayer) {
       // 服務人員圖層只顯示指定的欄位
       return [
         '#',
@@ -166,7 +168,12 @@
    */
   const getLayerColor = (layer) => {
     // 如果是服務人員圖層，從 GeoJSON features 中獲取實際使用的顏色
-    if (layer.layerId && layer.layerId.startsWith('service-provider-') && layer.geoJsonData) {
+    if (
+      layer.layerId &&
+      (layer.layerId.startsWith('service-provider-') ||
+        layer.layerId.startsWith('service-date-')) &&
+      layer.geoJsonData
+    ) {
       const features = layer.geoJsonData.features || [];
       if (features.length > 0) {
         // 優先使用 fillColor，如果沒有則使用 routeColor
@@ -190,17 +197,21 @@
    * @param {Object} item - 資料項目
    * @param {string} column - 欄位名稱
    * @param {Object} layer - 圖層物件
+   * @param {number} index - 項目在列表中的索引
    * @returns {string} 顯示值
    */
-  const getColumnDisplayValue = (item, column, layer) => {
+  const getColumnDisplayValue = (item, column, layer, index = 0) => {
     // 檢查是否為服務人員圖層
-    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
+    const isServiceLayer =
+      layer.layerId &&
+      (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
-    if (isServiceProviderLayer) {
+    if (isServiceLayer) {
       // 服務人員圖層的欄位映射
       switch (column) {
         case '#':
-          return item['#'] || 'N/A';
+          // # 欄位應該顯示序號，如果沒有則根據索引生成（從1開始）
+          return item['#'] || (index + 1).toString();
         case '編號':
           return item.編號 || 'N/A';
         case '姓名':
@@ -296,9 +307,11 @@
     }
 
     // 檢查是否為服務人員圖層
-    const isServiceProviderLayer = layer.layerId && layer.layerId.startsWith('service-provider-');
+    const isServiceLayer =
+      layer.layerId &&
+      (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
-    if (isServiceProviderLayer) {
+    if (isServiceLayer) {
       console.log('🎯 DataTableTab: 處理服務人員圖層點擊:', item);
 
       // 先清除之前的選取
@@ -497,20 +510,22 @@
                           }"
                         ></div>
                         <div class="my-content-xs-black w-100 px-3 py-2">
-                          {{ getColumnDisplayValue(item, column, layer) }}
+                          {{ getColumnDisplayValue(item, column, layer, rowIndex) }}
                         </div>
                       </div>
                       <div v-else class="my-content-xs-black px-3 py-2">
                         <template
                           v-if="
                             column === '交通時間' &&
-                            layer.layerId &&
-                            layer.layerId.startsWith('service-provider-') &&
+                            (layer.layerId.startsWith('service-provider-') ||
+                              layer.layerId.startsWith('service-date-')) &&
                             rowIndex === 0
                           "
                           >-</template
                         >
-                        <template v-else>{{ getColumnDisplayValue(item, column, layer) }}</template>
+                        <template v-else>{{
+                          getColumnDisplayValue(item, column, layer, rowIndex)
+                        }}</template>
                       </div>
                     </td>
                   </template>

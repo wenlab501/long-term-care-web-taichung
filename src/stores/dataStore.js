@@ -99,10 +99,16 @@ export const useDataStore = defineStore(
      */
     const DEFAULT_LAYER_GROUPS = Object.freeze([
       {
-        groupName: '新基準中央服務紀錄',
-        groupLayers: [], // 動態添加服務人員圖層
-        description: '長期照護服務人員的服務記錄資料',
-        icon: 'fas fa-hands-helping',
+        groupName: '依日期圖層',
+        groupLayers: [], // 依日期載入的圖層
+        description: '依日期顯示的長照服務記錄',
+        icon: 'fas fa-calendar-day',
+      },
+      {
+        groupName: '依服務員圖層',
+        groupLayers: [], // 依服務員載入的圖層
+        description: '依服務員顯示其所有服務日期',
+        icon: 'fas fa-user-nurse',
       },
     ]);
 
@@ -189,6 +195,18 @@ export const useDataStore = defineStore(
     };
 
     /**
+     * 🗺️ 將所有圖層設為不可見（清空地圖顯示）
+     */
+    const hideAllLayersOnMap = () => {
+      getAllLayers().forEach((layer) => {
+        if (layer.visible) {
+          layer.visible = false;
+        }
+      });
+      console.log('🗺️ 已將所有圖層設為不可見（清空地圖顯示）');
+    };
+
+    /**
      * 控制整個群組圖層的顯示/隱藏 (Toggle Group Visibility)
      * @param {string} groupName
      */
@@ -242,6 +260,11 @@ export const useDataStore = defineStore(
     const selectedServiceDate = ref('1140701'); // 預設為 2025年7月1日
     const isDateFilterActive = ref(true); // 預設啟用日期篩選
 
+    // 👤 服務員篩選狀態 (Service Provider Filter State)
+    const selectedServiceProvider = ref(''); // 選中的服務員身分證
+    const isServiceProviderFilterActive = ref(false); // 服務員篩選是否啟用
+    const availableServiceProviders = ref([]); // 可用的服務員清單
+
     const setSelectedFeature = (feature) => {
       selectedFeature.value = feature;
     };
@@ -290,8 +313,8 @@ export const useDataStore = defineStore(
           null // 不再需要顏色映射
         );
 
-        // 找到服務記錄群組
-        const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
+        // 找到服務記錄群組（日期）
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '依日期圖層');
         if (serviceRecordGroup) {
           // 清除現有的服務人員圖層
           serviceRecordGroup.groupLayers = [];
@@ -397,12 +420,312 @@ export const useDataStore = defineStore(
      * 📅 清除服務人員圖層 (Clear Service Provider Layers)
      */
     const clearServiceProviderLayers = () => {
-      const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
+      // 清除日期群組
+      const serviceRecordGroup = layers.value.find((g) => g.groupName === '依日期圖層');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
         // 清除服務人員圖層（每天重新載入和分配顏色）
         console.log('📅 已清除所有服務人員圖層');
       }
+    };
+
+    // =============================================================
+    // 👤 服務員篩選相關方法 (Service Provider Filter Methods)
+    // =============================================================
+
+    /**
+     * 👤 載入所有可用的服務員清單
+     */
+    const loadAvailableServiceProviders = async () => {
+      try {
+        const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
+        const response = await fetch(filePath);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        // 提取所有唯一的服務員身分證
+        const uniqueProviderIds = [...new Set(jsonData.map((record) => record.服務人員身分證))];
+
+        // 為每個服務員統計服務日期數量
+        const providersWithStats = uniqueProviderIds.map((providerId) => {
+          const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
+          const uniqueDates = [
+            ...new Set(providerRecords.map((record) => record['服務日期(請輸入7碼)'])),
+          ];
+
+          return {
+            id: providerId,
+            name: `服務員 ${providerId}`,
+            dateCount: uniqueDates.length,
+            totalRecords: providerRecords.length,
+          };
+        });
+
+        // 按服務日期數量排序（多的在前）
+        providersWithStats.sort((a, b) => b.dateCount - a.dateCount);
+
+        availableServiceProviders.value = providersWithStats;
+        console.log('👤 載入服務員清單，共', providersWithStats.length, '位服務員');
+
+        return providersWithStats;
+      } catch (error) {
+        console.error('👤 載入服務員清單失敗:', error);
+        return [];
+      }
+    };
+
+    /**
+     * 👤 設定服務員篩選
+     * @param {string} providerId - 服務員身分證
+     */
+    const setServiceProviderFilter = (providerId) => {
+      selectedServiceProvider.value = providerId;
+      isServiceProviderFilterActive.value = !!providerId;
+      console.log('👤 設定服務員篩選:', providerId);
+    };
+
+    /**
+     * 👤 清除服務員篩選
+     */
+    const clearServiceProviderFilter = () => {
+      selectedServiceProvider.value = '';
+      isServiceProviderFilterActive.value = false;
+      console.log('👤 清除服務員篩選');
+    };
+
+    /**
+     * 👤 載入指定服務員的所有日期圖層
+     */
+    const loadServiceProviderDateLayers = async (providerId) => {
+      try {
+        console.log('👤 dataStore 接收到的服務員ID:', providerId);
+
+        const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
+        const response = await fetch(filePath);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        // 篩選出該服務員的所有記錄
+        const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
+
+        // 按日期分組
+        const dateGroups = {};
+        providerRecords.forEach((record) => {
+          const date = record['服務日期(請輸入7碼)'];
+          if (!dateGroups[date]) {
+            dateGroups[date] = [];
+          }
+          dateGroups[date].push(record);
+        });
+
+        // 找到服務記錄群組（服務員）
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '依服務員圖層');
+        if (serviceRecordGroup) {
+          // 清除現有的圖層
+          serviceRecordGroup.groupLayers = [];
+
+          // 為每個日期創建圖層
+          const sortedDates = Object.keys(dateGroups).sort();
+
+          sortedDates.forEach((date, index) => {
+            const colorIndex = index % COLOR_PALETTE.length;
+            const assignedColor = COLOR_PALETTE[colorIndex];
+
+            // 處理該日期的資料
+            const dateData = dateGroups[date];
+            const processedData = processServiceProviderData(dateData, assignedColor);
+
+            if (processedData && processedData.features.length > 0) {
+              const layerId = `service-date-${date}`;
+              // 從 GeoJSON features 中提取 tableData（與 DateLayersTab 一致）
+              const tableData = processedData.features
+                .filter((feature) => feature.geometry.type === 'Point')
+                .map((feature) => ({
+                  id: feature.properties.id,
+                  姓名: feature.properties.姓名,
+                  個案居住地址: feature.properties.個案居住地址,
+                  起始時間: feature.properties.起始時間,
+                  編號: feature.properties.編號,
+                  性別: feature.properties.性別,
+                  detail: feature.properties.detail,
+                  hour_start: feature.properties.hour_start,
+                  min_start: feature.properties.min_start,
+                  hour_end: feature.properties.hour_end,
+                  min_end: feature.properties.min_end,
+                  hour_traffic: feature.properties.hour_traffic,
+                  min_traffic: feature.properties.min_traffic,
+                  service_items: feature.properties.service_items,
+                  serviceProviderId: feature.properties.serviceProviderId,
+                  serviceDate: feature.properties.serviceDate,
+                  routeOrder: feature.properties.routeOrder,
+                  lat: feature.geometry.coordinates[1],
+                  lon: feature.geometry.coordinates[0],
+                }));
+
+              // 計算該日期的 service_points_count 總數（與 DateLayersTab 一致）
+              const servicePointsCount = dateData.reduce((total, record) => {
+                return total + (record.service_points_count || 0);
+              }, 0);
+
+              const layerObj = {
+                layerId: layerId,
+                layerName: `${date}`,
+                visible: false, // 預設為關閉狀態
+                isLoaded: true,
+                isLoading: false,
+                colorName: assignedColor,
+                // 與 DateLayersTab 對齊，讓地圖同步機制識別為點圖層
+                type: 'point',
+                geoJsonData: processedData,
+                tableData: tableData, // 使用提取的 tableData
+                summaryData: {
+                  totalCount:
+                    servicePointsCount ||
+                    processedData.features.filter((f) => f.geometry.type === 'Point').length, // 優先使用 service_points_count
+                  pointCount: processedData.features.filter((f) => f.geometry.type === 'Point')
+                    .length,
+                  lineCount: processedData.features.filter((f) => f.geometry.type === 'LineString')
+                    .length,
+                },
+                // 添加服務員相關屬性，讓 DataTableTab 能正確處理點擊事件
+                serviceProviderId: providerId,
+                serviceDate: date,
+              };
+
+              serviceRecordGroup.groupLayers.push(layerObj);
+            }
+          });
+
+          console.log('👤 載入完成，共', sortedDates.length, '個日期的圖層');
+        }
+      } catch (error) {
+        console.error('👤 載入服務員日期圖層失敗:', error);
+      }
+    };
+
+    /**
+     * 👤 清除服務員群組的圖層
+     */
+    const clearServiceProviderDateLayers = () => {
+      const providerGroup = layers.value.find((g) => g.groupName === '依服務員圖層');
+      if (providerGroup) {
+        providerGroup.groupLayers = [];
+        console.log('👤 已清除服務員群組的所有圖層');
+      }
+    };
+
+    /**
+     * 👤 處理服務員單日資料
+     */
+    const processServiceProviderData = (dayRecords, colorName) => {
+      const features = [];
+
+      dayRecords.forEach((serviceProvider, providerIndex) => {
+        // 處理 service_points_routes 路線（與 DateLayersTab 完全一致）
+        if (
+          serviceProvider.service_points_routes &&
+          Array.isArray(serviceProvider.service_points_routes)
+        ) {
+          serviceProvider.service_points_routes.forEach((routeCollection) => {
+            if (routeCollection.features && Array.isArray(routeCollection.features)) {
+              routeCollection.features.forEach((routeFeature) => {
+                if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
+                  features.push({
+                    type: 'Feature',
+                    geometry: routeFeature.geometry,
+                    properties: {
+                      id: `route_${serviceProvider.服務人員身分證}_${providerIndex}`,
+                      layerName: '服務路線_路線', // 添加 layerName 屬性，讓 MapTab 識別為路線
+                      name: `服務路線_${serviceProvider.服務人員身分證}`,
+                      strokeColor: colorName, // 使用顏色名稱，方便統一處理
+                      routeColor: colorName, // 添加routeColor屬性，使用統一的顏色
+                      strokeWidth: 3,
+                      strokeOpacity: 0.8,
+                      serviceProviderId: serviceProvider.服務人員身分證,
+                      serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                      pointCount: routeFeature.geometry.coordinates.length,
+                      distance: routeFeature.properties?.summary?.distance || 0,
+                      duration: routeFeature.properties?.summary?.duration || 0,
+                      segments: routeFeature.properties?.segments?.length || 0,
+                      ...routeFeature.properties,
+                    },
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        // 處理舊版 route 資料（向後相容）
+        if (serviceProvider.route && serviceProvider.route.length > 1) {
+          const coordinates = serviceProvider.route.map((point) => [point.lon, point.lat]);
+          features.push({
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: coordinates,
+            },
+            properties: {
+              id: `route_${serviceProvider.服務人員身分證}_${providerIndex}`,
+              layerName: '服務路線_路線', // 添加 layerName 屬性，讓 MapTab 識別為路線
+              routeColor: colorName,
+              serviceProviderId: serviceProvider.服務人員身分證,
+              serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+            },
+          });
+        }
+
+        // 處理服務點（保持與 DateLayersTab 一致的屬性）
+        serviceProvider.service_points.forEach((serviceRecord, index) => {
+          if (serviceRecord.detail && serviceRecord.detail.Lat && serviceRecord.detail.Lon) {
+            const lat = parseFloat(serviceRecord.detail.Lat);
+            const lon = parseFloat(serviceRecord.detail.Lon);
+
+            if (!isNaN(lat) && !isNaN(lon)) {
+              features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [lon, lat],
+                },
+                properties: {
+                  id: `point_${serviceProvider.服務人員身分證}_${index}`,
+                  fillColor: colorName,
+                  routeOrder: index + 1,
+                  serviceProviderId: serviceProvider.服務人員身分證,
+                  serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                  姓名: serviceRecord.detail.姓名,
+                  個案居住地址: serviceRecord.detail.個案居住地址,
+                  起始時間: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
+                  編號: serviceRecord.detail.編號,
+                  性別: serviceRecord.detail.性別,
+                  detail: serviceRecord.detail,
+                  hour_start: serviceRecord.hour_start,
+                  min_start: serviceRecord.min_start,
+                  hour_end: serviceRecord.hour_end,
+                  min_end: serviceRecord.min_end,
+                  hour_traffic: serviceRecord.hour_traffic || 0,
+                  min_traffic: serviceRecord.min_traffic || 0,
+                  service_items: serviceRecord.service_items || [],
+                },
+              });
+            }
+          }
+        });
+      });
+
+      return {
+        type: 'FeatureCollection',
+        features: features,
+      };
     };
 
     /**
@@ -589,6 +912,17 @@ export const useDataStore = defineStore(
       matchesDateFilter,
       loadServiceProviderLayers, // 載入服務人員圖層
       clearServiceProviderLayers, // 清除服務人員圖層
+
+      // 👤 服務員篩選相關
+      selectedServiceProvider,
+      isServiceProviderFilterActive,
+      availableServiceProviders,
+      loadAvailableServiceProviders,
+      setServiceProviderFilter,
+      clearServiceProviderFilter,
+      loadServiceProviderDateLayers,
+      clearServiceProviderDateLayers,
+      hideAllLayersOnMap,
 
       calculatePointsInRange, // 計算範圍內的點
       calculatePolygonInRange, // 計算範圍內的多邊形
