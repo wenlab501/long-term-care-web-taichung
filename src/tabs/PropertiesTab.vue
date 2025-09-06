@@ -242,6 +242,7 @@
         polygonStats, // 多邊形圖層統計
         combinedStats, // 整合統計
         formatDateTime, // 日期時間格式化函數
+        selectedServiceDate: computed(() => dataStore.selectedServiceDate), // 當前選中的服務日期
       };
     },
 
@@ -364,7 +365,7 @@
               label="服務人員身分證"
               :value="selectedFeature.properties.serviceProviderId"
             />
-            <DetailItem label="服務日期" :value="selectedFeature.properties.layerName" />
+            <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
             <DetailItem
               label="服務點位數"
               :value="`${selectedFeature.properties.allServicePoints.length} 個`"
@@ -414,6 +415,7 @@
                 </div>
                 <DetailItem label="編號" :value="selectedServicePoint.編號" />
                 <DetailItem label="姓名" :value="selectedServicePoint.姓名" />
+                <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
                 <DetailItem label="性別" :value="selectedServicePoint.性別" />
                 <DetailItem label="服務時間" :value="selectedServicePoint.時間" />
                 <DetailItem
