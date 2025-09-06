@@ -116,6 +116,14 @@
       });
 
       /**
+       * ⭐ 是否為路線中心點物件 (Is Route Center Point Object)
+       * 檢查選中物件是否為路線中心點
+       */
+      const isRouteCenterPointObject = computed(() => {
+        return selectedFeature.value?.properties?.type === 'route-center-point-selected';
+      });
+
+      /**
        * 📋 是否為服務項目列表物件 (Is Service Items Object)
        * 檢查選中物件是否包含服務項目列表
        */
@@ -243,6 +251,7 @@
         // 注意：路徑規劃和路徑優化相關的計算屬性已移除
         isServiceProviderObject, // 是否為服務人員物件
         isServiceItemsObject, // 是否為服務項目列表物件
+        isRouteCenterPointObject, // 是否為路線中心點物件
         selectedServicePoint, // 選中的服務點
         selectServicePoint, // 選擇服務點方法
         pointsInRange, // 範圍內點位清單
@@ -511,6 +520,38 @@
             <div v-else class="text-muted">
               <i class="fas fa-info-circle me-2"></i>
               此服務點沒有服務項目記錄
+            </div>
+          </template>
+
+          <!-- ⭐ 路線中心點顯示 -->
+          <template v-if="isRouteCenterPointObject">
+            <hr class="my-3" />
+            <div class="my-title-sm-black mb-3">路線中心點資訊</div>
+            <DetailItem
+              label="服務人員身分證"
+              :value="selectedFeature.properties.serviceProviderId"
+            />
+            <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
+            <DetailItem label="中心點編號" :value="selectedFeature.properties.centerIndex" />
+            <DetailItem
+              label="緯度"
+              :value="selectedFeature.properties.緯度?.toFixed(6) || '無資料'"
+            />
+            <DetailItem
+              label="經度"
+              :value="selectedFeature.properties.經度?.toFixed(6) || '無資料'"
+            />
+
+            <hr class="my-2" />
+            <div class="my-content-xs-gray">
+              <div class="mb-1">
+                <i class="fas fa-star me-2 text-warning"></i>
+                此點為服務人員路線的中心位置
+              </div>
+              <div class="mb-1">
+                <i class="fas fa-info-circle me-2 text-info"></i>
+                中心點座標來自系統計算的路線幾何中心
+              </div>
             </div>
           </template>
         </div>

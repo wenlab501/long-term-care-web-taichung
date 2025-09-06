@@ -473,7 +473,7 @@
               </thead>
               <tbody>
                 <tr
-                  v-for="item in getSortedData(layer)"
+                  v-for="(item, rowIndex) in getSortedData(layer)"
                   :key="item.id"
                   class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
                   @click="
@@ -501,7 +501,16 @@
                         </div>
                       </div>
                       <div v-else class="my-content-xs-black px-3 py-2">
-                        {{ getColumnDisplayValue(item, column, layer) }}
+                        <template
+                          v-if="
+                            column === '交通時間' &&
+                            layer.layerId &&
+                            layer.layerId.startsWith('service-provider-') &&
+                            rowIndex === 0
+                          "
+                          >-</template
+                        >
+                        <template v-else>{{ getColumnDisplayValue(item, column, layer) }}</template>
                       </div>
                     </td>
                   </template>

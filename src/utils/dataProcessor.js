@@ -130,7 +130,92 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           });
         }
 
-        // 2. 處理服務點（service_points 裡面的點）
+        // 2. 處理 service_points_routes_center 中心點（如果存在）
+        if (
+          serviceProvider.service_points_routes_center &&
+          Array.isArray(serviceProvider.service_points_routes_center) &&
+          serviceProvider.service_points_routes_center.length > 0
+        ) {
+          const routeTimesArray = Array.isArray(serviceProvider.service_points_routes_time)
+            ? serviceProvider.service_points_routes_time
+            : [];
+          serviceProvider.service_points_routes_center.forEach((centerCoords, index) => {
+            if (Array.isArray(centerCoords) && centerCoords.length >= 2) {
+              const [lng, lat] = centerCoords; // GeoJSON 格式：[經度, 緯度]
+
+              // 驗證座標有效性
+              if (
+                typeof lng === 'number' &&
+                typeof lat === 'number' &&
+                !isNaN(lng) &&
+                !isNaN(lat) &&
+                lat >= -90 &&
+                lat <= 90 &&
+                lng >= -180 &&
+                lng <= 180
+              ) {
+                // 對應該路線中心點的交通時間（依序對應 service_points_routes_time）
+                const timeEntry = routeTimesArray[index] || null;
+                const timeMinutes = (() => {
+                  if (timeEntry && typeof timeEntry.time_interval === 'number') {
+                    return timeEntry.time_interval;
+                  }
+                  const h = timeEntry?.hour_interval ?? null;
+                  const m = timeEntry?.min_interval ?? null;
+                  if (typeof h === 'number' && typeof m === 'number') {
+                    return h * 60 + m;
+                  }
+                  return null; // 若無資料則返回 null
+                })();
+
+                const timeLabel = (() => {
+                  if (typeof timeMinutes === 'number' && !isNaN(timeMinutes)) {
+                    const hours = Math.floor(timeMinutes / 60);
+                    const minutes = timeMinutes % 60;
+                    return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
+                  }
+                  return 'N/A';
+                })();
+
+                const routeCenterFeatureData = {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [lng, lat],
+                  },
+                  properties: {
+                    id: `route_center_${serviceProvider.服務人員身分證}_${index}`,
+                    layerId: layerId,
+                    layerName: `${layer.layerName}_路線中心點`,
+                    name: `路線中心點_${serviceProvider.服務人員身分證}_${index + 1}`,
+                    type: 'route-center-point', // 特殊類型標記
+                    fillColor: unifiedColor, // 使用顏色名稱
+                    routeColor: unifiedColor,
+                    serviceProviderId: serviceProvider.服務人員身分證,
+                    serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                    centerIndex: index + 1,
+                    緯度: lat,
+                    經度: lng,
+                    // 新增：於路線中心點顯示交通時間（依序對應 route_time）
+                    traffic_time_minutes: typeof timeMinutes === 'number' ? timeMinutes : undefined,
+                    traffic_time_label: timeLabel,
+                  },
+                };
+
+                // 添加到對應的服務人員圖層
+                serviceProviderLayers.get(serviceProviderId).features.push(routeCenterFeatureData);
+                // 也添加到總圖層
+                allGeoJsonData.features.push(routeCenterFeatureData);
+              } else {
+                console.warn(
+                  `🚫 無效的路線中心點座標: serviceProvider=${serviceProvider.服務人員身分證}, index=${index}, coords=[${lng}, ${lat}]`
+                );
+              }
+            }
+          });
+        }
+
+        // 3. 處理服務點（service_points 裡面的點）
         const servicePoints = serviceProvider.service_points.filter((record) => record.detail);
 
         if (servicePoints.length > 0) {
@@ -397,6 +482,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             })
           : [];
 
+        // 獲取原始服務人員數據以取得 service_points_count
+        const originalServiceProvider = jsonData.find(
+          (sp) => sp.服務人員身分證 === serviceProviderId
+        );
+
         return {
           serviceProviderId,
           layerName: serviceProviderId, // 直接使用服務人員身分證作為圖層名稱
@@ -404,6 +494,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           tableData: servicePointsTableData, // 添加 service_points 的表格資料
           pointCount: geoJsonData.features.filter((f) => f.geometry.type === 'Point').length,
           routeCount: geoJsonData.features.filter((f) => f.geometry.type === 'LineString').length,
+          servicePointsCount: originalServiceProvider?.service_points_count || 0, // 添加原始的 service_points_count
         };
       }
     );
