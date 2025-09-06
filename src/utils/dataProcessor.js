@@ -341,6 +341,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               姓名: point.detail.姓名,
               地址: point.detail.個案居住地址,
               時間: `${point.hour_start}:${point.min_start.toString().padStart(2, '0')}`,
+              身分證字號: point['身分證字號'],
               編號: point.detail.編號,
               性別: point.detail.性別,
               個案戶籍縣市: point.detail.個案戶籍縣市,

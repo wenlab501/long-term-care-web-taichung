@@ -720,6 +720,7 @@ export const useDataStore = defineStore(
                   serviceProviderId: serviceProvider.服務人員身分證,
                   serviceDate: serviceProvider['服務日期(請輸入7碼)'],
                   姓名: serviceRecord.detail.姓名,
+                  身分證字號: serviceRecord['身分證字號'],
                   個案居住地址: serviceRecord.detail.個案居住地址,
                   起始時間: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
                   編號: serviceRecord.detail.編號,
