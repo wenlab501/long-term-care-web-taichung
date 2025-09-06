@@ -705,7 +705,8 @@
                             style="max-width: 80px"
                           >
                             <div class="my-content-xs-black px-3 py-2">
-                              {{ `${item.hour_total || 0}h${item.min_total || 0}m` }}
+                              {{ (item.hour_total || 0) > 0 ? `${item.hour_total || 0}h` : ''
+                              }}{{ item.min_total || 0 }}m
                             </div>
                           </td>
                           <!-- <td
