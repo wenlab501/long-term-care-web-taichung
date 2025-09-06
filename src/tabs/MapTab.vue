@@ -72,6 +72,7 @@
           <div class="my-font-size-sm">
             <div><strong>${props.姓名 || props.name || ''}</strong></div>
             <div>編號: ${props.編號 || props.id || ''}</div>
+            <div>服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
             <div>性別: ${props.性別 || props.gender || ''}</div>
             <div>戶籍縣市: ${props.個案戶籍縣市 || ''}</div>
             <div>戶籍鄉鎮區: ${props.鄉鎮區 || ''}</div>
@@ -586,14 +587,14 @@
               // 新基準中央服務紀錄路線的彈出視窗
               layer.bindPopup(
                 `
-                <div class="">
-                  <div class="my-title-xs-gray pb-2">${feature.properties.layerName}</div>
-                  <div class="my-content-sm-black">${feature.properties.name}</div>
-                  <div class="my-content-xs-gray pt-1">服務人員: ${feature.properties.serviceProviderId}</div>
-                  <div class="my-content-xs-gray">服務日期: ${feature.properties.serviceDate}</div>
-                  <div class="my-content-xs-gray">服務點數: ${feature.properties.pointCount} 個</div>
-                </div>
-              `,
+                  <div class="">
+                    <div class="my-title-xs-gray pb-2">${feature.properties.layerName}</div>
+                    <div class="my-content-sm-black">${feature.properties.name}</div>
+                    <div class="my-content-xs-gray pt-1">服務人員: ${feature.properties.serviceProviderId}</div>
+                    <div class="my-content-xs-gray">服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
+                    <div class="my-content-xs-gray">服務點數: ${feature.properties.pointCount} 個</div>
+                  </div>
+                `,
                 {
                   className: 'service-route-popup',
                   offset: [0, -5],
@@ -664,6 +665,7 @@
                     <div class="my-title-xs-gray pb-2">${layerName}</div>
                     <div class="my-content-sm-black">${feature.properties.name}</div>
                     <div class="my-content-xs-gray pt-1">路線順序: ${feature.properties.routeOrder}</div>
+                    <div class="my-content-xs-gray">服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
                     <div class="my-content-xs-gray">服務時間: ${feature.properties.propertyData.服務時間}</div>
                     <div class="my-content-xs-gray">居住地址: ${feature.properties.propertyData.個案居住地址}</div>
                   </div>
@@ -2104,6 +2106,7 @@
         selectedAnalysisFeature, // 選中的分析要素
         deleteAnalysisPoint, // 刪除分析點函數
         hideContextMenu, // 隱藏右鍵菜單函數
+        selectedServiceDate: computed(() => dataStore.selectedServiceDate), // 當前選中的服務日期
       };
     },
   };

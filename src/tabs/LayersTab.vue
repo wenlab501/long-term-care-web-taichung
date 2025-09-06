@@ -1,10 +1,19 @@
 <script>
-  import { computed, ref } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIcon } from '../utils/utils.js';
+  import DatePicker from '../components/DatePicker.vue';
 
   export default {
     name: 'LayersTab',
+
+    /**
+     * 🧩 組件註冊 (Component Registration)
+     * 註冊子組件
+     */
+    components: {
+      DatePicker,
+    },
 
     /**
      * 🔧 組件設定函數 (Component Setup)
@@ -19,6 +28,18 @@
 
       // 建立一個計算屬性，從 store 中獲取圖層數據。當 store 的 state 改變時，這裡會自動更新。
       const layers = computed(() => dataStore.layers);
+
+      // 📅 日期選擇相關狀態（從 dataStore 獲取）
+      const selectedServiceDate = computed({
+        get: () => dataStore.selectedServiceDate,
+        set: (value) => {
+          if (value) {
+            dataStore.setServiceDateFilter(value);
+          } else {
+            dataStore.clearServiceDateFilter();
+          }
+        },
+      });
 
       /**
        * 🔘 切換圖層可見性
@@ -67,6 +88,37 @@
         return layer.colorName ? `var(--my-color-${layer.colorName})` : 'var(--my-color-gray-300)';
       };
 
+      /**
+       * 📅 處理日期選擇事件
+       * @param {string} dateStr - 7碼日期字串 (例如: 1140701)
+       */
+      const handleDateSelected = async (dateStr) => {
+        console.log('📅 LayersTab 接收到的日期:', dateStr);
+        console.log('📅 日期長度:', dateStr ? dateStr.length : 'null');
+        console.log('📅 預期的民國年格式:', dateStr);
+
+        if (dateStr) {
+          dataStore.setServiceDateFilter(dateStr);
+          // 載入該日期的服務人員圖層
+          console.log('📅 開始載入服務人員圖層');
+          await dataStore.loadServiceProviderLayers(dateStr);
+        } else {
+          dataStore.clearServiceDateFilter();
+          // 清除所有服務人員圖層
+          dataStore.clearServiceProviderLayers();
+        }
+      };
+
+      /**
+       * 🚀 組件掛載時初始化
+       * 載入預設日期 (7月1日) 的服務人員圖層
+       */
+      onMounted(async () => {
+        console.log('🚀 LayersTab 組件掛載，開始載入預設日期數據');
+        // 載入預設日期的服務人員圖層
+        await dataStore.loadServiceProviderLayers('1140701');
+      });
+
       // 📤 將需要暴露給 <template> 使用的數據和方法返回
       return {
         layers,
@@ -76,6 +128,10 @@
         layerListRef,
         getIcon,
         getLayerColor,
+        // 📅 日期選擇相關
+        selectedServiceDate,
+        handleDateSelected,
+        isDateFilterActive: computed(() => dataStore.isDateFilterActive),
       };
     },
   };
@@ -85,6 +141,18 @@
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
       <div class="mb-3">
+        <!-- 📅 服務日期選擇區域 -->
+        <div class="p-3">
+          <div class="mb-2">
+            <div class="my-title-xs-gray mb-1">選擇服務日期</div>
+            <DatePicker
+              v-model="selectedServiceDate"
+              placeholder="選擇服務日期"
+              @date-selected="handleDateSelected"
+            />
+          </div>
+        </div>
+
         <div v-for="group in layers" :key="group.groupName" class="p-3">
           <div class="d-flex align-items-center pb-2">
             <div class="my-title-xs-gray">

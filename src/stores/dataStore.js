@@ -134,8 +134,8 @@ export const useDataStore = defineStore(
     const selectedFeature = ref(null);
 
     // 📅 日期篩選狀態 (Date Filter State)
-    const selectedServiceDate = ref('');
-    const isDateFilterActive = ref(false);
+    const selectedServiceDate = ref('1140701'); // 預設為 2025年7月1日
+    const isDateFilterActive = ref(true); // 預設啟用日期篩選
 
     const setSelectedFeature = (feature) => {
       selectedFeature.value = feature;
