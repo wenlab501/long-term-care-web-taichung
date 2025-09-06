@@ -4,7 +4,7 @@
    *
    * Purpose:
    * - Owns the Leaflet map lifecycle, rendering, interactions, and feature layers.
-   * - Binds popups/tooltips for service routes and service points.
+   * - Binds popups for service routes and service points.
    * - For maintainability, this file is organized into clearly labeled sections.
    *
    * Notes:
@@ -80,9 +80,9 @@
       // 移除高亮相關邏輯，因為現在使用 time_total 來決定大小
 
       // =============================================================
-      // Popup/Tooltip Content Helpers
+      // Popup Content Helpers
       // =============================================================
-      // 🎯 創建共用的 popup/tooltip 內容函數，顯示完整的 detail 內容
+      // 🎯 創建共用的 popup 內容函數，顯示完整的 detail 內容
       const createServicePointContent = (props) => {
         return `
           <div class="my-font-size-sm">
@@ -494,14 +494,7 @@
 
                 const marker = L.marker(latlng, { icon });
 
-                // 添加 tooltip（滑鼠懸停時顯示完整的 detail 內容）
-                const tooltipContent = createServicePointContent(feature.properties);
-                marker.bindTooltip(tooltipContent, {
-                  permanent: false,
-                  direction: 'top',
-                  className: 'service-point-tooltip',
-                  opacity: 0.9,
-                });
+                // 移除 tooltip 功能（不需要 hover tooltip）
 
                 return marker;
               } else {
@@ -1026,7 +1019,7 @@
                     emit('show-service-point-detail', serviceItemsData);
                     console.log('🎯 MapTab: 已發送 show-service-point-detail 事件');
 
-                    // 縮放到該服務點並顯示 tooltip
+                    // 縮放到該服務點
                     if (feature.geometry && feature.geometry.type === 'Point') {
                       const [lng, lat] = feature.geometry.coordinates;
                       mapInstance.setView([lat, lng], 16);
@@ -1170,9 +1163,7 @@
                 if (layer.closePopup) {
                   layer.closePopup();
                 }
-                if (layer.closeTooltip) {
-                  layer.closeTooltip();
-                }
+                // 移除 tooltip 相關功能
               }
             });
           }
@@ -1695,7 +1686,7 @@
                 if (targetLayer.openPopup) {
                   targetLayer.openPopup();
                 }
-                // 若此為點位且具有 datail 資料，動態建立 tooltip
+                // 移除 tooltip 功能，只保留 popup
                 const f = targetLayer.feature;
                 const hasDetail = f && f.properties && (f.properties.編號 || f.properties.name);
                 if (hasDetail && targetLayer.getLatLng) {
