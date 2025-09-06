@@ -59,6 +59,42 @@
       const toggleLayer = (layerId) => {
         console.log('🔘 DateLayersTab: 切換圖層', layerId);
         dataStore.toggleLayerVisibility(layerId);
+
+        // 如果是服務人員圖層，設置或清除對應的服務人員
+        if (layerId && layerId.startsWith('service-provider-')) {
+          const layer = dataStore.findLayerById(layerId);
+          if (layer && layer.visible) {
+            // 從圖層 ID 中提取服務人員身分證號碼
+            const serviceProviderId = layerId.replace('service-provider-', '');
+            console.log('🔘 DateLayersTab: 設置服務人員', serviceProviderId);
+            dataStore.selectedServiceProvider = serviceProviderId;
+          } else {
+            // 圖層被關閉時，如果當前選中的服務人員就是這個圖層的，則清除選擇
+            const serviceProviderId = layerId.replace('service-provider-', '');
+            if (dataStore.selectedServiceProvider === serviceProviderId) {
+              console.log('🔘 DateLayersTab: 清除服務人員選擇');
+              dataStore.selectedServiceProvider = '';
+            }
+          }
+        }
+
+        // 如果是服務日期圖層，設置對應的服務日期
+        if (layerId && layerId.startsWith('service-date-')) {
+          const layer = dataStore.findLayerById(layerId);
+          if (layer && layer.visible) {
+            // 從圖層 ID 中提取服務日期
+            const serviceDate = layerId.replace('service-date-', '');
+            console.log('🔘 DateLayersTab: 設置服務日期', serviceDate);
+            dataStore.setServiceDateFilter(serviceDate);
+          } else {
+            // 圖層被關閉時，如果當前選中的服務日期就是這個圖層的，則清除選擇
+            const serviceDate = layerId.replace('service-date-', '');
+            if (dataStore.selectedServiceDate === serviceDate) {
+              console.log('🔘 DateLayersTab: 清除服務日期選擇');
+              dataStore.clearServiceDateFilter();
+            }
+          }
+        }
       };
 
       /**
