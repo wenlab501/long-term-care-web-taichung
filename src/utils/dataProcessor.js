@@ -361,7 +361,10 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 (Array.isArray(point.service_items) ? point.service_items.length : 0),
               service_items: point.service_items || [],
               總服務時間分鐘: point.time_total || 0,
-              交通時間: `${point.hour_traffic || 0}h${point.min_traffic || 0}m`,
+              交通時間:
+                (point.hour_traffic || 0) > 0
+                  ? `${point.hour_traffic || 0}h${point.min_traffic || 0}m`
+                  : `${point.min_traffic || 0}m`,
               交通時間分鐘: (point.hour_traffic || 0) * 60 + (point.min_traffic || 0),
               hour_traffic: point.hour_traffic || 0,
               min_traffic: point.min_traffic || 0,
