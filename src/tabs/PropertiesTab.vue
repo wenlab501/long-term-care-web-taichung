@@ -89,6 +89,14 @@
        * 獲取當前選中的服務人員信息
        */
       const serviceProviderLabel = computed(() => {
+        // 若有選中的服務點，優先從該點取得服務人員
+        if (selectedServicePoint.value) {
+          const sp = selectedServicePoint.value;
+          if (sp.serviceProviderId) return sp.serviceProviderId;
+          if (sp['服務人員身分證']) return sp['服務人員身分證'];
+          if (sp.detail?.['服務人員身分證']) return sp.detail['服務人員身分證'];
+        }
+
         // 優先從 bottom panel 選中的物件獲取服務人員信息
         if (selectedFeature.value?.properties) {
           const props = selectedFeature.value.properties;
@@ -127,6 +135,16 @@
        * 獲取當前選中的服務日期信息
        */
       const serviceDateLabel = computed(() => {
+        // 若有選中的服務點，優先從該點取得服務日期
+        if (selectedServicePoint.value) {
+          const sp = selectedServicePoint.value;
+          if (sp.serviceDate) return sp.serviceDate;
+          if (sp['服務日期(請輸入7碼)']) return sp['服務日期(請輸入7碼)'];
+          if (sp.服務日期) return sp.服務日期;
+          if (sp.detail?.['服務日期(請輸入7碼)']) return sp.detail['服務日期(請輸入7碼)'];
+          if (sp.detail?.服務日期) return sp.detail.服務日期;
+        }
+
         // 優先從 bottom panel 選中的物件獲取服務日期信息
         if (selectedFeature.value?.properties) {
           const props = selectedFeature.value.properties;
@@ -487,11 +505,8 @@
 
             <!-- 服務人員基本信息 -->
             <div class="my-title-xs-gray mb-3">服務人員信息</div>
-            <DetailItem
-              label="服務人員身分證"
-              :value="selectedFeature.properties.serviceProviderId"
-            />
-            <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
+            <DetailItem label="服務人員身分證" :value="serviceProviderLabel" />
+            <DetailItem label="服務日期" :value="serviceDateLabel || '無資料'" />
             <DetailItem
               label="服務點位數"
               :value="`${selectedFeature.properties.allServicePoints.length} 個`"
@@ -701,11 +716,8 @@
           <template v-if="isRouteCenterPointObject">
             <hr class="my-3" />
             <div class="my-title-sm-black mb-3">路線中心點資訊</div>
-            <DetailItem
-              label="服務人員身分證"
-              :value="selectedFeature.properties.serviceProviderId"
-            />
-            <DetailItem label="服務日期" :value="selectedServiceDate || '無資料'" />
+            <DetailItem label="服務人員身分證" :value="serviceProviderLabel" />
+            <DetailItem label="服務日期" :value="serviceDateLabel || '無資料'" />
             <DetailItem label="中心點編號" :value="selectedFeature.properties.centerIndex" />
             <DetailItem
               label="緯度"
