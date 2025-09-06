@@ -1,4 +1,17 @@
 <script>
+  /**
+   * MapTab.vue
+   *
+   * Purpose:
+   * - Owns the Leaflet map lifecycle, rendering, interactions, and feature layers.
+   * - Binds popups/tooltips for service routes and service points.
+   * - For maintainability, this file is organized into clearly labeled sections.
+   *
+   * Notes:
+   * - Do NOT change logic, UI, or data flows in this file during refactors.
+   * - Add comments and section headers only to improve readability.
+   * - Keep function names and signatures unchanged.
+   */
   // 🔧 Vue Composition API 引入 (Vue Composition API Imports)
   import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'; // 引入 Vue 3 響應式 API
   import L from 'leaflet'; // 引入 Leaflet 地圖庫
@@ -66,6 +79,9 @@
 
       // 移除高亮相關邏輯，因為現在使用 time_total 來決定大小
 
+      // =============================================================
+      // Popup/Tooltip Content Helpers
+      // =============================================================
       // 🎯 創建共用的 popup/tooltip 內容函數，顯示完整的 detail 內容
       const createServicePointContent = (props) => {
         return `
@@ -87,6 +103,9 @@
           </div>`;
       };
 
+      // =============================================================
+      // Computed Flags & Basic Utilities
+      // =============================================================
       // 📊 計算屬性：檢查是否有任何圖層可見 (Computed Property: Check if Any Layer is Visible)
       const isAnyLayerVisible = computed(
         () => dataStore.getAllLayers().some((l) => l.visible && l.geoJsonData) // 檢查所有圖層中是否有可見且有資料的圖層

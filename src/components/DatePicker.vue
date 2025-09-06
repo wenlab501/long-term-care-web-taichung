@@ -1,4 +1,14 @@
 <script>
+  /**
+   * DatePicker.vue
+   *
+   * Purpose:
+   * - Minimal calendar for selecting a 7-digit ROC date string (YYYMMDD).
+   * - Month navigation is disabled by design; fixed to 2025/07.
+   *
+   * Notes:
+   * - Non-functional documentation only; no behavior or layout changes.
+   */
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
   export default {

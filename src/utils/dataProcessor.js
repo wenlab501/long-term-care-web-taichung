@@ -1,3 +1,13 @@
+/**
+ * dataProcessor.js
+ *
+ * Purpose:
+ * - Load and transform data for the "新基準中央服務紀錄" feature set.
+ * - Returns geojson, table data, and summary stats; color resolution is deferred to store.
+ *
+ * Notes:
+ * - Documentation-only refactor for maintainability; logic unchanged.
+ */
 // 注意：getColorForServiceProvider 函數已移除
 // 現在顏色分配統一在 dataStore.js 中處理
 

@@ -1,3 +1,15 @@
+/**
+ * dataStore.js
+ *
+ * Purpose:
+ * - Centralized application state using Pinia.
+ * - Manages layer groups, visibility, selected features, and service-date filtering.
+ * - Loads and prepares data for "新基準中央服務紀錄" including colors and table data.
+ *
+ * Refactor Notes (non-functional):
+ * - Added module header, section separators, and JSDoc-style comments for maintainability.
+ * - Logic, UI, and outputs are unchanged.
+ */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
@@ -7,6 +19,9 @@ import { loadNewStandardCentralServiceData } from '../utils/dataProcessor.js';
 export const useDataStore = defineStore(
   'data',
   () => {
+    // =============================================================
+    // Layer Groups & Colors
+    // =============================================================
     const layers = ref([
       {
         groupName: '新基準中央服務紀錄',
@@ -49,7 +64,14 @@ export const useDataStore = defineStore(
     // 注意：getColorForServiceProvider 函數已移除
     // 現在每天重新按照服務人員順序分配 category20b 顏色
 
-    // 在新的分組結構中搜尋指定 ID 的圖層
+    // =============================================================
+    // Layer Lookup & Utilities
+    // =============================================================
+    /**
+     * 根據 ID 在群組內搜尋圖層 (Find Layer By Id)
+     * @param {string} layerId
+     * @returns {Object|null}
+     */
     const findLayerById = (layerId) => {
       for (const group of layers.value) {
         for (const layer of group.groupLayers) {
@@ -61,7 +83,10 @@ export const useDataStore = defineStore(
       return null;
     };
 
-    // 從分組結構中提取所有圖層的扁平陣列
+    /**
+     * 從分組結構中提取所有圖層的扁平陣列 (Get All Layers)
+     * @returns {Array<Object>}
+     */
     const getAllLayers = () => {
       const allLayers = [];
       for (const group of layers.value) {
@@ -70,7 +95,14 @@ export const useDataStore = defineStore(
       return allLayers;
     };
 
-    // 控制圖層的顯示/隱藏，並在需要時自動載入資料
+    // =============================================================
+    // Visibility Controls
+    // =============================================================
+
+    /**
+     * 控制圖層的顯示/隱藏 (Toggle Layer Visibility)
+     * @param {string} layerId
+     */
     const toggleLayerVisibility = async (layerId) => {
       console.log('🔧 DataStore: toggleLayerVisibility 被調用', layerId);
       const layer = findLayerById(layerId);
@@ -92,7 +124,10 @@ export const useDataStore = defineStore(
       console.log(`🔄 圖層 "${layer.layerName}" 可見性切換為:`, layer.visible);
     };
 
-    // 控制整個群組圖層的顯示/隱藏
+    /**
+     * 控制整個群組圖層的顯示/隱藏 (Toggle Group Visibility)
+     * @param {string} groupName
+     */
     const toggleGroupVisibility = async (groupName) => {
       console.log('🔧 DataStore: toggleGroupVisibility 被調用', groupName);
       const group = layers.value.find((g) => g.groupName === groupName);
@@ -122,14 +157,20 @@ export const useDataStore = defineStore(
       });
     };
 
-    // 檢查群組是否有任何可見圖層
+    /**
+     * 檢查群組是否有任何可見圖層 (Is Group Visible)
+     * @param {string} groupName
+     * @returns {boolean}
+     */
     const isGroupVisible = (groupName) => {
       const group = layers.value.find((g) => g.groupName === groupName);
       if (!group) return false;
       return group.groupLayers.some((layer) => layer.visible);
     };
 
-    // ------------------------------------------------------------
+    // =============================================================
+    // Selected Feature & Date Filter
+    // =============================================================
     // 選中的地圖物件
     const selectedFeature = ref(null);
 
@@ -289,7 +330,7 @@ export const useDataStore = defineStore(
     };
 
     /**
-     * 📅 清除服務人員圖層
+     * 📅 清除服務人員圖層 (Clear Service Provider Layers)
      */
     const clearServiceProviderLayers = () => {
       const serviceRecordGroup = layers.value.find((g) => g.groupName === '新基準中央服務紀錄');
@@ -301,7 +342,7 @@ export const useDataStore = defineStore(
     };
 
     /**
-     * 📅 檢查資料是否符合日期篩選條件
+     * 📅 檢查資料是否符合日期篩選條件 (Matches Date Filter)
      * @param {Object} data - 要檢查的資料物件
      * @returns {boolean} - 是否符合篩選條件
      */
@@ -319,6 +360,9 @@ export const useDataStore = defineStore(
       return true; // 如果沒有日期欄位，預設符合條件
     };
 
+    // =============================================================
+    // Spatial Utilities
+    // =============================================================
     // 🧮 計算兩點間距離 (Calculate Distance Between Two Points)
     // 使用 Haversine 公式計算地球表面兩點間的距離（公尺）
     const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -436,7 +480,7 @@ export const useDataStore = defineStore(
       return polygonInRange;
     };
 
-    // 檢查多邊形與圓圈是否重疊的函數
+    // 檢查多邊形與圓圈是否重疊的函數 (Check Polygon-Circle Overlap)
     const checkPolygonCircleOverlap = (geometry, centerLat, centerLng, radiusMeters) => {
       const coordinates =
         geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
@@ -456,7 +500,9 @@ export const useDataStore = defineStore(
       return false;
     };
 
-    // 分析圖層管理方法
+    // =============================================================
+    // Returned API (Store Interface)
+    // =============================================================
 
     // 注意：路徑規劃和路徑優化相關的函數和註解已移除
 

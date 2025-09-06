@@ -1,4 +1,14 @@
 <script setup>
+  /**
+   * DataTableTab.vue
+   *
+   * Purpose:
+   * - Displays per-layer tabbed data tables with sorting and highlight interactions.
+   * - Mirrors layer colors consistent with the map rendering.
+   *
+   * Notes:
+   * - Non-functional refactor: documentation only; behavior and UI unchanged.
+   */
   import { ref, computed, defineEmits, onMounted, watch } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
 
