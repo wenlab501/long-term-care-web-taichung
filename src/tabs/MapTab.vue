@@ -83,7 +83,7 @@
       // Popup Content Helpers
       // =============================================================
       // 🎯 創建共用的 popup 內容函數，顯示完整的 detail 內容
-      const createServicePointContent = (props, index = 0) => {
+      const createServicePointContent = (props, index = 0, routeOrder = null) => {
         // 處理 # 欄位顯示 - 優先使用資料中的 # 欄位
         const itemNumber = props['#'] || (index + 1).toString();
 
@@ -139,6 +139,11 @@
 
         // 處理交通時間顯示
         const trafficTime = (() => {
+          // 如果是第一筆記錄（routeOrder = 1），顯示 "-"
+          if (routeOrder === 1) {
+            return '-';
+          }
+
           if (props.交通時間) return props.交通時間;
           if (props.hour_traffic !== undefined && props.min_traffic !== undefined) {
             const hours = props.hour_traffic || 0;
@@ -1121,7 +1126,7 @@
                       const props = feature.properties || {};
                       // 顯示 popup（完整的 detail 內容）
                       if (this.bindPopup) {
-                        const popupContent = createServicePointContent(props, 0);
+                        const popupContent = createServicePointContent(props, 0, props.routeOrder);
                         this.bindPopup(popupContent, {
                           closeButton: false,
                           autoClose: false,
@@ -1565,7 +1570,8 @@
                     const props = highlightData.item || {};
                     const popupContent = createServicePointContent(
                       props,
-                      highlightData.rowIndex || 0
+                      highlightData.rowIndex || 0,
+                      props.routeOrder
                     );
 
                     if (layer.bindPopup) {
@@ -1604,7 +1610,11 @@
 
               // 添加彈出視窗
               const props = item;
-              const popupContent = createServicePointContent(props, highlightData.rowIndex || 0);
+              const popupContent = createServicePointContent(
+                props,
+                highlightData.rowIndex || 0,
+                props.routeOrder
+              );
               tempMarker
                 .bindPopup(popupContent, {
                   closeButton: false,
@@ -1791,7 +1801,7 @@
                 if (hasDetail && targetLayer.getLatLng) {
                   const props = f.properties;
                   // 顯示 popup（完整的 detail 內容）
-                  const popupContent = createServicePointContent(props, 0);
+                  const popupContent = createServicePointContent(props, 0, props.routeOrder);
                   targetLayer.bindPopup(popupContent, {
                     closeButton: false,
                     autoClose: false,
