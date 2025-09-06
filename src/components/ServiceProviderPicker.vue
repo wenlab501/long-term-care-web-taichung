@@ -45,7 +45,7 @@
       const availableProviders = computed(() => dataStore.availableServiceProviders);
 
       /**
-       * 🚀 載入服務員清單
+       * 🚀 載入服務人員清單
        */
       const loadProviders = async () => {
         try {
@@ -53,15 +53,15 @@
           error.value = null;
           await dataStore.loadAvailableServiceProviders();
         } catch (err) {
-          error.value = '載入服務員清單失敗';
-          console.error('ServiceProviderPicker: 載入服務員清單失敗', err);
+          error.value = '載入服務人員清單失敗';
+          console.error('ServiceProviderPicker: 載入服務人員清單失敗', err);
         } finally {
           isLoading.value = false;
         }
       };
 
       /**
-       * 🎯 處理服務員選擇
+       * 🎯 處理服務人員選擇
        */
       const handleProviderSelected = async (providerId) => {
         if (providerId) {
@@ -71,7 +71,7 @@
       };
 
       /**
-       * 🚀 組件掛載時載入服務員清單
+       * 🚀 組件掛載時載入服務人員清單
        */
       onMounted(async () => {
         await loadProviders();
@@ -97,7 +97,7 @@
       <div class="spinner-border spinner-border-sm" role="status">
         <span class="visually-hidden">載入中...</span>
       </div>
-      <span class="ms-2 my-content-xs-gray">載入服務員清單...</span>
+      <span class="ms-2 my-content-xs-gray">載入服務人員清單...</span>
     </div>
 
     <!-- 錯誤狀態 -->
@@ -114,12 +114,11 @@
       <select
         v-model="selectedProvider"
         @change="handleProviderSelected($event.target.value)"
-        class="form-select form-select-sm"
+        class="form-select form-select-sm px-3 py-2"
         :disabled="isLoading"
       >
-        <option value="">請選擇服務員</option>
         <option v-for="provider in availableProviders" :key="provider.id" :value="provider.id">
-          {{ provider.name }} ({{ provider.dateCount }} 個服務日期)
+          {{ provider.name }} ({{ provider.dateCount }})
         </option>
       </select>
     </div>

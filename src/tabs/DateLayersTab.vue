@@ -164,7 +164,7 @@
         </div>
 
         <div
-          v-for="group in layers.filter((g) => g.groupName === '依日期圖層')"
+          v-for="group in layers.filter((g) => g.groupName === '服務人員列表')"
           :key="group.groupName"
           class="p-3"
         >

@@ -263,7 +263,12 @@
           }
           return '0m';
         case '服務數量':
-          return (item.service_items_count ?? item.服務數量 ?? '0').toString();
+          return (
+            item.service_items_count ??
+            (Array.isArray(item.service_items) ? item.service_items.length : null) ??
+            item.服務數量 ??
+            0
+          ).toString();
         default:
           return item[column] || 'N/A';
       }

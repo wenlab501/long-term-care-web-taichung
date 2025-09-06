@@ -99,15 +99,15 @@ export const useDataStore = defineStore(
      */
     const DEFAULT_LAYER_GROUPS = Object.freeze([
       {
-        groupName: '依日期圖層',
+        groupName: '服務人員列表',
         groupLayers: [], // 依日期載入的圖層
         description: '依日期顯示的長照服務記錄',
         icon: 'fas fa-calendar-day',
       },
       {
-        groupName: '依服務員圖層',
-        groupLayers: [], // 依服務員載入的圖層
-        description: '依服務員顯示其所有服務日期',
+        groupName: '服務日期列表',
+        groupLayers: [], // 依服務人員載入的圖層
+        description: '依服務人員顯示其所有服務日期',
         icon: 'fas fa-user-nurse',
       },
     ]);
@@ -260,10 +260,10 @@ export const useDataStore = defineStore(
     const selectedServiceDate = ref('1140701'); // 預設為 2025年7月1日
     const isDateFilterActive = ref(true); // 預設啟用日期篩選
 
-    // 👤 服務員篩選狀態 (Service Provider Filter State)
-    const selectedServiceProvider = ref(''); // 選中的服務員身分證
-    const isServiceProviderFilterActive = ref(false); // 服務員篩選是否啟用
-    const availableServiceProviders = ref([]); // 可用的服務員清單
+    // 👤 服務人員篩選狀態 (Service Provider Filter State)
+    const selectedServiceProvider = ref(''); // 選中的服務人員身分證
+    const isServiceProviderFilterActive = ref(false); // 服務人員篩選是否啟用
+    const availableServiceProviders = ref([]); // 可用的服務人員清單
 
     const setSelectedFeature = (feature) => {
       selectedFeature.value = feature;
@@ -314,7 +314,7 @@ export const useDataStore = defineStore(
         );
 
         // 找到服務記錄群組（日期）
-        const serviceRecordGroup = layers.value.find((g) => g.groupName === '依日期圖層');
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
         if (serviceRecordGroup) {
           // 清除現有的服務人員圖層
           serviceRecordGroup.groupLayers = [];
@@ -421,7 +421,7 @@ export const useDataStore = defineStore(
      */
     const clearServiceProviderLayers = () => {
       // 清除日期群組
-      const serviceRecordGroup = layers.value.find((g) => g.groupName === '依日期圖層');
+      const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
         // 清除服務人員圖層（每天重新載入和分配顏色）
@@ -430,11 +430,11 @@ export const useDataStore = defineStore(
     };
 
     // =============================================================
-    // 👤 服務員篩選相關方法 (Service Provider Filter Methods)
+    // 👤 服務人員篩選相關方法 (Service Provider Filter Methods)
     // =============================================================
 
     /**
-     * 👤 載入所有可用的服務員清單
+     * 👤 載入所有可用的服務人員清單
      */
     const loadAvailableServiceProviders = async () => {
       try {
@@ -447,10 +447,10 @@ export const useDataStore = defineStore(
 
         const jsonData = await response.json();
 
-        // 提取所有唯一的服務員身分證
+        // 提取所有唯一的服務人員身分證
         const uniqueProviderIds = [...new Set(jsonData.map((record) => record.服務人員身分證))];
 
-        // 為每個服務員統計服務日期數量
+        // 為每個服務人員統計服務日期數量
         const providersWithStats = uniqueProviderIds.map((providerId) => {
           const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
           const uniqueDates = [
@@ -459,7 +459,7 @@ export const useDataStore = defineStore(
 
           return {
             id: providerId,
-            name: `服務員 ${providerId}`,
+            name: `${providerId}`,
             dateCount: uniqueDates.length,
             totalRecords: providerRecords.length,
           };
@@ -469,40 +469,40 @@ export const useDataStore = defineStore(
         providersWithStats.sort((a, b) => b.dateCount - a.dateCount);
 
         availableServiceProviders.value = providersWithStats;
-        console.log('👤 載入服務員清單，共', providersWithStats.length, '位服務員');
+        console.log('👤 載入服務人員清單，共', providersWithStats.length, '位服務人員');
 
         return providersWithStats;
       } catch (error) {
-        console.error('👤 載入服務員清單失敗:', error);
+        console.error('👤 載入服務人員清單失敗:', error);
         return [];
       }
     };
 
     /**
-     * 👤 設定服務員篩選
-     * @param {string} providerId - 服務員身分證
+     * 👤 設定服務人員篩選
+     * @param {string} providerId - 服務人員身分證
      */
     const setServiceProviderFilter = (providerId) => {
       selectedServiceProvider.value = providerId;
       isServiceProviderFilterActive.value = !!providerId;
-      console.log('👤 設定服務員篩選:', providerId);
+      console.log('👤 設定服務人員篩選:', providerId);
     };
 
     /**
-     * 👤 清除服務員篩選
+     * 👤 清除服務人員篩選
      */
     const clearServiceProviderFilter = () => {
       selectedServiceProvider.value = '';
       isServiceProviderFilterActive.value = false;
-      console.log('👤 清除服務員篩選');
+      console.log('👤 清除服務人員篩選');
     };
 
     /**
-     * 👤 載入指定服務員的所有日期圖層
+     * 👤 載入指定服務人員的所有日期圖層
      */
     const loadServiceProviderDateLayers = async (providerId) => {
       try {
-        console.log('👤 dataStore 接收到的服務員ID:', providerId);
+        console.log('👤 dataStore 接收到的服務人員ID:', providerId);
 
         const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
         const response = await fetch(filePath);
@@ -513,7 +513,7 @@ export const useDataStore = defineStore(
 
         const jsonData = await response.json();
 
-        // 篩選出該服務員的所有記錄
+        // 篩選出該服務人員的所有記錄
         const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
 
         // 按日期分組
@@ -526,8 +526,8 @@ export const useDataStore = defineStore(
           dateGroups[date].push(record);
         });
 
-        // 找到服務記錄群組（服務員）
-        const serviceRecordGroup = layers.value.find((g) => g.groupName === '依服務員圖層');
+        // 找到服務記錄群組（服務人員）
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務日期列表');
         if (serviceRecordGroup) {
           // 清除現有的圖層
           serviceRecordGroup.groupLayers = [];
@@ -563,6 +563,11 @@ export const useDataStore = defineStore(
                   hour_traffic: feature.properties.hour_traffic,
                   min_traffic: feature.properties.min_traffic,
                   service_items: feature.properties.service_items,
+                  service_items_count:
+                    feature.properties.service_items_count ||
+                    (Array.isArray(feature.properties.service_items)
+                      ? feature.properties.service_items.length
+                      : 0),
                   serviceProviderId: feature.properties.serviceProviderId,
                   serviceDate: feature.properties.serviceDate,
                   routeOrder: feature.properties.routeOrder,
@@ -595,7 +600,7 @@ export const useDataStore = defineStore(
                   lineCount: processedData.features.filter((f) => f.geometry.type === 'LineString')
                     .length,
                 },
-                // 添加服務員相關屬性，讓 DataTableTab 能正確處理點擊事件
+                // 添加服務人員相關屬性，讓 DataTableTab 能正確處理點擊事件
                 serviceProviderId: providerId,
                 serviceDate: date,
               };
@@ -607,23 +612,23 @@ export const useDataStore = defineStore(
           console.log('👤 載入完成，共', sortedDates.length, '個日期的圖層');
         }
       } catch (error) {
-        console.error('👤 載入服務員日期圖層失敗:', error);
+        console.error('👤 載入服務人員日期圖層失敗:', error);
       }
     };
 
     /**
-     * 👤 清除服務員群組的圖層
+     * 👤 清除服務人員群組的圖層
      */
     const clearServiceProviderDateLayers = () => {
-      const providerGroup = layers.value.find((g) => g.groupName === '依服務員圖層');
+      const providerGroup = layers.value.find((g) => g.groupName === '服務日期列表');
       if (providerGroup) {
         providerGroup.groupLayers = [];
-        console.log('👤 已清除服務員群組的所有圖層');
+        console.log('👤 已清除服務人員群組的所有圖層');
       }
     };
 
     /**
-     * 👤 處理服務員單日資料
+     * 👤 處理服務人員單日資料
      */
     const processServiceProviderData = (dayRecords, colorName) => {
       const features = [];
@@ -913,7 +918,7 @@ export const useDataStore = defineStore(
       loadServiceProviderLayers, // 載入服務人員圖層
       clearServiceProviderLayers, // 清除服務人員圖層
 
-      // 👤 服務員篩選相關
+      // 👤 服務人員篩選相關
       selectedServiceProvider,
       isServiceProviderFilterActive,
       availableServiceProviders,

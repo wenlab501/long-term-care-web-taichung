@@ -91,32 +91,34 @@
       <h1 class="my-font-size-lg my-letter-spacing-lg text-center m-3">臺中市長照服務路線</h1>
 
       <!-- 🎛️ 分頁導航按鈕 (Tab Navigation Buttons) -->
-      <div class="d-flex justify-content-center">
+      <div class="d-flex justify-content-center pt-3">
         <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
           <!-- 日期圖層分頁按鈕 -->
           <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            class="btn rounded-pill border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
             :class="{
               'my-btn-blue': activeLeftTab === 'date',
             }"
             @click="switchLeftTab('date')"
-            style="width: 30px; height: 30px"
+            style="height: 30px"
             title="日期圖層"
           >
             <i class="fas fa-calendar-day"></i>
+            <span class="ps-2">服務日期</span>
           </button>
 
           <!-- 伺服器圖層分頁按鈕 -->
           <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            class="btn rounded-pill border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
             :class="{
               'my-btn-blue': activeLeftTab === 'server',
             }"
             @click="switchLeftTab('server')"
-            style="width: 30px; height: 30px"
+            style="height: 30px"
             title="伺服器圖層"
           >
-            <i class="fas fa-server"></i>
+            <i class="fa-solid fa-user-nurse"></i>
+            <span class="ps-2">服務人員</span>
           </button>
         </div>
       </div>

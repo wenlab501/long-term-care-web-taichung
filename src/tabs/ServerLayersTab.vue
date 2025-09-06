@@ -41,7 +41,7 @@
       // 建立一個計算屬性，從 store 中獲取圖層數據
       const layers = computed(() => dataStore.layers);
 
-      // 👤 服務員選擇相關狀態（從 dataStore 獲取）
+      // 👤 服務人員選擇相關狀態（從 dataStore 獲取）
       const selectedServiceProvider = computed({
         get: () => dataStore.selectedServiceProvider,
         set: (value) => {
@@ -101,37 +101,37 @@
       };
 
       /**
-       * 👤 處理服務員選擇事件
-       * @param {string} providerId - 服務員身分證 ID
+       * 👤 處理服務人員選擇事件
+       * @param {string} providerId - 服務人員身分證 ID
        */
       const handleProviderSelected = async (providerId) => {
-        console.log('👤 ServerLayersTab 接收到的服務員ID:', providerId);
+        console.log('👤 ServerLayersTab 接收到的服務人員ID:', providerId);
 
         if (providerId) {
           dataStore.setServiceProviderFilter(providerId);
-          // 載入該服務員的所有日期圖層
-          console.log('👤 開始載入服務員日期圖層');
+          // 載入該服務人員的所有日期圖層
+          console.log('👤 開始載入服務人員日期圖層');
           await dataStore.loadServiceProviderDateLayers(providerId);
         } else {
           dataStore.clearServiceProviderFilter();
-          // 清除服務員群組圖層
+          // 清除服務人員群組圖層
           dataStore.clearServiceProviderDateLayers();
         }
       };
 
       /**
        * 🚀 組件掛載時初始化
-       * 載入服務員清單並預設選擇第一個服務員
+       * 載入服務人員清單並預設選擇第一個服務人員
        */
       onMounted(async () => {
-        console.log('🚀 ServerLayersTab 組件掛載，開始載入服務員清單');
-        // 載入可用的服務員清單
+        console.log('🚀 ServerLayersTab 組件掛載，開始載入服務人員清單');
+        // 載入可用的服務人員清單
         const providers = await dataStore.loadAvailableServiceProviders();
 
-        // 預設選擇第一個服務員
+        // 預設選擇第一個服務人員
         if (providers && providers.length > 0) {
           const firstProvider = providers[0];
-          console.log('👤 預設選擇第一個服務員:', firstProvider.id);
+          console.log('👤 預設選擇第一個服務人員:', firstProvider.id);
           await handleProviderSelected(firstProvider.id);
         }
       });
@@ -145,7 +145,7 @@
         layerListRef,
         getIcon,
         getLayerColor,
-        // 👤 服務員選擇相關
+        // 👤 服務人員選擇相關
         selectedServiceProvider,
         handleProviderSelected,
         isServiceProviderFilterActive: computed(() => dataStore.isServiceProviderFilterActive),
@@ -158,10 +158,10 @@
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
       <div class="mb-3">
-        <!-- 👤 服務員選擇區域 -->
+        <!-- 👤 服務人員選擇區域 -->
         <div class="p-3">
           <div class="mb-2">
-            <div class="my-title-xs-gray mb-1">選擇服務員</div>
+            <div class="my-title-xs-gray mb-1">選擇服務人員</div>
             <ServiceProviderPicker
               v-model="selectedServiceProvider"
               @provider-selected="handleProviderSelected"
@@ -171,7 +171,7 @@
 
         <!-- 🗂️ 圖層群組列表 -->
         <div
-          v-for="group in layers.filter((g) => g.groupName === '依服務員圖層')"
+          v-for="group in layers.filter((g) => g.groupName === '服務日期列表')"
           :key="group.groupName"
           class="p-3"
         >
