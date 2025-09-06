@@ -357,7 +357,7 @@ export const useDataStore = defineStore(
                 geoJsonData: serviceLayer.geoJsonData,
                 tableData: serviceLayer.tableData || [], // 使用 dataProcessor 提供的 service_points 資料
                 summaryData: {
-                  totalCount: serviceLayer.pointCount,
+                  totalCount: serviceLayer.servicePointsCount || serviceLayer.pointCount, // 優先使用 service_points_count
                   routeCount: serviceLayer.routeCount,
                   districtCount: [],
                 },

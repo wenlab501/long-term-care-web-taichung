@@ -398,8 +398,50 @@
               }
             } else if (type === 'point') {
               // 一般點類型
-              // 檢查是否為新基準中央服務紀錄且有路線順序
-              if (feature.properties.routeOrder) {
+              // 檢查是否為路線中心點
+              if (feature.properties.type === 'route-center-point') {
+                // ============================================
+                // 路線中心點：星形標記，較小尺寸
+                // ============================================
+                // 優先使用feature.properties中的顏色，如果沒有則使用layer的colorName
+                let pointColor = `var(--my-color-${colorName})`; // 預設使用layer顏色
+
+                if (feature.properties.fillColor) {
+                  pointColor = `var(--my-color-${feature.properties.fillColor})`;
+                } else if (feature.properties.routeColor) {
+                  pointColor = `var(--my-color-${feature.properties.routeColor})`;
+                }
+
+                // 準備交通時間標籤（從屬性取得，若無則以分鐘轉換為 h/m）
+                const trafficTimeLabel = (() => {
+                  const label = feature.properties.traffic_time_label;
+                  if (label) return label;
+                  const minutes = feature.properties.traffic_time_minutes;
+                  if (typeof minutes === 'number' && !isNaN(minutes)) {
+                    const hours = Math.floor(minutes / 60);
+                    const mins = minutes % 60;
+                    return hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
+                  }
+                  return 'N/A';
+                })();
+
+                const icon = L.divIcon({
+                  html: `
+                  <div style="transform: translate(-50%, -50%); background: ${pointColor}; color: #fff; display: inline-block; padding: 2px 6px; font-weight: 700; line-height: 1; white-space: nowrap; border-radius: 8px; font-size: 12px;">
+                    ${trafficTimeLabel}
+                  </div>
+                  `,
+                  className: 'route-center-point-icon',
+                  iconAnchor: [0, 0],
+                  popupAnchor: [0, -10],
+                });
+
+                const marker = L.marker(latlng, { icon });
+
+                // 不綁定 hover tooltip（需求：不需要 hover 功能）
+
+                return marker;
+              } else if (feature.properties.routeOrder) {
                 // ============================================
                 // 新基準中央服務紀錄點位：根據 time_total 決定大小
                 // ============================================
@@ -757,13 +799,18 @@
                     this.bringToFront(); // 置於最前層
                   }
                 } else if (type === 'point') {
-                  // 一般點類型處理
-                  const element = this.getElement();
-                  if (element) {
-                    const innerIconDiv = element.querySelector('div');
-                    if (innerIconDiv) {
-                      innerIconDiv.style.transition = 'transform 0.04s ease-in-out';
-                      innerIconDiv.style.transform = 'scale(1.6)';
+                  // 路線中心點：不做任何 hover 效果
+                  if (feature.properties.type === 'route-center-point') {
+                    return;
+                  } else {
+                    // 一般點類型處理
+                    const element = this.getElement();
+                    if (element) {
+                      const innerIconDiv = element.querySelector('div');
+                      if (innerIconDiv) {
+                        innerIconDiv.style.transition = 'transform 0.04s ease-in-out';
+                        innerIconDiv.style.transform = 'scale(1.6)';
+                      }
                     }
                   }
                 } else if (type === 'polygon' && feature.properties.fillColor !== null) {
@@ -818,12 +865,17 @@
                       }
                     }
                   } else if (type === 'point') {
-                    // 一般點類型處理
-                    const element = this.getElement();
-                    if (element) {
-                      const innerIconDiv = element.querySelector('div');
-                      if (innerIconDiv) {
-                        innerIconDiv.style.transform = '';
+                    // 路線中心點：不做任何 hover 恢復（因為沒有 hover）
+                    if (feature.properties.type === 'route-center-point') {
+                      return;
+                    } else {
+                      // 一般點類型處理
+                      const element = this.getElement();
+                      if (element) {
+                        const innerIconDiv = element.querySelector('div');
+                        if (innerIconDiv) {
+                          innerIconDiv.style.transform = '';
+                        }
                       }
                     }
                   } else if (type === 'polygon') {
@@ -847,6 +899,34 @@
                   (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') &&
                   feature.properties.type === 'point-analysis'
                 ) {
+                  return;
+                }
+
+                // 路線中心點簡單處理：顯示基本信息
+                if (feature.properties.type === 'route-center-point') {
+                  // 清除之前的選取
+                  dataStore.setSelectedFeature(null);
+                  resetAllLayerStyles();
+
+                  // 創建路線中心點特徵物件
+                  const routeCenterFeature = {
+                    type: 'Feature',
+                    properties: {
+                      ...feature.properties,
+                      type: 'route-center-point-selected',
+                    },
+                  };
+
+                  // 設置到dataStore中
+                  dataStore.setSelectedFeature(routeCenterFeature);
+
+                  // 縮放到該中心點
+                  const zoomLevel = Math.max(mapInstance.getZoom(), 16);
+                  mapInstance.setView(
+                    [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
+                    zoomLevel
+                  );
+
                   return;
                 }
 
@@ -2070,33 +2150,6 @@
         { deep: true }
       );
 
-      // 🔄 手動重試地圖初始化函數 (Manual Retry Map Initialization Function)
-      const retryMapInitialization = () => {
-        console.log('[MapTab] 手動重試地圖初始化');
-
-        // 清理當前的狀態
-        if (mapInstance) {
-          try {
-            mapInstance.remove();
-          } catch (error) {
-            console.warn('[MapTab] 清理舊地圖實例時發生錯誤:', error);
-          }
-          mapInstance = null;
-        }
-
-        isMapReady.value = false;
-
-        // 重新開始初始化
-        initMap();
-      };
-
-      // 📊 計算屬性：地圖初始化狀態 (Computed Property: Map Initialization Status)
-      const mapInitStatus = computed(() => {
-        if (isMapReady.value) return 'ready';
-        if (isInitializing) return 'initializing';
-        return 'failed';
-      });
-
       // 📤 返回組件公開的屬性和方法 (Return Component Public Properties and Methods)
       return {
         mapContainer, // 地圖容器 DOM 元素引用
@@ -2113,10 +2166,6 @@
         // 注意：路徑規劃和路徑優化相關函數已移除
         clearAnalysisLayer, // 清除分析圖層函數
         mapStore, // 定義存儲實例
-
-        // 地圖初始化相關
-        mapInitStatus, // 地圖初始化狀態
-        retryMapInitialization, // 手動重試地圖初始化函數
 
         // 右鍵菜單相關
         contextMenu, // 右鍵菜單 DOM 引用
@@ -2145,39 +2194,6 @@
     <!-- 🗺️ Leaflet 地圖容器 (Leaflet Map Container) -->
     <!-- 這是 Leaflet 地圖實際渲染的 DOM 元素 -->
     <div :id="mapContainerId" ref="mapContainer" class="h-100 w-100"></div>
-
-    <!-- 🗺️ 地圖初始化狀態指示器 (Map Initialization Status Indicator) -->
-    <div
-      v-if="mapInitStatus !== 'ready'"
-      class="position-absolute top-50 start-50 translate-middle bg-white p-3 rounded shadow border"
-      style="z-index: 1000; min-width: 200px"
-    >
-      <div class="text-center">
-        <!-- 初始化中狀態 -->
-        <div v-if="mapInitStatus === 'initializing'" class="text-primary">
-          <div class="spinner-border spinner-border-sm me-2" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <span>地圖初始化中...</span>
-        </div>
-
-        <!-- 初始化失敗狀態 -->
-        <div v-else-if="mapInitStatus === 'failed'" class="text-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <span>地圖初始化失敗</span>
-          <div class="mt-2">
-            <button
-              class="btn btn-sm btn-outline-primary"
-              @click="retryMapInitialization"
-              title="重試地圖初始化"
-            >
-              <i class="fas fa-redo me-1"></i>
-              重試
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 🖱️ 右鍵菜單 (Context Menu) -->
     <div
