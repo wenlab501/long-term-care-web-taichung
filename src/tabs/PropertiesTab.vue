@@ -420,7 +420,7 @@
                 <DetailItem label="服務時間" :value="selectedServicePoint.時間" />
                 <DetailItem
                   label="交通時間"
-                  :value="`${selectedServicePoint.hour_traffic || 0}小時${selectedServicePoint.min_traffic || 0}分鐘`"
+                  :value="`${selectedServicePoint.hour_traffic || 0}h${selectedServicePoint.min_traffic || 0}m`"
                 />
                 <DetailItem label="個案戶籍縣市" :value="selectedServicePoint.個案戶籍縣市" />
                 <DetailItem label="鄉鎮區" :value="selectedServicePoint.鄉鎮區" />
@@ -489,11 +489,11 @@
                 />
                 <DetailItem
                   label="總時間"
-                  :value="`${item.hour_total || 0}小時${item.min_total || 0}分鐘 (${item.time_total || 0}分鐘)`"
+                  :value="`${item.hour_total || 0}h${item.min_total || 0}m (${item.time_total || 0}m)`"
                 />
                 <DetailItem
                   label="交通時間"
-                  :value="`${item.hour_traffic || 0}小時${item.min_traffic || 0}分鐘`"
+                  :value="`${item.hour_traffic || 0}h${item.min_traffic || 0}m`"
                 />
               </div>
             </div>

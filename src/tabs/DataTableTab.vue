@@ -225,7 +225,7 @@
             if (totalMinutes > 0) {
               const hours = Math.floor(totalMinutes / 60);
               const minutes = totalMinutes % 60;
-              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
             }
           }
           return 'N/A';
@@ -237,10 +237,10 @@
             const hours = item.hour_traffic || 0;
             const minutes = item.min_traffic || 0;
             if (hours > 0 || minutes > 0) {
-              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
             }
           }
-          return '0分鐘';
+          return '0m';
         case '服務數量':
           return (item.service_items_count ?? item.服務數量 ?? '0').toString();
         default:

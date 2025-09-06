@@ -210,7 +210,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             服務點位數: serviceProvider.service_points_count || servicePoints.length,
             開始時間: `${serviceProvider.hour_start}:${serviceProvider.min_start.toString().padStart(2, '0')}`,
             結束時間: `${serviceProvider.hour_end}:${serviceProvider.min_end.toString().padStart(2, '0')}`,
-            總服務時間: `${serviceProvider.hour_total}小時${serviceProvider.min_total}分鐘`,
+            總服務時間: `${serviceProvider.hour_total}h${serviceProvider.min_total}m`,
             總時間分鐘: serviceProvider.time_total || 0,
             交通時間: (() => {
               // 計算服務人員的總交通時間（所有服務點的交通時間總和）
@@ -219,7 +219,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               }, 0);
               const hours = Math.floor(totalTrafficMinutes / 60);
               const minutes = totalTrafficMinutes % 60;
-              return hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
             })(),
             交通時間分鐘: servicePoints.reduce((total, point) => {
               return total + (point.hour_traffic || 0) * 60 + (point.min_traffic || 0);
@@ -265,7 +265,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 (Array.isArray(point.service_items) ? point.service_items.length : 0),
               service_items: point.service_items || [],
               總服務時間分鐘: point.time_total || 0,
-              交通時間: `${point.hour_traffic || 0}小時${point.min_traffic || 0}分鐘`,
+              交通時間: `${point.hour_traffic || 0}h${point.min_traffic || 0}m`,
               交通時間分鐘: (point.hour_traffic || 0) * 60 + (point.min_traffic || 0),
               hour_traffic: point.hour_traffic || 0,
               min_traffic: point.min_traffic || 0,
