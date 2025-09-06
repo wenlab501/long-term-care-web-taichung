@@ -412,7 +412,6 @@
                     <tr
                       v-for="(point, index) in selectedFeature.properties.allServicePoints"
                       :key="index"
-                      class="cursor-pointer"
                       @click="selectServicePoint(point)"
                     >
                       <td class="text-center">
@@ -502,78 +501,92 @@
                 />
               </div>
               <div v-else class="text-muted small">此服務點缺少 detail 資料</div>
-            </div>
 
-            <hr class="my-3" />
+              <div class="pb-2">
+                <div class="my-title-xs-gray pb-1">
+                  服務項目列表 ({{ selectedFeature.properties.serviceItems.length }})
+                </div>
 
-            <div class="my-title-sm-black mb-3">
-              服務項目列表 ({{ selectedFeature.properties.serviceItems.length }})
-            </div>
-
-            <div v-if="selectedFeature.properties.serviceItems.length > 0" class="mb-3">
-              <div class="table-responsive">
-                <table class="table w-100 mb-0">
-                  <thead class="sticky-top my-table-thead">
-                    <tr class="text-center text-nowrap">
-                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
-                        <span class="my-title-xs-gray text-nowrap">row_id</span>
-                      </th>
-                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
-                        <span class="my-title-xs-gray text-nowrap">服務項目代碼</span>
-                      </th>
-                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
-                        <span class="my-title-xs-gray text-nowrap">單價</span>
-                      </th>
-                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
-                        <span class="my-title-xs-gray text-nowrap">服務時間</span>
-                      </th>
-                      <th class="my-bgcolor-white-hover p-1 my-cursor-pointer">
-                        <span class="my-title-xs-gray text-nowrap">總時間</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(item, index) in selectedFeature.properties.serviceItems"
-                      :key="item.row_id || index"
-                      class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
-                    >
-                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                        <div class="my-content-xs-black px-3 py-2">
-                          {{ item.row_id || 'N/A' }}
-                        </div>
-                      </td>
-                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                        <div class="my-content-xs-black px-3 py-2">
-                          {{ item.服務項目代碼 || 'N/A' }}
-                        </div>
-                      </td>
-                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                        <div class="my-content-xs-black px-3 py-2">
-                          {{ item.單價 || item.unitPrice || 'N/A' }}
-                        </div>
-                      </td>
-                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                        <div class="my-content-xs-black px-3 py-2">
-                          {{
-                            `${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`
-                          }}
-                        </div>
-                      </td>
-                      <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                        <div class="my-content-xs-black px-3 py-2">
-                          {{ `${item.hour_total || 0}h${item.min_total || 0}m` }}
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div v-if="selectedFeature.properties.serviceItems.length > 0" class="pb-1">
+                  <div class="table-responsive">
+                    <table class="table w-100 mb-0">
+                      <thead class="sticky-top my-table-thead">
+                        <tr class="text-center text-nowrap">
+                          <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">row_id</span>
+                          </th>
+                          <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">服務項目代碼</span>
+                          </th>
+                          <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">單價</span>
+                          </th>
+                          <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">服務時間</span>
+                          </th>
+                          <th class="p-1">
+                            <span class="my-title-xs-gray text-nowrap">總時間</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="(item, index) in selectedFeature.properties.serviceItems"
+                          :key="item.row_id || index"
+                          class="text-center text-nowrap border-bottom"
+                        >
+                          <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{ item.row_id || 'N/A' }}
+                            </div>
+                          </td>
+                          <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{ item.服務項目代碼 || 'N/A' }}
+                            </div>
+                          </td>
+                          <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{ item.單價 || item.unitPrice || 'N/A' }}
+                            </div>
+                          </td>
+                          <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{
+                                `${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`
+                              }}
+                            </div>
+                          </td>
+                          <td
+                            class="border-0 text-nowrap text-truncate p-0"
+                            style="max-width: 80px"
+                          >
+                            <div class="my-content-xs-black px-3 py-2">
+                              {{ `${item.hour_total || 0}h${item.min_total || 0}m` }}
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div v-else class="text-muted">
+                  <i class="fas fa-info-circle me-2"></i>
+                  此服務點沒有服務項目記錄
+                </div>
               </div>
-            </div>
-
-            <div v-else class="text-muted">
-              <i class="fas fa-info-circle me-2"></i>
-              此服務點沒有服務項目記錄
             </div>
           </template>
 
