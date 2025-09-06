@@ -84,22 +84,65 @@
       // =============================================================
       // 🎯 創建共用的 popup 內容函數，顯示完整的 detail 內容
       const createServicePointContent = (props) => {
+        // 處理姓名和性別顯示
+        const name = props.姓名 || props.name || '';
+        const gender = props.性別 || props.gender || '';
+        const genderInitial = gender === '男性' ? 'M' : gender === '女性' ? 'F' : '';
+        const colorClass =
+          gender === '男性' ? 'my-color-blue' : gender === '女性' ? 'my-color-red' : '';
+        const nameWithGender = name && genderInitial ? `${name}(${genderInitial})` : name;
+
+        // 處理服務時間顯示
+        const startTime = (() => {
+          if (props.時間) return props.時間;
+          if (props.起始時間) return props.起始時間;
+          if (props.hour_start !== undefined && props.min_start !== undefined) {
+            return `${props.hour_start}:${String(props.min_start).padStart(2, '0')}`;
+          }
+          return 'N/A';
+        })();
+
+        const endTime = (() => {
+          if (props.結束時間) return props.結束時間;
+          if (props.hour_end !== undefined && props.min_end !== undefined) {
+            return `${props.hour_end}:${String(props.min_end).padStart(2, '0')}`;
+          }
+          return 'N/A';
+        })();
+
+        const serviceTime = `${startTime} - ${endTime}`;
+
+        // 處理總時間顯示
+        const totalTime = (() => {
+          if (props.總時間) return props.總時間;
+          if (props.time_total) return `${props.time_total}m`;
+          if (
+            props.hour_start !== undefined &&
+            props.min_start !== undefined &&
+            props.hour_end !== undefined &&
+            props.min_end !== undefined
+          ) {
+            const startMinutes = props.hour_start * 60 + props.min_start;
+            const endMinutes = props.hour_end * 60 + props.min_end;
+            const totalMinutes = endMinutes - startMinutes;
+            if (totalMinutes > 0) {
+              const hours = Math.floor(totalMinutes / 60);
+              const minutes = totalMinutes % 60;
+              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
+            }
+          }
+          return 'N/A';
+        })();
+
         return `
           <div class="my-font-size-sm">
-            <div><strong>${props.姓名 || props.name || ''}</strong></div>
-            <div>編號: ${props.編號 || props.id || ''}</div>
-            <div>服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
-            <div>性別: ${props.性別 || props.gender || ''}</div>
-            <div>戶籍縣市: ${props.個案戶籍縣市 || ''}</div>
-            <div>戶籍鄉鎮區: ${props.鄉鎮區 || ''}</div>
-            <div>戶籍里別: ${props.里別 || ''}</div>
-            <div>戶籍地址: ${props.個案戶籍地址 || ''}</div>
-            <div>居住縣市: ${props.個案居住縣市 || ''}</div>
-            <div>居住鄉鎮區: ${props['鄉鎮區.1'] || ''}</div>
-            <div>居住里別: ${props['里別.1'] || ''}</div>
-            <div>居住地址: ${props.個案居住地址 || props.address || ''}</div>
-            <div>服務時間: ${props.hour_start || ''}:${props.min_start?.toString().padStart(2, '0') || '00'} - ${props.hour_end || ''}:${props.min_end?.toString().padStart(2, '0') || '00'}</div>
-            <div>總時間: ${props.time_total || ''}m</div>
+            <div><strong>編號:</strong> ${props.編號 || props.id || 'N/A'}</div>
+            <div><strong>姓名:</strong> <span class="${colorClass}">${nameWithGender || 'N/A'}</span></div>
+            <div><strong>服務日期:</strong> ${dataStore.selectedServiceDate || 'N/A'}</div>
+            <div><strong>戶籍地址:</strong> ${props.個案戶籍地址 || 'N/A'}</div>
+            <div><strong>居住地址:</strong> ${props.個案居住地址 || props.address || 'N/A'}</div>
+            <div><strong>服務時間:</strong> ${serviceTime}</div>
+            <div><strong>總時間:</strong> ${totalTime}</div>
           </div>`;
       };
 
@@ -1432,6 +1475,9 @@
           // 清除所有圖層的樣式
           resetAllLayerStyles();
 
+          // 關閉所有現有的 popup，避免重疊
+          mapInstance.closePopup();
+
           // 從座標信息獲取位置
           const coordinates = highlightData.coordinates;
           const lat = coordinates?.lat;
@@ -1515,17 +1561,17 @@
                 }),
               }).addTo(mapInstance);
 
-              // 添加彈出視窗
+              // 添加彈出視窗（使用 createServicePointContent 保持一致性）
+              const props = item;
+              const popupContent = createServicePointContent(props);
               highlightMarker
-                .bindPopup(
-                  `
-                <div style="font-size: 14px;">
-                  <strong>${item.姓名 || item.name || '服務點'}</strong><br>
-                  地址: ${item.個案居住地址 || item.address || '無'}<br>
-                  時間: ${item.時間 || item.time || '無'}
-                </div>
-                `
-                )
+                .bindPopup(popupContent, {
+                  closeButton: false,
+                  autoClose: false,
+                  closeOnClick: false,
+                  className: 'service-point-popup',
+                  opacity: 0.9,
+                })
                 .openPopup();
             }
 
