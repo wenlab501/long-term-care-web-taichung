@@ -3,12 +3,15 @@
    * LeftView.vue
    *
    * Purpose:
-   * - Hosts the left panel including the layer list and optional service point detail.
+   * - Hosts the left panel including the layer tabs and optional service point detail.
+   * - Provides tab switching functionality between DateLayersTab and ServerLayersTab.
    *
    * Notes:
-   * - Documentation only; behavior and UI are unchanged.
+   * - Updated to support tab system similar to UpperView.vue
    */
-  import LayersTab from '../tabs/LayersTab.vue';
+  import { ref } from 'vue';
+  import DateLayersTab from '../tabs/DateLayersTab.vue';
+  import ServerLayersTab from '../tabs/ServerLayersTab.vue';
 
   export default {
     name: 'LeftView',
@@ -18,7 +21,8 @@
      * 註冊左側面板內使用的子組件
      */
     components: {
-      LayersTab, // 圖層列表分頁組件
+      DateLayersTab, // 日期圖層分頁組件
+      ServerLayersTab, // 伺服器圖層分頁組件
     },
 
     /**
@@ -43,16 +47,37 @@
      * 使用 Composition API 設定組件邏輯
      */
     setup(props, { emit }) {
+      // 📑 分頁狀態管理 (Tab State Management)
+      /** 🗂️ 左側分頁狀態 (預設為日期圖層分頁) */
+      const activeLeftTab = ref('date');
+
       /**
        * 📋 清除服務點詳細資訊
        */
       const clearServicePointDetail = () => {
-        console.log('📋 LeftView: 清除服務點詳細資訊');
         emit('clear-service-point-detail');
+      };
+
+      /**
+       * 🔄 切換左側分頁
+       * @param {string} tabName - 分頁名稱 ('date' 或 'server')
+       */
+      const switchLeftTab = (tabName) => {
+        activeLeftTab.value = tabName;
+        // 切換左側分頁時清空地圖顯示
+        try {
+          const { useDataStore } = require('../stores/dataStore.js');
+          const store = useDataStore();
+          store.hideAllLayersOnMap();
+        } catch (e) {
+          // no-op
+        }
       };
 
       // 📤 返回響應式數據給模板使用
       return {
+        activeLeftTab,
+        switchLeftTab,
         clearServicePointDetail,
       };
     },
@@ -64,11 +89,50 @@
     <!-- 📰 頁面標題區域 -->
     <div class="p-3">
       <h1 class="my-font-size-lg my-letter-spacing-lg text-center m-3">臺中市長照服務路線</h1>
+
+      <!-- 🎛️ 分頁導航按鈕 (Tab Navigation Buttons) -->
+      <div class="d-flex justify-content-center">
+        <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
+          <!-- 日期圖層分頁按鈕 -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeLeftTab === 'date',
+            }"
+            @click="switchLeftTab('date')"
+            style="width: 30px; height: 30px"
+            title="日期圖層"
+          >
+            <i class="fas fa-calendar-day"></i>
+          </button>
+
+          <!-- 伺服器圖層分頁按鈕 -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeLeftTab === 'server',
+            }"
+            @click="switchLeftTab('server')"
+            style="width: 30px; height: 30px"
+            title="伺服器圖層"
+          >
+            <i class="fas fa-server"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- 📋 圖層列表分頁內容 -->
+    <!-- 📋 分頁內容區域 -->
     <div class="flex-grow-1 overflow-hidden">
-      <LayersTab />
+      <!-- 📅 日期圖層分頁內容 -->
+      <div v-show="activeLeftTab === 'date'" class="h-100">
+        <DateLayersTab />
+      </div>
+
+      <!-- 🖥️ 伺服器圖層分頁內容 -->
+      <div v-show="activeLeftTab === 'server'" class="h-100">
+        <ServerLayersTab />
+      </div>
 
       <!-- 📋 服務點詳細資訊區域 (Service Point Detail Area) -->
       <div v-if="selectedServicePoint" class="mt-3 p-3 my-bgcolor-white rounded shadow-sm">

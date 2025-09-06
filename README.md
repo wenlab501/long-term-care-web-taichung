@@ -220,7 +220,8 @@ src/
 │   ├── MapTab.vue             # 地圖展示
 │   ├── DashboardTab.vue       # 儀表板
 │   ├── DataTableTab.vue       # 資料表格
-│   ├── LayersTab.vue          # 圖層管理
+│   ├── DateLayersTab.vue      # 日期圖層管理
+│   ├── ServerLayersTab.vue    # 伺服器圖層管理
 │   └── PropertiesTab.vue      # 屬性面板
 ├── 📁 stores/              # Pinia 狀態管理
 │   ├── dataStore.js           # 主要資料狀態

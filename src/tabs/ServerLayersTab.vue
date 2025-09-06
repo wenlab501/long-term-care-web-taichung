@@ -1,28 +1,30 @@
 <script>
   /**
-   * LayersTab.vue
+   * ServerLayersTab.vue
    *
    * Purpose:
-   * - Lists layer groups and layers with visibility toggles.
-   * - Hosts the service-date picker to load day-specific provider layers.
+   * - Service provider-based layer management
+   * - Lists layer groups and layers with visibility toggles
+   * - Hosts the service provider picker to load provider-specific date layers
    *
    * Notes:
-   * - Refactor only adds comments and headers; behavior and UI unchanged.
+   * - Similar to DateLayersTab but filters by service provider instead of date
+   * - Shows all service dates for the selected service provider
    */
   import { computed, ref, onMounted } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIcon } from '../utils/utils.js';
-  import DatePicker from '../components/DatePicker.vue';
+  import ServiceProviderPicker from '../components/ServiceProviderPicker.vue';
 
   export default {
-    name: 'LayersTab',
+    name: 'ServerLayersTab',
 
     /**
      * 🧩 組件註冊 (Component Registration)
      * 註冊子組件
      */
     components: {
-      DatePicker,
+      ServiceProviderPicker,
     },
 
     /**
@@ -36,17 +38,17 @@
       // 建立一個 ref 來引用模板中的圖層列表 DOM 元素
       const layerListRef = ref(null);
 
-      // 建立一個計算屬性，從 store 中獲取圖層數據。當 store 的 state 改變時，這裡會自動更新。
+      // 建立一個計算屬性，從 store 中獲取圖層數據
       const layers = computed(() => dataStore.layers);
 
-      // 📅 日期選擇相關狀態（從 dataStore 獲取）
-      const selectedServiceDate = computed({
-        get: () => dataStore.selectedServiceDate,
+      // 👤 服務員選擇相關狀態（從 dataStore 獲取）
+      const selectedServiceProvider = computed({
+        get: () => dataStore.selectedServiceProvider,
         set: (value) => {
           if (value) {
-            dataStore.setServiceDateFilter(value);
+            dataStore.setServiceProviderFilter(value);
           } else {
-            dataStore.clearServiceDateFilter();
+            dataStore.clearServiceProviderFilter();
           }
         },
       });
@@ -57,7 +59,7 @@
        * @param {string} layerId - 要切換的圖層 ID
        */
       const toggleLayer = (layerId) => {
-        console.log('🔘 LayersTab: 切換圖層', layerId);
+        console.log('🔘 ServerLayersTab: 切換圖層', layerId);
         dataStore.toggleLayerVisibility(layerId);
       };
 
@@ -67,7 +69,7 @@
        * @param {string} groupName - 要切換的群組名稱
        */
       const toggleGroup = (groupName) => {
-        console.log('🔘 LayersTab: 切換群組', groupName);
+        console.log('🔘 ServerLayersTab: 切換群組', groupName);
         dataStore.toggleGroupVisibility(groupName);
       };
 
@@ -78,8 +80,8 @@
        * @returns {string} CSS 顏色值
        */
       const getLayerColor = (layer) => {
-        // 如果是服務人員圖層，從 GeoJSON features 中獲取實際使用的顏色
-        if (layer.layerId && layer.layerId.startsWith('service-provider-') && layer.geoJsonData) {
+        // 如果是服務日期圖層，從 GeoJSON features 中獲取實際使用的顏色
+        if (layer.layerId && layer.layerId.startsWith('service-date-') && layer.geoJsonData) {
           const features = layer.geoJsonData.features || [];
           if (features.length > 0) {
             // 優先使用 fillColor，如果沒有則使用 routeColor
@@ -99,34 +101,39 @@
       };
 
       /**
-       * 📅 處理日期選擇事件
-       * @param {string} dateStr - 7碼日期字串 (例如: 1140701)
+       * 👤 處理服務員選擇事件
+       * @param {string} providerId - 服務員身分證 ID
        */
-      const handleDateSelected = async (dateStr) => {
-        console.log('📅 LayersTab 接收到的日期:', dateStr);
-        console.log('📅 日期長度:', dateStr ? dateStr.length : 'null');
-        console.log('📅 預期的民國年格式:', dateStr);
+      const handleProviderSelected = async (providerId) => {
+        console.log('👤 ServerLayersTab 接收到的服務員ID:', providerId);
 
-        if (dateStr) {
-          dataStore.setServiceDateFilter(dateStr);
-          // 載入該日期的服務人員圖層
-          console.log('📅 開始載入服務人員圖層');
-          await dataStore.loadServiceProviderLayers(dateStr);
+        if (providerId) {
+          dataStore.setServiceProviderFilter(providerId);
+          // 載入該服務員的所有日期圖層
+          console.log('👤 開始載入服務員日期圖層');
+          await dataStore.loadServiceProviderDateLayers(providerId);
         } else {
-          dataStore.clearServiceDateFilter();
-          // 清除所有服務人員圖層
-          dataStore.clearServiceProviderLayers();
+          dataStore.clearServiceProviderFilter();
+          // 清除服務員群組圖層
+          dataStore.clearServiceProviderDateLayers();
         }
       };
 
       /**
        * 🚀 組件掛載時初始化
-       * 載入預設日期 (7月1日) 的服務人員圖層
+       * 載入服務員清單並預設選擇第一個服務員
        */
       onMounted(async () => {
-        console.log('🚀 LayersTab 組件掛載，開始載入預設日期數據');
-        // 載入預設日期的服務人員圖層
-        await dataStore.loadServiceProviderLayers('1140701');
+        console.log('🚀 ServerLayersTab 組件掛載，開始載入服務員清單');
+        // 載入可用的服務員清單
+        const providers = await dataStore.loadAvailableServiceProviders();
+
+        // 預設選擇第一個服務員
+        if (providers && providers.length > 0) {
+          const firstProvider = providers[0];
+          console.log('👤 預設選擇第一個服務員:', firstProvider.id);
+          await handleProviderSelected(firstProvider.id);
+        }
       });
 
       // 📤 將需要暴露給 <template> 使用的數據和方法返回
@@ -138,10 +145,10 @@
         layerListRef,
         getIcon,
         getLayerColor,
-        // 📅 日期選擇相關
-        selectedServiceDate,
-        handleDateSelected,
-        isDateFilterActive: computed(() => dataStore.isDateFilterActive),
+        // 👤 服務員選擇相關
+        selectedServiceProvider,
+        handleProviderSelected,
+        isServiceProviderFilterActive: computed(() => dataStore.isServiceProviderFilterActive),
       };
     },
   };
@@ -151,29 +158,31 @@
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
       <div class="mb-3">
-        <!-- 📅 服務日期選擇區域 -->
+        <!-- 👤 服務員選擇區域 -->
         <div class="p-3">
           <div class="mb-2">
-            <div class="my-title-xs-gray mb-1">選擇服務日期</div>
-            <DatePicker
-              v-model="selectedServiceDate"
-              placeholder="選擇服務日期"
-              @date-selected="handleDateSelected"
+            <div class="my-title-xs-gray mb-1">選擇服務員</div>
+            <ServiceProviderPicker
+              v-model="selectedServiceProvider"
+              @provider-selected="handleProviderSelected"
             />
           </div>
         </div>
 
-        <div v-for="group in layers" :key="group.groupName" class="p-3">
+        <!-- 🗂️ 圖層群組列表 -->
+        <div
+          v-for="group in layers.filter((g) => g.groupName === '依服務員圖層')"
+          :key="group.groupName"
+          class="p-3"
+        >
           <div class="d-flex align-items-center pb-2">
             <div class="my-title-xs-gray">
               {{ group.groupName }}
-              <span v-if="group.groupName === '新基準中央服務紀錄' && group.groupLayers.length > 0">
-                ({{ group.groupLayers.length }})
-              </span>
+              <span v-if="group.groupLayers.length > 0"> ({{ group.groupLayers.length }}) </span>
             </div>
-            <!-- 群組開關 - 只有"新基準中央服務紀錄"群組才顯示 -->
+            <!-- 群組開關 - 有圖層時才顯示 -->
             <div
-              v-if="group.groupName === '新基準中央服務紀錄' && group.groupLayers.length > 0"
+              v-if="group.groupLayers.length > 0"
               class="d-flex align-items-center justify-content-center ms-auto"
             >
               <input
@@ -191,6 +200,7 @@
             </div>
           </div>
 
+          <!-- 📅 圖層列表 -->
           <div v-for="layer in group.groupLayers" :key="layer.layerId" class="mb-1">
             <!-- 圖層卡片 -->
             <div

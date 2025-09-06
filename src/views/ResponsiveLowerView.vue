@@ -1,6 +1,6 @@
 <script>
   import { computed, ref, onMounted, onUnmounted } from 'vue';
-  import LayersTab from '../tabs/LayersTab.vue';
+  import DateLayersTab from '../tabs/DateLayersTab.vue';
   import DataTableTab from '../tabs/DataTableTab.vue';
   import PropertiesTab from '../tabs/PropertiesTab.vue';
 
@@ -12,7 +12,7 @@
      * 註冊響應式下半部面板內使用的子組件
      */
     components: {
-      LayersTab, // 圖層列表分頁組件
+      DateLayersTab, // 日期圖層分頁組件
       DataTableTab, // 資料表格分頁組件
       PropertiesTab, // 物件屬性分頁組件
     },
@@ -154,7 +154,7 @@
     >
       <!-- 📋 圖層分頁內容 -->
       <div v-show="activeTab === 'layers'" class="h-100">
-        <LayersTab />
+        <DateLayersTab />
       </div>
 
       <!-- 📊 資料表格分頁內容 -->
