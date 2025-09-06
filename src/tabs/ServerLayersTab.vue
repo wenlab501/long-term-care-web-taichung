@@ -107,6 +107,9 @@
       const handleProviderSelected = async (providerId) => {
         console.log('👤 ServerLayersTab 接收到的服務人員ID:', providerId);
 
+        // 切換服務人員時清空 right panel
+        dataStore.setSelectedFeature(null);
+
         if (providerId) {
           dataStore.setServiceProviderFilter(providerId);
           // 載入該服務人員的所有日期圖層

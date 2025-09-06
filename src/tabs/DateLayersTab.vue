@@ -143,6 +143,9 @@
         console.log('📅 日期長度:', dateStr ? dateStr.length : 'null');
         console.log('📅 預期的民國年格式:', dateStr);
 
+        // 切換服務日期時清空 right panel
+        dataStore.setSelectedFeature(null);
+
         if (dateStr) {
           dataStore.setServiceDateFilter(dateStr);
           // 載入該日期的服務人員圖層
