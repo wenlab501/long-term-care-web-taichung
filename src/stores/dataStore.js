@@ -323,7 +323,7 @@ export const useDataStore = defineStore(
           // 創建一個臨時的載入指示器圖層
           const loadingLayer = {
             layerId: 'loading-indicator-date',
-            layerName: '載入資料中...',
+            layerName: '服務日期',
             visible: false,
             isLoaded: false,
             isLoading: true,
@@ -548,7 +548,7 @@ export const useDataStore = defineStore(
           // 創建一個臨時的載入指示器圖層
           const loadingLayer = {
             layerId: 'loading-indicator-provider',
-            layerName: '載入資料中...',
+            layerName: '服務人員',
             visible: false,
             isLoaded: false,
             isLoading: true,
