@@ -82,11 +82,8 @@
       // =============================================================
       // Popup Content Helpers
       // =============================================================
-      // 🎯 創建共用的 popup 內容函數，顯示完整的 detail 內容
-      const createServicePointContent = (props, index = 0, routeOrder = null) => {
-        // 處理 # 欄位顯示 - 優先使用資料中的 # 欄位
-        const itemNumber = props['#'] || (index + 1).toString();
-
+      // 🎯 創建簡化的 popup 內容函數，只顯示編號、姓名、個案居住地址
+      const createServicePointContent = (props) => {
         // 處理姓名和性別顯示
         const name = props.姓名 || props.name || '';
         const gender = props.性別 || props.gender || '';
@@ -95,82 +92,8 @@
           gender === '男性' ? 'my-color-blue' : gender === '女性' ? 'my-color-red' : '';
         const nameWithGender = name && genderInitial ? `${name}(${genderInitial})` : name;
 
-        // 處理服務時間顯示
-        const startTime = (() => {
-          if (props.時間) return props.時間;
-          if (props.起始時間) return props.起始時間;
-          if (props.hour_start !== undefined && props.min_start !== undefined) {
-            return `${props.hour_start}:${String(props.min_start).padStart(2, '0')}`;
-          }
-          return 'N/A';
-        })();
-
-        const endTime = (() => {
-          if (props.結束時間) return props.結束時間;
-          if (props.hour_end !== undefined && props.min_end !== undefined) {
-            return `${props.hour_end}:${String(props.min_end).padStart(2, '0')}`;
-          }
-          return 'N/A';
-        })();
-
-        const serviceTime = `${startTime} - ${endTime}`;
-
-        // 處理總時間顯示
-        const totalTime = (() => {
-          if (props.總時間) return props.總時間;
-          if (props.time_total) return `${props.time_total}m`;
-          if (
-            props.hour_start !== undefined &&
-            props.min_start !== undefined &&
-            props.hour_end !== undefined &&
-            props.min_end !== undefined
-          ) {
-            const startMinutes = props.hour_start * 60 + props.min_start;
-            const endMinutes = props.hour_end * 60 + props.min_end;
-            const totalMinutes = endMinutes - startMinutes;
-            if (totalMinutes > 0) {
-              const hours = Math.floor(totalMinutes / 60);
-              const minutes = totalMinutes % 60;
-              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
-            }
-          }
-          return 'N/A';
-        })();
-
-        // 處理交通時間顯示
-        const trafficTime = (() => {
-          // 如果是第一筆記錄（routeOrder = 1），顯示 "-"
-          if (routeOrder === 1) {
-            return '-';
-          }
-
-          if (props.交通時間) return props.交通時間;
-          if (props.hour_traffic !== undefined && props.min_traffic !== undefined) {
-            const hours = props.hour_traffic || 0;
-            const minutes = props.min_traffic || 0;
-            if (hours > 0 || minutes > 0) {
-              return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
-            }
-          }
-          return 'N/A';
-        })();
-
-        // 處理服務數量顯示
-        const serviceCount = (() => {
-          return (
-            props.service_items_count ??
-            (Array.isArray(props.service_items) ? props.service_items.length : null) ??
-            props.服務數量 ??
-            0
-          ).toString();
-        })();
-
         return `
           <div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">#</div>
-              <div class="my-content-sm-black pb-1">${itemNumber}</div>
-            </div>
             <div class="pb-2">
               <div class="my-title-xs-gray pb-1">編號</div>
               <div class="my-content-sm-black pb-1">${props.編號 || props.id || 'N/A'}</div>
@@ -182,22 +105,6 @@
             <div class="pb-2">
               <div class="my-title-xs-gray pb-1">個案居住地址</div>
               <div class="my-content-sm-black pb-1">${props.個案居住地址 || props.address || 'N/A'}</div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">服務時間</div>
-              <div class="my-content-sm-black pb-1">${serviceTime}</div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">總時間</div>
-              <div class="my-content-sm-black pb-1">${totalTime}</div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">交通時間</div>
-              <div class="my-content-sm-black pb-1">${trafficTime}</div>
-            </div>
-            <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">服務數量</div>
-              <div class="my-content-sm-black pb-1">${serviceCount}</div>
             </div>
           </div>`;
       };
@@ -811,26 +718,15 @@
             } else {
               // 檢查是否為新基準中央服務紀錄點位
               if (feature.properties.routeOrder && feature.properties.propertyData) {
-                // 新基準中央服務紀錄點位的彈窗
-                layer.bindPopup(
-                  `
-                  <div class="">
-                    <div class="my-title-xs-gray pb-2">${layerName}</div>
-                    <div class="my-content-sm-black">${feature.properties.name}</div>
-                    <div class="my-content-xs-gray pt-1">路線順序: ${feature.properties.routeOrder}</div>
-                    <div class="my-content-xs-gray">服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
-                    <div class="my-content-xs-gray">服務時間: ${feature.properties.propertyData.服務時間}</div>
-                    <div class="my-content-xs-gray">居住地址: ${feature.properties.propertyData.個案居住地址}</div>
-                  </div>
-                `,
-                  {
-                    className: 'service-route-point-popup',
-                    offset: [0, -5],
-                    closeButton: true,
-                    autoClose: false,
-                    closeOnClick: false,
-                  }
-                );
+                // 新基準中央服務紀錄點位的彈窗（使用簡化的服務點內容）
+                const popupContent = createServicePointContent(feature.properties);
+                layer.bindPopup(popupContent, {
+                  className: 'service-point-popup',
+                  offset: [0, -5],
+                  closeButton: true,
+                  autoClose: true,
+                  closeOnClick: true,
+                });
               } else {
                 // 一般點類型的彈窗
                 layer.bindPopup(`
@@ -842,144 +738,9 @@
               }
             }
 
-            // 綁定滑鼠事件
+            // 只綁定點擊事件 - 移除所有 highlight 和 tooltip 功能
             layer.on({
-              // 滑鼠懸停事件
-              mouseover: function () {
-                // 注意：路徑規劃點擊模式相關代碼已移除
-
-                // 分析圖層的特殊處理
-                if (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') {
-                  if (feature.properties.type === 'point-analysis') {
-                    // 分析點不需要懸停效果，直接返回
-                    return;
-                  } else if (feature.properties.type === 'circle-analysis') {
-                    // 分析圓圈懸停效果
-                    if (!this._originalStyle) {
-                      this._originalStyle = {
-                        weight: this.options.weight,
-                        color: this.options.color,
-                        fillOpacity: this.options.fillOpacity,
-                      };
-                    }
-                    this.setStyle({
-                      weight: 2,
-                      fillOpacity: 0.4,
-                    });
-                  }
-                } else if (
-                  layer.isRoutePlanningLayer ||
-                  feature.properties.layerId === 'route-planning-layer'
-                ) {
-                  if (feature.properties.type === 'route-planning-point') {
-                    // 路徑規劃點不需要懸停效果，直接返回
-                    return;
-                  } else if (feature.properties.type === 'route-line') {
-                    // 路徑規劃路線懸停效果
-                    if (!this._originalStyle) {
-                      this._originalStyle = {
-                        weight: this.options.weight,
-                        color: this.options.color,
-                        opacity: this.options.opacity,
-                      };
-                    }
-                    this.setStyle({
-                      weight: 6, // 加粗路線
-                      opacity: 1.0, // 增加透明度
-                      color: 'var(--my-color-orange-hover)', // 使用深橘色
-                    });
-                    this.bringToFront(); // 置於最前層
-                  }
-                } else if (type === 'point') {
-                  // 路線中心點：不做任何 hover 效果
-                  if (feature.properties.type === 'route-center-point') {
-                    return;
-                  } else {
-                    // 一般點類型處理
-                    const element = this.getElement();
-                    if (element) {
-                      const innerIconDiv = element.querySelector('div');
-                      if (innerIconDiv) {
-                        innerIconDiv.style.transition = 'transform 0.04s ease-in-out';
-                        innerIconDiv.style.transform = 'scale(1.6)';
-                      }
-                    }
-                  }
-                } else if (type === 'polygon' && feature.properties.fillColor !== null) {
-                  // 多邊形類型處理
-                  if (!this._originalStyle) {
-                    this._originalStyle = {
-                      weight: this.options.weight,
-                      color: this.options.color,
-                      fillOpacity: this.options.fillOpacity,
-                    };
-                  }
-                  this.setStyle({
-                    weight: 4,
-                    color: 'white',
-                    fillOpacity: 0.8,
-                  });
-                  this.bringToFront();
-                }
-              },
-              // 滑鼠離開事件
-              mouseout: function () {
-                // 注意：路徑規劃點擊模式相關代碼已移除
-
-                // 只有在沒有被選中的情況下才恢復原始樣式
-                const isSelected =
-                  dataStore.selectedFeature &&
-                  dataStore.selectedFeature.properties.id === feature.properties.id;
-
-                if (!isSelected) {
-                  // 分析圖層的特殊處理
-                  if (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') {
-                    if (feature.properties.type === 'point-analysis') {
-                      // 分析點不需要恢復效果，直接返回
-                      return;
-                    } else if (feature.properties.type === 'circle-analysis') {
-                      // 分析圓圈恢復
-                      if (this._originalStyle) {
-                        this.setStyle(this._originalStyle);
-                      }
-                    }
-                  } else if (
-                    layer.isRoutePlanningLayer ||
-                    feature.properties.layerId === 'route-planning-layer'
-                  ) {
-                    if (feature.properties.type === 'route-planning-point') {
-                      // 路徑規劃點不需要恢復效果，直接返回
-                      return;
-                    } else if (feature.properties.type === 'route-line') {
-                      // 路徑規劃路線恢復
-                      if (this._originalStyle) {
-                        this.setStyle(this._originalStyle);
-                      }
-                    }
-                  } else if (type === 'point') {
-                    // 路線中心點：不做任何 hover 恢復（因為沒有 hover）
-                    if (feature.properties.type === 'route-center-point') {
-                      return;
-                    } else {
-                      // 一般點類型處理
-                      const element = this.getElement();
-                      if (element) {
-                        const innerIconDiv = element.querySelector('div');
-                        if (innerIconDiv) {
-                          innerIconDiv.style.transform = '';
-                        }
-                      }
-                    }
-                  } else if (type === 'polygon') {
-                    // 多邊形類型處理
-                    if (this._originalStyle) {
-                      this.setStyle(this._originalStyle);
-                    } else {
-                      geoJsonLayer.resetStyle(this);
-                    }
-                  }
-                }
-              },
+              // 移除所有滑鼠懸停和離開事件 - 不需要任何 highlight 效果
               // 點擊事件
               click: function () {
                 // 注意：路徑規劃點擊模式相關代碼已移除
@@ -991,6 +752,18 @@
                   (layer.isAnalysisLayer || feature.properties.layerId === 'analysis-layer') &&
                   feature.properties.type === 'point-analysis'
                 ) {
+                  return;
+                }
+
+                // 服務點點擊：打開現有的 popup
+                if (feature.properties.routeOrder && feature.properties.propertyData) {
+                  // 首先關閉地圖上所有現有的 popup，確保同一時間只有一個popup
+                  mapInstance.closePopup();
+
+                  // 直接打開已經綁定的 popup
+                  if (this.openPopup) {
+                    this.openPopup();
+                  }
                   return;
                 }
 
@@ -1012,12 +785,7 @@
                   // 設置到dataStore中
                   dataStore.setSelectedFeature(routeCenterFeature);
 
-                  // 縮放到該中心點
-                  const zoomLevel = Math.max(mapInstance.getZoom(), 16);
-                  mapInstance.setView(
-                    [feature.geometry.coordinates[1], feature.geometry.coordinates[0]],
-                    zoomLevel
-                  );
+                  // 移除縮放功能 - 不再自動縮放到點擊位置
 
                   return;
                 }
@@ -1118,25 +886,8 @@
                     emit('show-service-point-detail', serviceItemsData);
                     console.log('🎯 MapTab: 已發送 show-service-point-detail 事件');
 
-                    // 縮放到該服務點
-                    if (feature.geometry && feature.geometry.type === 'Point') {
-                      const [lng, lat] = feature.geometry.coordinates;
-                      mapInstance.setView([lat, lng], 16);
-                      console.log('🎯 MapTab: 地圖已移動到服務點位置:', [lat, lng]);
-                      const props = feature.properties || {};
-                      // 顯示 popup（完整的 detail 內容）
-                      if (this.bindPopup) {
-                        const popupContent = createServicePointContent(props, 0, props.routeOrder);
-                        this.bindPopup(popupContent, {
-                          closeButton: false,
-                          autoClose: false,
-                          closeOnClick: false,
-                          className: 'service-point-popup',
-                          opacity: 0.9,
-                        });
-                        this.openPopup && this.openPopup();
-                      }
-                    }
+                    // 移除縮放和 popup 功能 - 只保留選擇功能
+                    console.log('🎯 MapTab: 服務點已選擇，不再縮放或顯示 popup');
                   } catch (error) {
                     console.error('❌ MapTab: 創建服務項目資料時發生錯誤:', error);
 
@@ -1160,11 +911,7 @@
                   dataStore.setSelectedFeature(feature); // 設定選中的要素到資料存儲
                   emit('feature-selected', feature); // 發送要素選中事件
 
-                  // 如果是點要素，縮放到該點
-                  if (feature.geometry && feature.geometry.type === 'Point') {
-                    const [lng, lat] = feature.geometry.coordinates;
-                    mapInstance.setView([lat, lng], 16); // 縮放到 16 級別
-                  }
+                  // 移除縮放功能 - 不再自動縮放到點擊位置
                 }
               },
               // 右鍵點擊事件
@@ -1531,7 +1278,7 @@
           // 清除所有圖層的樣式
           resetAllLayerStyles();
 
-          // 關閉所有現有的 popup，避免重疊
+          // 關閉所有現有的 popup，確保同一時間只有一個popup
           mapInstance.closePopup();
 
           // 從座標信息獲取位置
@@ -1542,7 +1289,7 @@
           if (lat && lon) {
             console.log('🎯 MapTab: 移動地圖到座標:', lat, lon);
 
-            // 移動地圖視圖到服務點位置
+            // 移動地圖視圖到服務點位置（底部面板選擇時縮放到中心）
             saveCurrentViewState();
             mapInstance.setView([lat, lon], 16);
 
@@ -1568,17 +1315,14 @@
 
                     // 只添加 popup，不修改樣式
                     const props = highlightData.item || {};
-                    const popupContent = createServicePointContent(
-                      props,
-                      highlightData.rowIndex || 0,
-                      props.routeOrder
-                    );
+                    const popupContent = createServicePointContent(props);
 
+                    // 顯示 popup（完整的 detail 內容）
                     if (layer.bindPopup) {
                       layer.bindPopup(popupContent, {
-                        closeButton: false,
-                        autoClose: false,
-                        closeOnClick: false,
+                        closeButton: true,
+                        autoClose: true,
+                        closeOnClick: true,
                         className: 'service-point-popup',
                         opacity: 0.9,
                       });
@@ -1610,16 +1354,12 @@
 
               // 添加彈出視窗
               const props = item;
-              const popupContent = createServicePointContent(
-                props,
-                highlightData.rowIndex || 0,
-                props.routeOrder
-              );
+              const popupContent = createServicePointContent(props);
               tempMarker
                 .bindPopup(popupContent, {
-                  closeButton: false,
-                  autoClose: false,
-                  closeOnClick: false,
+                  closeButton: true,
+                  autoClose: true,
+                  closeOnClick: true,
                   className: 'service-point-popup',
                   opacity: 0.9,
                 })
@@ -1800,12 +1540,12 @@
                 const hasDetail = f && f.properties && (f.properties.編號 || f.properties.name);
                 if (hasDetail && targetLayer.getLatLng) {
                   const props = f.properties;
-                  // 顯示 popup（完整的 detail 內容）
-                  const popupContent = createServicePointContent(props, 0, props.routeOrder);
+                  // 顯示 popup（簡化的 detail 內容）
+                  const popupContent = createServicePointContent(props);
                   targetLayer.bindPopup(popupContent, {
-                    closeButton: false,
-                    autoClose: false,
-                    closeOnClick: false,
+                    closeButton: true,
+                    autoClose: true,
+                    closeOnClick: true,
                     className: 'service-point-popup',
                     opacity: 0.9,
                   });
@@ -2439,4 +2179,6 @@
   .route-optimization-click-mode-active * {
     cursor: crosshair !important;
   }
+
+  /* 🗺️ 移除 tooltip 樣式 - 不再使用 tooltip */
 </style>
