@@ -314,6 +314,32 @@ export const useDataStore = defineStore(
         console.log('📅 dataStore 接收到的日期參數:', dateStr);
         console.log('📅 將用此日期查詢 JSON 中的服務日期(請輸入7碼)');
 
+        // 找到服務記錄群組（日期）
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
+        if (serviceRecordGroup) {
+          // 清除現有的服務人員圖層
+          serviceRecordGroup.groupLayers = [];
+
+          // 創建一個臨時的載入指示器圖層
+          const loadingLayer = {
+            layerId: 'loading-indicator-date',
+            layerName: '載入資料中...',
+            visible: false,
+            isLoaded: false,
+            isLoading: true,
+            isAnalysisLayer: false,
+            isIsochroneAnalysisLayer: false,
+            geoJsonData: null,
+            tableData: [],
+            summaryData: { totalCount: 0, routeCount: 0, districtCount: [] },
+            legendData: null,
+            colorName: 'category20b-1',
+            type: 'point',
+            shape: 'circle',
+          };
+          serviceRecordGroup.groupLayers.push(loadingLayer);
+        }
+
         // 載入服務數據（不需要傳遞顏色映射，每天重新分配）
         const result = await loadNewStandardCentralServiceData(
           {
@@ -324,9 +350,6 @@ export const useDataStore = defineStore(
           dateStr,
           null // 不再需要顏色映射
         );
-
-        // 找到服務記錄群組（日期）
-        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
         if (serviceRecordGroup) {
           // 清除現有的服務人員圖層
           serviceRecordGroup.groupLayers = [];
@@ -516,6 +539,32 @@ export const useDataStore = defineStore(
       try {
         console.log('👤 dataStore 接收到的服務人員ID:', providerId);
 
+        // 找到服務記錄群組（服務人員）
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務日期列表');
+        if (serviceRecordGroup) {
+          // 清除現有的圖層
+          serviceRecordGroup.groupLayers = [];
+
+          // 創建一個臨時的載入指示器圖層
+          const loadingLayer = {
+            layerId: 'loading-indicator-provider',
+            layerName: '載入資料中...',
+            visible: false,
+            isLoaded: false,
+            isLoading: true,
+            isAnalysisLayer: false,
+            isIsochroneAnalysisLayer: false,
+            geoJsonData: null,
+            tableData: [],
+            summaryData: { totalCount: 0, routeCount: 0, districtCount: [] },
+            legendData: null,
+            colorName: 'category20b-1',
+            type: 'point',
+            shape: 'circle',
+          };
+          serviceRecordGroup.groupLayers.push(loadingLayer);
+        }
+
         const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
         const response = await fetch(filePath);
 
@@ -538,10 +587,9 @@ export const useDataStore = defineStore(
           dateGroups[date].push(record);
         });
 
-        // 找到服務記錄群組（服務人員）
-        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務日期列表');
+        // 移除載入指示器並處理實際數據
         if (serviceRecordGroup) {
-          // 清除現有的圖層
+          // 清除載入指示器
           serviceRecordGroup.groupLayers = [];
 
           // 為每個日期創建圖層
