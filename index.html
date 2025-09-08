@@ -1,0 +1,17 @@
+<!doctype html><html lang=""><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="/long-term-care-web-taichung/favicon.ico"><title>long-term-care-web-taichung</title><script>// Script to handle SPA redirection from 404.html
+      (function(l) {
+        if (l.search) {
+          var q = {};
+          l.search.slice(1).split('&').forEach(function(v) {
+            var a = v.split('=');
+            q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+          });
+          if (q.p) {
+            window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + q.p.replace(/^\/&/, '/') +
+              (q.q ? ('?' + q.q) : '') +
+              l.hash
+            );
+          }
+        }
+      }(window.location))</script><script defer="defer" src="/long-term-care-web-taichung/js/chunk-vendors.37fd6d08.js"></script><script defer="defer" src="/long-term-care-web-taichung/js/app.38e46a30.js"></script><link href="/long-term-care-web-taichung/css/chunk-vendors.a381de24.css" rel="stylesheet"><link href="/long-term-care-web-taichung/css/app.dbea0efc.css" rel="stylesheet"></head><body><noscript><strong>We're sorry but long-term-care-web-taichung doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="app"></div></body></html>
