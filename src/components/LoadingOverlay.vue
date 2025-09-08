@@ -222,9 +222,9 @@
 
         <!-- 📝 主要載入文字區域 (Primary Loading Text Section) -->
         <div class="loading-overlay__text-container">
-          <h2 class="loading-overlay__title my-title-lg-black" id="loading-title">
+          <div class="loading-overlay__title my-title-lg-black" id="loading-title">
             {{ loadingText }}
-          </h2>
+          </div>
 
           <!-- 📝 輔助說明文字 (Secondary Text) -->
           <p
