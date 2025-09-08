@@ -275,6 +275,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                       serviceRecord.time_traffic ||
                       (serviceRecord.hour_traffic || 0) * 60 + (serviceRecord.min_traffic || 0),
                     detail: serviceRecord.detail,
+                    // 添加 propertyData 屬性，用於觸發地圖popup
+                    propertyData: serviceRecord.detail,
                   },
                 };
 
