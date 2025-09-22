@@ -4,10 +4,10 @@
    *
    * Purpose:
    * - Minimal calendar for selecting a 7-digit ROC date string (YYYMMDD).
-   * - Month navigation is disabled by design; fixed to 2025/07.
+   * - Month navigation is enabled for browsing different months.
    *
    * Notes:
-   * - Non-functional documentation only; no behavior or layout changes.
+   * - Supports month navigation with previous/next buttons.
    */
   import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 
@@ -103,13 +103,23 @@
         }
       };
 
-      // 禁用月份切換功能，固定為 2025 年 7 月
+      // 啟用月份切換功能
       const previousMonth = () => {
-        // 不執行任何操作
+        if (currentMonth.value > 1) {
+          currentMonth.value--;
+        } else {
+          currentMonth.value = 12;
+          currentYear.value--;
+        }
       };
 
       const nextMonth = () => {
-        // 不執行任何操作
+        if (currentMonth.value < 12) {
+          currentMonth.value++;
+        } else {
+          currentMonth.value = 1;
+          currentYear.value++;
+        }
       };
 
       const closeCalendar = (event) => {
@@ -155,8 +165,38 @@
     <!-- 日曆 -->
     <div class="calendar-container bg-white border rounded shadow-sm p-2">
       <!-- 日曆標題 -->
-      <div class="calendar-header d-flex justify-content-center align-items-center mb-2">
+      <div class="calendar-header d-flex justify-content-between align-items-center mb-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          @click="previousMonth"
+          style="
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <i class="fas fa-chevron-left" style="font-size: 12px"></i>
+        </button>
         <h6 class="mb-0 my-font-size-sm">{{ currentYear }}年{{ currentMonth }}月</h6>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          @click="nextMonth"
+          style="
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <i class="fas fa-chevron-right" style="font-size: 12px"></i>
+        </button>
       </div>
 
       <!-- 星期標題 -->

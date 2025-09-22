@@ -210,6 +210,7 @@
           <div class="d-flex align-items-center pb-2">
             <div class="my-title-xs-gray">
               {{ group.groupName }}
+              <span v-if="selectedServiceDate"> - {{ selectedServiceDate }}</span>
               <span v-if="group.groupLayers.length > 0"> ({{ group.groupLayers.length }}) </span>
             </div>
             <!-- 群組開關 - 有圖層時才顯示 -->
