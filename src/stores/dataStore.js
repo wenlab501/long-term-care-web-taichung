@@ -604,7 +604,7 @@ export const useDataStore = defineStore(
           serviceRecordGroup.groupLayers.push(loadingLayer);
         }
 
-        // 載入兩個 JSON 檔案
+        // 直接載入原始數據並處理，不使用 dataProcessor 的日期篩選
         const fileNames = [
           '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
@@ -702,11 +702,12 @@ export const useDataStore = defineStore(
                   routeOrder: feature.properties.routeOrder,
                   lat: feature.geometry.coordinates[1],
                   lon: feature.geometry.coordinates[0],
+                  filename: feature.properties.filename, // 添加 filename 欄位
                 }));
 
               // 計算該日期的 service_points_count 總數（與 DateLayersTab 一致）
               const servicePointsCount = dateData.reduce((total, record) => {
-                return total + (record.service_points_count || 0);
+                return total + (record.service_points?.length || 0);
               }, 0);
 
               const layerObj = {
@@ -763,6 +764,36 @@ export const useDataStore = defineStore(
       const features = [];
 
       dayRecords.forEach((serviceProvider, providerIndex) => {
+        // 處理洪幸雪數據的欄位映射
+        if (
+          serviceProvider.filename ===
+          'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json'
+        ) {
+          // 處理服務點數據，映射欄位名稱
+          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
+            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
+              if (point.detail) {
+                // 映射欄位名稱
+                const processedDetail = {
+                  ...point.detail,
+                  編號: point.detail.案號, // 案號 -> 編號
+                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
+                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
+                };
+
+                // 移除原始欄位
+                delete processedDetail.案號;
+                delete processedDetail.居住地;
+                delete processedDetail.居住地址;
+                delete processedDetail.戶籍地;
+                delete processedDetail.戶籍地址;
+
+                point.detail = processedDetail;
+              }
+              return point;
+            });
+          }
+        }
         // 處理 service_points_routes 路線（與 DateLayersTab 完全一致）
         if (
           serviceProvider.service_points_routes &&

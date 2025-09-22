@@ -112,12 +112,15 @@ function processGraceRecord(serviceProvider) {
             ...point.detail,
             編號: point.detail.案號, // 案號 -> 編號
             個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
+            個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
           };
 
           // 移除原始欄位
           delete processedDetail.案號;
           delete processedDetail.居住地;
           delete processedDetail.居住地址;
+          delete processedDetail.戶籍地;
+          delete processedDetail.戶籍地址;
 
           console.log(`🔍 洪幸雪服務點 ${index} 處理後:`, {
             hasLat: !!processedDetail.Lat,
@@ -427,6 +430,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     里別: serviceRecord.detail.里別,
                     個案戶籍地址: serviceRecord.detail.個案戶籍地址,
                     個案居住縣市: serviceRecord.detail.個案居住縣市,
+                    個案居住地址: serviceRecord.detail.個案居住地址,
                     hour_start: serviceRecord.hour_start,
                     min_start: serviceRecord.min_start,
                     hour_end: serviceRecord.hour_end,
