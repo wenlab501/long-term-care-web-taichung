@@ -15,6 +15,7 @@
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIcon } from '../utils/utils.js';
   import ServiceProviderPicker from '../components/ServiceProviderPicker.vue';
+  import FileSelector from '../components/FileSelector.vue';
 
   export default {
     name: 'ServerLayersTab',
@@ -25,6 +26,7 @@
      */
     components: {
       ServiceProviderPicker,
+      FileSelector,
     },
 
     /**
@@ -49,6 +51,18 @@
             dataStore.setServiceProviderFilter(value);
           } else {
             dataStore.clearServiceProviderFilter();
+          }
+        },
+      });
+
+      // 📁 檔案選擇相關狀態（從 dataStore 獲取）
+      const selectedFileFilter = computed({
+        get: () => dataStore.selectedFileFilter,
+        set: (value) => {
+          if (value) {
+            dataStore.setFileFilter(value);
+          } else {
+            dataStore.clearFileFilter();
           }
         },
       });
@@ -123,6 +137,48 @@
       };
 
       /**
+       * 📁 處理檔案選擇事件
+       * @param {string} fileName - 檔案名稱
+       */
+      const handleFileSelected = async (fileName) => {
+        console.log('📁 ServerLayersTab 接收到的檔案:', fileName);
+
+        // 切換檔案時清空 right panel
+        dataStore.setSelectedFeature(null);
+
+        if (fileName) {
+          dataStore.setFileFilter(fileName);
+        } else {
+          dataStore.clearFileFilter();
+        }
+
+        // 重新載入服務人員清單以應用檔案篩選
+        console.log('📁 重新載入服務人員清單以應用檔案篩選');
+        const providers = await dataStore.loadAvailableServiceProviders();
+
+        // 如果當前選中的服務人員不在新的清單中，選擇第一個可用的服務人員
+        if (providers && providers.length > 0) {
+          const currentProvider = dataStore.selectedServiceProvider;
+          const isCurrentProviderAvailable = providers.some((p) => p.id === currentProvider);
+
+          if (!isCurrentProviderAvailable) {
+            console.log('📁 當前服務人員不在篩選後的清單中，選擇第一個可用服務人員');
+            const firstProvider = providers[0];
+            await handleProviderSelected(firstProvider.id);
+          } else if (currentProvider) {
+            // 如果當前服務人員仍然可用，重新載入其日期圖層
+            console.log('📁 重新載入當前服務人員的日期圖層');
+            await dataStore.loadServiceProviderDateLayers(currentProvider);
+          }
+        } else {
+          // 如果沒有可用的服務人員，清除選擇
+          console.log('📁 沒有可用的服務人員，清除選擇');
+          dataStore.clearServiceProviderFilter();
+          dataStore.clearServiceProviderDateLayers();
+        }
+      };
+
+      /**
        * 🚀 組件掛載時初始化
        * 載入服務人員清單並預設選擇第一個服務人員
        */
@@ -152,6 +208,10 @@
         selectedServiceProvider,
         handleProviderSelected,
         isServiceProviderFilterActive: computed(() => dataStore.isServiceProviderFilterActive),
+        // 📁 檔案選擇相關
+        selectedFileFilter,
+        handleFileSelected,
+        isFileFilterActive: computed(() => dataStore.isFileFilterActive),
       };
     },
   };
@@ -161,6 +221,14 @@
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
       <div class="mb-3">
+        <!-- 📁 檔案選擇區域 -->
+        <div class="p-3">
+          <div class="mb-2">
+            <div class="my-title-xs-gray mb-1">選擇資料來源</div>
+            <FileSelector v-model="selectedFileFilter" @file-selected="handleFileSelected" />
+          </div>
+        </div>
+
         <!-- 👤 服務人員選擇區域 -->
         <div class="p-3">
           <div class="mb-2">

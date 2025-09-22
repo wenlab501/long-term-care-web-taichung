@@ -13,6 +13,7 @@
   import { useDataStore } from '@/stores/dataStore.js';
   import { getIcon } from '../utils/utils.js';
   import DatePicker from '../components/DatePicker.vue';
+  import FileSelector from '../components/FileSelector.vue';
 
   export default {
     name: 'DateLayersTab',
@@ -23,6 +24,7 @@
      */
     components: {
       DatePicker,
+      FileSelector,
     },
 
     /**
@@ -47,6 +49,18 @@
             dataStore.setServiceDateFilter(value);
           } else {
             dataStore.clearServiceDateFilter();
+          }
+        },
+      });
+
+      // 📁 檔案選擇相關狀態（從 dataStore 獲取）
+      const selectedFileFilter = computed({
+        get: () => dataStore.selectedFileFilter,
+        set: (value) => {
+          if (value) {
+            dataStore.setFileFilter(value);
+          } else {
+            dataStore.clearFileFilter();
           }
         },
       });
@@ -159,6 +173,32 @@
       };
 
       /**
+       * 📁 處理檔案選擇事件
+       * @param {string} fileName - 檔案名稱
+       */
+      const handleFileSelected = async (fileName) => {
+        console.log('📁 DateLayersTab 接收到的檔案:', fileName);
+
+        // 切換檔案時清空 right panel
+        dataStore.setSelectedFeature(null);
+
+        if (fileName) {
+          dataStore.setFileFilter(fileName);
+          // 重新載入當前日期的服務人員圖層以應用檔案篩選
+          if (dataStore.selectedServiceDate) {
+            console.log('📁 重新載入服務人員圖層以應用檔案篩選');
+            await dataStore.loadServiceProviderLayers(dataStore.selectedServiceDate);
+          }
+        } else {
+          dataStore.clearFileFilter();
+          // 重新載入以顯示所有資料
+          if (dataStore.selectedServiceDate) {
+            await dataStore.loadServiceProviderLayers(dataStore.selectedServiceDate);
+          }
+        }
+      };
+
+      /**
        * 🚀 組件掛載時初始化
        * 載入預設日期 (7月1日) 的服務人員圖層
        */
@@ -181,6 +221,10 @@
         selectedServiceDate,
         handleDateSelected,
         isDateFilterActive: computed(() => dataStore.isDateFilterActive),
+        // 📁 檔案選擇相關
+        selectedFileFilter,
+        handleFileSelected,
+        isFileFilterActive: computed(() => dataStore.isFileFilterActive),
       };
     },
   };
@@ -190,6 +234,14 @@
   <div class="h-100 d-flex flex-column overflow-hidden my-bgcolor-gray-100">
     <div class="flex-grow-1 overflow-auto layer-list-container" ref="layerListRef">
       <div class="mb-3">
+        <!-- 📁 檔案選擇區域 -->
+        <div class="p-3">
+          <div class="mb-2">
+            <div class="my-title-xs-gray mb-1">選擇資料來源</div>
+            <FileSelector v-model="selectedFileFilter" @file-selected="handleFileSelected" />
+          </div>
+        </div>
+
         <!-- 📅 服務日期選擇區域 -->
         <div class="p-3">
           <div class="mb-2">

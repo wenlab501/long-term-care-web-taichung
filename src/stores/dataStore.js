@@ -268,6 +268,10 @@ export const useDataStore = defineStore(
     // 📑 左側面板分頁狀態 (Left Panel Tab State)
     const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
 
+    // 📁 檔案篩選狀態 (File Filter State)
+    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', '新基準中央服務紀錄_all_2.json', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json')
+    const isFileFilterActive = ref(false); // 檔案篩選是否啟用
+
     /**
      * 🔄 設置左側面板活躍分頁 (Set Active Left Tab)
      * @param {string} tabName - 分頁名稱 ('date' 或 'server')
@@ -340,7 +344,7 @@ export const useDataStore = defineStore(
           serviceRecordGroup.groupLayers.push(loadingLayer);
         }
 
-        // 載入服務數據（合併兩個JSON文件）
+        // 載入所有服務數據（始終載入所有檔案）
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
@@ -358,13 +362,29 @@ export const useDataStore = defineStore(
           if (result.serviceProviderLayers && result.serviceProviderLayers.length > 0) {
             console.log('📅 找到', result.serviceProviderLayers.length, '個服務人員');
 
+            // 根據檔案篩選過濾服務人員圖層
+            let filteredLayers = result.serviceProviderLayers;
+            if (selectedFileFilter.value !== 'all') {
+              filteredLayers = result.serviceProviderLayers.filter((layer) => {
+                // 檢查圖層中的資料是否來自選中的檔案
+                if (layer.geoJsonData && layer.geoJsonData.features) {
+                  return layer.geoJsonData.features.some(
+                    (feature) =>
+                      feature.properties && feature.properties.filename === selectedFileFilter.value
+                  );
+                }
+                return false;
+              });
+              console.log('📁 檔案篩選後剩餘', filteredLayers.length, '個服務人員');
+            }
+
             // ============================================
             // 確保服務人員圖層按照固定順序排列
             // 這樣每一天的圖層都會按照 category20b 顏色順序顯示
             // ============================================
 
             // 1. 先收集所有服務人員ID並排序
-            const serviceProviderIds = result.serviceProviderLayers
+            const serviceProviderIds = filteredLayers
               .map((layer) => layer.serviceProviderId)
               .sort(); // 按字母順序排序，確保一致性
 
@@ -377,7 +397,7 @@ export const useDataStore = defineStore(
             // 3. 按照固定順序創建圖層並分配顏色
             serviceProviderIds.forEach((serviceProviderId, index) => {
               // 找到對應的服務圖層數據
-              const serviceLayer = result.serviceProviderLayers.find(
+              const serviceLayer = filteredLayers.find(
                 (layer) => layer.serviceProviderId === serviceProviderId
               );
 
@@ -473,10 +493,11 @@ export const useDataStore = defineStore(
      */
     const loadAvailableServiceProviders = async () => {
       try {
-        // 載入兩個 JSON 檔案
+        // 載入所有檔案
         const fileNames = [
           '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -512,12 +533,21 @@ export const useDataStore = defineStore(
 
         console.log(`📊 合併後總記錄數: ${allData.length}`);
 
+        // 根據檔案篩選過濾資料
+        let filteredData = allData;
+        if (selectedFileFilter.value !== 'all') {
+          filteredData = allData.filter((record) => record.filename === selectedFileFilter.value);
+          console.log('📁 檔案篩選後剩餘', filteredData.length, '筆記錄');
+        }
+
         // 提取所有唯一的服務人員身分證
-        const uniqueProviderIds = [...new Set(allData.map((record) => record.服務人員身分證))];
+        const uniqueProviderIds = [...new Set(filteredData.map((record) => record.服務人員身分證))];
 
         // 為每個服務人員統計服務日期數量和資料來源
         const providersWithStats = uniqueProviderIds.map((providerId) => {
-          const providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
+          const providerRecords = filteredData.filter(
+            (record) => record.服務人員身分證 === providerId
+          );
           const uniqueDates = [
             ...new Set(providerRecords.map((record) => record['服務日期(請輸入7碼)'])),
           ];
@@ -604,10 +634,11 @@ export const useDataStore = defineStore(
           serviceRecordGroup.groupLayers.push(loadingLayer);
         }
 
-        // 直接載入原始數據並處理，不使用 dataProcessor 的日期篩選
+        // 載入所有檔案
         const fileNames = [
           '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -644,7 +675,15 @@ export const useDataStore = defineStore(
         console.log(`📊 合併後總記錄數: ${allData.length}`);
 
         // 篩選出該服務人員的所有記錄
-        const providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
+        let providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
+
+        // 根據檔案篩選進一步過濾
+        if (selectedFileFilter.value !== 'all') {
+          providerRecords = providerRecords.filter(
+            (record) => record.filename === selectedFileFilter.value
+          );
+          console.log('📁 檔案篩選後剩餘', providerRecords.length, '筆記錄');
+        }
 
         // 按日期分組
         const dateGroups = {};
@@ -794,6 +833,37 @@ export const useDataStore = defineStore(
             });
           }
         }
+
+        // 處理基隆聯祥數據的欄位映射
+        if (
+          serviceProvider.filename ===
+          'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json'
+        ) {
+          // 處理服務點數據，映射欄位名稱
+          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
+            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
+              if (point.detail) {
+                // 映射欄位名稱
+                const processedDetail = {
+                  ...point.detail,
+                  編號: point.detail.案號, // 案號 -> 編號
+                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
+                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
+                };
+
+                // 移除原始欄位
+                delete processedDetail.案號;
+                delete processedDetail.居住地;
+                delete processedDetail.居住地址;
+                delete processedDetail.戶籍地;
+                delete processedDetail.戶籍地址;
+
+                point.detail = processedDetail;
+              }
+              return point;
+            });
+          }
+        }
         // 處理 service_points_routes 路線（與 DateLayersTab 完全一致）
         if (
           serviceProvider.service_points_routes &&
@@ -912,6 +982,47 @@ export const useDataStore = defineStore(
       }
 
       return true; // 如果沒有日期欄位，預設符合條件
+    };
+
+    // =============================================================
+    // 📁 檔案篩選相關方法 (File Filter Methods)
+    // =============================================================
+
+    /**
+     * 📁 設定檔案篩選
+     * @param {string} fileName - 檔案名稱 ('all' 或具體檔案名)
+     */
+    const setFileFilter = (fileName) => {
+      selectedFileFilter.value = fileName;
+      isFileFilterActive.value = fileName !== 'all';
+      console.log('📁 設定檔案篩選:', fileName);
+    };
+
+    /**
+     * 📁 清除檔案篩選
+     */
+    const clearFileFilter = () => {
+      selectedFileFilter.value = 'all';
+      isFileFilterActive.value = false;
+      console.log('📁 清除檔案篩選');
+    };
+
+    /**
+     * 📁 檢查資料是否符合檔案篩選條件 (Matches File Filter)
+     * @param {Object} data - 要檢查的資料物件
+     * @returns {boolean} - 是否符合篩選條件
+     */
+    const matchesFileFilter = (data) => {
+      if (!isFileFilterActive.value || selectedFileFilter.value === 'all') {
+        return true; // 沒有篩選條件時，所有資料都符合
+      }
+
+      // 檢查資料中是否有 filename 欄位
+      if (data && data.filename) {
+        return data.filename === selectedFileFilter.value;
+      }
+
+      return true; // 如果沒有 filename 欄位，預設符合條件
     };
 
     // =============================================================
@@ -1094,6 +1205,13 @@ export const useDataStore = defineStore(
       // 📑 左側面板分頁相關
       activeLeftTab,
       setActiveLeftTab,
+
+      // 📁 檔案篩選相關
+      selectedFileFilter,
+      isFileFilterActive,
+      setFileFilter,
+      clearFileFilter,
+      matchesFileFilter,
 
       calculatePointsInRange, // 計算範圍內的點
       calculatePolygonInRange, // 計算範圍內的多邊形
