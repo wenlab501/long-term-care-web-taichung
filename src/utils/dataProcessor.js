@@ -127,6 +127,9 @@ function processGraceRecord(serviceProvider) {
             name: processedDetail.姓名,
             編號: processedDetail.編號,
             個案居住地址: processedDetail.個案居住地址,
+            original案號: point.detail.案號,
+            original居住地: point.detail.居住地,
+            original居住地址: point.detail.居住地址,
             allKeys: Object.keys(processedDetail),
           });
 
@@ -174,6 +177,13 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       // 根據filename處理不同的數據格式
       serviceProvider = processNewStandardRecord(serviceProvider);
       serviceProvider = processGraceRecord(serviceProvider);
+
+      // 調試：確認 filename 是否存在
+      console.log('🔍 處理服務提供者資料:', {
+        serviceProviderId: serviceProvider.服務人員身分證,
+        filename: serviceProvider.filename,
+        hasFilename: !!serviceProvider.filename,
+      });
 
       // 日期篩選邏輯
       if (dateFilter) {
@@ -401,6 +411,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     routeOrder: index + 1,
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
                     address: serviceRecord.detail.個案居住地址,
+                    // 添加 filename 欄位
+                    filename: serviceProvider.filename,
                     // 添加 service_items 資料
                     service_items: serviceRecord.service_items || [],
                     service_items_count: Array.isArray(serviceRecord.service_items)
@@ -456,6 +468,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               .trim(),
             服務人員身分證: serviceProvider.服務人員身分證,
             服務日期: serviceProvider['服務日期(請輸入7碼)'],
+            filename: serviceProvider.filename, // 添加 filename 欄位
             服務點位數: serviceProvider.service_points_count || servicePoints.length,
             開始時間: `${serviceProvider.hour_start}:${serviceProvider.min_start.toString().padStart(2, '0')}`,
             結束時間: `${serviceProvider.hour_end}:${serviceProvider.min_end.toString().padStart(2, '0')}`,
@@ -503,8 +516,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               里別: point.detail.里別,
               個案戶籍地址: point.detail.個案戶籍地址,
               個案居住縣市: point.detail.個案居住縣市,
+              個案居住地址: point.detail.個案居住地址, // 添加個案居住地址欄位
               緯度: point.detail.Lat ? parseFloat(point.detail.Lat) : null,
               經度: point.detail.Lon ? parseFloat(point.detail.Lon) : null,
+              // 添加 filename 欄位
+              filename: serviceProvider.filename,
               // 添加時間相關欄位
               hour_start: point.hour_start,
               min_start: point.min_start,
@@ -595,10 +611,10 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 '#': index + 1,
                 id: `point_${serviceProviderId}_${index}`, // 添加與 GeoJSON feature 一致的 ID
                 姓名: point.姓名,
-                個案居住地址: point.地址,
                 時間: point.時間,
                 服務項目代碼: point.服務項目代碼 || 'N/A',
                 順序: point.順序,
+                filename: point.filename, // 添加 filename 欄位
                 緯度: point.緯度,
                 經度: point.經度,
                 編號: point.編號,
@@ -608,6 +624,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 里別: point.里別,
                 個案戶籍地址: point.個案戶籍地址,
                 個案居住縣市: point.個案居住縣市,
+                個案居住地址: point.地址, // 個案居住地址欄位
                 // 添加時間相關欄位
                 hour_start: point.hour_start,
                 min_start: point.min_start,

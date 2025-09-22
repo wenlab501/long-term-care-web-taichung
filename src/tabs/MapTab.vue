@@ -869,6 +869,7 @@
                         ...serviceItemsData.servicePoint,
                         serviceItems: serviceItemsData.serviceItems,
                         servicePointInfo: serviceItemsData.servicePointInfo,
+                        filename: serviceItemsData.filename, // 添加 filename 欄位
                         id: feature.properties.id,
                         type: 'service-items', // 關鍵：設置類型為service-items
                         layerId: storeLayerId,

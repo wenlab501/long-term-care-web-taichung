@@ -473,35 +473,74 @@ export const useDataStore = defineStore(
      */
     const loadAvailableServiceProviders = async () => {
       try {
-        const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
-        const response = await fetch(filePath);
+        // 載入兩個 JSON 檔案
+        const fileNames = [
+          '新基準中央服務紀錄_all_2.json',
+          'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+        ];
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const allData = [];
+        for (const fileName of fileNames) {
+          try {
+            const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
+            const response = await fetch(filePath);
+
+            if (!response.ok) {
+              console.error(`HTTP 錯誤: ${fileName}`, {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+              });
+              continue; // 跳過失敗的檔案，繼續處理其他檔案
+            }
+
+            const jsonData = await response.json();
+            console.log(`📁 載入服務人員清單文件: ${fileName}, 記錄數: ${jsonData.length}`);
+
+            // 為每個記錄添加filename欄位
+            const dataWithFilename = jsonData.map((record) => ({
+              ...record,
+              filename: fileName,
+            }));
+
+            allData.push(...dataWithFilename);
+          } catch (error) {
+            console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
+            // 繼續處理其他檔案
+          }
         }
 
-        const jsonData = await response.json();
+        console.log(`📊 合併後總記錄數: ${allData.length}`);
 
         // 提取所有唯一的服務人員身分證
-        const uniqueProviderIds = [...new Set(jsonData.map((record) => record.服務人員身分證))];
+        const uniqueProviderIds = [...new Set(allData.map((record) => record.服務人員身分證))];
 
-        // 為每個服務人員統計服務日期數量
+        // 為每個服務人員統計服務日期數量和資料來源
         const providersWithStats = uniqueProviderIds.map((providerId) => {
-          const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
+          const providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
           const uniqueDates = [
             ...new Set(providerRecords.map((record) => record['服務日期(請輸入7碼)'])),
           ];
+
+          // 統計來自不同檔案的記錄數
+          const filenameStats = {};
+          providerRecords.forEach((record) => {
+            const filename = record.filename || 'unknown';
+            filenameStats[filename] = (filenameStats[filename] || 0) + 1;
+          });
 
           return {
             id: providerId,
             name: `${providerId}`,
             dateCount: uniqueDates.length,
             totalRecords: providerRecords.length,
+            filename: providerRecords[0]?.filename || 'unknown', // 使用第一個記錄的 filename
+            filenameStats: filenameStats, // 詳細的檔案統計
           };
         });
 
-        // 按服務日期數量排序（多的在前）
-        providersWithStats.sort((a, b) => b.dateCount - a.dateCount);
+        // 按服務人員身分證字母順序排序（英文排序）
+        providersWithStats.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
 
         availableServiceProviders.value = providersWithStats;
         console.log('👤 載入服務人員清單，共', providersWithStats.length, '位服務人員');
@@ -565,17 +604,47 @@ export const useDataStore = defineStore(
           serviceRecordGroup.groupLayers.push(loadingLayer);
         }
 
-        const filePath = '/long-term-care-web-taichung/data/json/新基準中央服務紀錄_all_2.json';
-        const response = await fetch(filePath);
+        // 載入兩個 JSON 檔案
+        const fileNames = [
+          '新基準中央服務紀錄_all_2.json',
+          'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+        ];
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const allData = [];
+        for (const fileName of fileNames) {
+          try {
+            const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
+            const response = await fetch(filePath);
+
+            if (!response.ok) {
+              console.error(`HTTP 錯誤: ${fileName}`, {
+                status: response.status,
+                statusText: response.statusText,
+                url: response.url,
+              });
+              continue; // 跳過失敗的檔案，繼續處理其他檔案
+            }
+
+            const jsonData = await response.json();
+            console.log(`📁 載入服務人員日期圖層文件: ${fileName}, 記錄數: ${jsonData.length}`);
+
+            // 為每個記錄添加filename欄位
+            const dataWithFilename = jsonData.map((record) => ({
+              ...record,
+              filename: fileName,
+            }));
+
+            allData.push(...dataWithFilename);
+          } catch (error) {
+            console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
+            // 繼續處理其他檔案
+          }
         }
 
-        const jsonData = await response.json();
+        console.log(`📊 合併後總記錄數: ${allData.length}`);
 
         // 篩選出該服務人員的所有記錄
-        const providerRecords = jsonData.filter((record) => record.服務人員身分證 === providerId);
+        const providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
 
         // 按日期分組
         const dateGroups = {};
@@ -767,6 +836,7 @@ export const useDataStore = defineStore(
                   routeOrder: index + 1,
                   serviceProviderId: serviceProvider.服務人員身分證,
                   serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+                  filename: serviceProvider.filename,
                   姓名: serviceRecord.detail.姓名,
                   身分證字號: serviceRecord['身分證字號'],
                   個案居住地址: serviceRecord.detail.個案居住地址,
@@ -1031,6 +1101,7 @@ export const useDataStore = defineStore(
           type: 'service-items',
           layerId: layer.layerId,
           layerName: layer.layerName,
+          filename: properties.filename, // 添加 filename 欄位
           servicePoint: properties, // 原始屬性
           serviceItems: serviceItems, // 提取出的服務項目
           servicePointInfo: {

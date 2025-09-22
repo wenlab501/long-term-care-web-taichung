@@ -37,7 +37,18 @@
        * 從 Pinia store 獲取當前選中的地圖物件
        * 提供響應式的選中物件數據
        */
-      const selectedFeature = computed(() => dataStore.selectedFeature);
+      const selectedFeature = computed(() => {
+        const feature = dataStore.selectedFeature;
+        if (feature) {
+          console.log('🔍 PropertiesTab - selectedFeature:', {
+            type: feature.type,
+            properties: feature.properties,
+            filename: feature.properties?.filename,
+            hasFilename: !!feature.properties?.filename,
+          });
+        }
+        return feature;
+      });
 
       const selectedLayer = computed(() => {
         if (!selectedFeature.value?.properties?.layerId) {
@@ -507,6 +518,7 @@
             <div class="my-title-xs-gray mb-3">服務人員信息</div>
             <DetailItem label="服務人員身分證" :value="serviceProviderLabel" />
             <DetailItem label="服務日期" :value="serviceDateLabel || '無資料'" />
+            <DetailItem label="資料來源" :value="selectedFeature.properties.filename || '無資料'" />
             <DetailItem
               label="服務點位數"
               :value="`${selectedFeature.properties.allServicePoints.length} 個`"
@@ -554,6 +566,12 @@
                   個案詳細信息 - {{ selectedServicePoint.姓名 }}
                 </div>
                 <DetailItem label="編號" :value="selectedServicePoint.編號" />
+                <DetailItem
+                  label="資料來源"
+                  :value="
+                    selectedServicePoint.filename || selectedFeature.properties.filename || '無資料'
+                  "
+                />
                 <div class="pb-2">
                   <div class="my-title-xs-gray pb-1">姓名</div>
                   <div class="my-content-sm-black pb-1">
@@ -595,6 +613,10 @@
                 <DetailItem
                   label="編號"
                   :value="selectedFeature.properties.detail.編號 || '無資料'"
+                />
+                <DetailItem
+                  label="資料來源"
+                  :value="selectedFeature.properties.filename || '無資料'"
                 />
                 <div class="pb-2">
                   <div class="my-title-xs-gray pb-1">姓名</div>
