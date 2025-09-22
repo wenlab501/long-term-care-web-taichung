@@ -340,12 +340,12 @@ export const useDataStore = defineStore(
           serviceRecordGroup.groupLayers.push(loadingLayer);
         }
 
-        // 載入服務數據（不需要傳遞顏色映射，每天重新分配）
+        // 載入服務數據（合併兩個JSON文件）
         const result = await loadNewStandardCentralServiceData(
           {
             layerId: '新基準中央服務紀錄',
             colorName: 'category20b-1', // 預設顏色，會在後面重新分配
-            fileName: '新基準中央服務紀錄_all_2.json',
+            fileName: 'merged_service_records.json', // 使用合併後的數據
           },
           dateStr,
           null // 不再需要顏色映射

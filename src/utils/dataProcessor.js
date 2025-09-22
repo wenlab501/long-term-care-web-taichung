@@ -15,6 +15,131 @@
 // 現在顏色分配統一在 dataStore.js 中處理
 
 /**
+ * 合併多個JSON文件並處理數據
+ * @param {Array<string>} fileNames - 要載入的JSON文件名列表
+ * @param {string|null} dateFilter - 日期篩選器 (格式: YYYYMMDD)
+ * @returns {Promise<Array>} 合併後的數據
+ */
+async function loadAndMergeJsonFiles(fileNames) {
+  const allData = [];
+
+  for (const fileName of fileNames) {
+    try {
+      const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
+      const response = await fetch(filePath);
+
+      if (!response.ok) {
+        console.error('HTTP 錯誤:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+        });
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const jsonData = await response.json();
+      console.log(`📁 載入文件: ${fileName}, 記錄數: ${jsonData.length}`);
+
+      // 為每個記錄添加filename欄位
+      const dataWithFilename = jsonData.map((record) => ({
+        ...record,
+        filename: fileName,
+      }));
+
+      allData.push(...dataWithFilename);
+    } catch (error) {
+      console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
+      throw error;
+    }
+  }
+
+  console.log(`📊 合併後總記錄數: ${allData.length}`);
+  return allData;
+}
+
+/**
+ * 處理新基準中央服務紀錄數據（移除不需要的欄位）
+ * @param {Object} serviceProvider - 服務提供者記錄
+ * @returns {Object} 處理後的記錄
+ */
+function processNewStandardRecord(serviceProvider) {
+  if (serviceProvider.filename === '新基準中央服務紀錄_all_2.json') {
+    // 處理服務點數據，移除不需要的欄位
+    if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
+      serviceProvider.service_points = serviceProvider.service_points.map((point) => {
+        if (point.detail) {
+          // 移除不需要的欄位
+          // eslint-disable-next-line no-unused-vars
+          const { 性別, 個案戶籍縣市, 鄉鎮區, 里別, 個案戶籍地址, ...cleanedDetail } = point.detail;
+          point.detail = cleanedDetail;
+        }
+        return point;
+      });
+    }
+  }
+  return serviceProvider;
+}
+
+/**
+ * 處理洪幸雪數據（映射欄位名稱）
+ * @param {Object} serviceProvider - 服務提供者記錄
+ * @returns {Object} 處理後的記錄
+ */
+function processGraceRecord(serviceProvider) {
+  if (
+    serviceProvider.filename === 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json'
+  ) {
+    console.log('🔍 處理洪幸雪數據:', {
+      serviceProviderId: serviceProvider.服務人員身分證,
+      serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+      servicePointsCount: serviceProvider.service_points?.length || 0,
+    });
+
+    // 處理服務點數據，映射欄位名稱
+    if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
+      serviceProvider.service_points = serviceProvider.service_points.map((point, index) => {
+        if (point.detail) {
+          console.log(`🔍 洪幸雪服務點 ${index} 處理前:`, {
+            hasLat: !!point.detail.Lat,
+            hasLon: !!point.detail.Lon,
+            lat: point.detail.Lat,
+            lon: point.detail.Lon,
+            name: point.detail.姓名,
+          });
+
+          // 映射欄位名稱
+          const processedDetail = {
+            ...point.detail,
+            編號: point.detail.案號, // 案號 -> 編號
+            個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
+          };
+
+          // 移除原始欄位
+          delete processedDetail.案號;
+          delete processedDetail.居住地;
+          delete processedDetail.居住地址;
+
+          console.log(`🔍 洪幸雪服務點 ${index} 處理後:`, {
+            hasLat: !!processedDetail.Lat,
+            hasLon: !!processedDetail.Lon,
+            lat: processedDetail.Lat,
+            lon: processedDetail.Lon,
+            name: processedDetail.姓名,
+            編號: processedDetail.編號,
+            個案居住地址: processedDetail.個案居住地址,
+            allKeys: Object.keys(processedDetail),
+          });
+
+          point.detail = processedDetail;
+        }
+        return point;
+      });
+    }
+  }
+  return serviceProvider;
+}
+
+/**
  * 新基準中央服務紀錄數據加載函數
  * 處理長照服務人員的服務記錄，包含路線、服務點和服務項目
  * @param {Object} layer - 圖層配置物件
@@ -25,20 +150,13 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
   try {
     const layerId = layer.layerId;
 
-    const filePath = `/long-term-care-web-taichung/data/json/${layer.fileName}`;
+    // 載入並合併多個JSON文件
+    const fileNames = [
+      '新基準中央服務紀錄_all_2.json',
+      'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+    ];
 
-    const response = await fetch(filePath);
-
-    if (!response.ok) {
-      console.error('HTTP 錯誤:', {
-        status: response.status,
-        statusText: response.statusText,
-        url: response.url,
-      });
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const jsonData = await response.json();
+    const jsonData = await loadAndMergeJsonFiles(fileNames);
 
     console.log('📅 載入服務紀錄數據，日期篩選:', dateFilter);
 
@@ -53,6 +171,10 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
     const serviceProviderData = new Map();
 
     jsonData.forEach((serviceProvider) => {
+      // 根據filename處理不同的數據格式
+      serviceProvider = processNewStandardRecord(serviceProvider);
+      serviceProvider = processGraceRecord(serviceProvider);
+
       // 日期篩選邏輯
       if (dateFilter) {
         // 如果有日期篩選，只處理符合條件的資料
@@ -63,13 +185,27 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           serviceDate,
           serviceDateType: typeof serviceDate,
           matches: serviceDate === filterValue,
+          filename: serviceProvider.filename,
+          serviceProviderId: serviceProvider.服務人員身分證,
         });
 
         if (serviceDate !== filterValue) {
+          console.log('❌ 日期不匹配，跳過處理:', {
+            serviceProviderId: serviceProvider.服務人員身分證,
+            filename: serviceProvider.filename,
+            serviceDate,
+            filterValue,
+          });
           return;
         }
       } else {
         // 如果沒有日期篩選，預設只處理 1140701 的資料
+        console.log('🔍 無日期篩選，檢查預設日期:', {
+          serviceDate: serviceProvider['服務日期(請輸入7碼)'],
+          filename: serviceProvider.filename,
+          serviceProviderId: serviceProvider.服務人員身分證,
+          willProcess: serviceProvider['服務日期(請輸入7碼)'] === 1140701,
+        });
         if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
           return;
         }
@@ -95,7 +231,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           Array.isArray(serviceProvider.service_points_routes)
         ) {
           serviceProvider.service_points_routes.forEach((routeCollection) => {
-            if (routeCollection.features && Array.isArray(routeCollection.features)) {
+            if (
+              routeCollection &&
+              routeCollection.features &&
+              Array.isArray(routeCollection.features)
+            ) {
               routeCollection.features.forEach((routeFeature) => {
                 if (routeFeature.geometry && routeFeature.geometry.type === 'LineString') {
                   const routeFeatureData = {
@@ -228,6 +368,18 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
           // 3. 在地圖上繪製有座標的服務點
           servicePoints.forEach((serviceRecord, index) => {
+            console.log('🔍 檢查服務點座標:', {
+              serviceProviderId: serviceProvider.服務人員身分證,
+              filename: serviceProvider.filename,
+              serviceRecordIndex: index,
+              hasDetail: !!serviceRecord.detail,
+              hasLat: !!serviceRecord.detail?.Lat,
+              hasLon: !!serviceRecord.detail?.Lon,
+              lat: serviceRecord.detail?.Lat,
+              lon: serviceRecord.detail?.Lon,
+              name: serviceRecord.detail?.姓名,
+            });
+
             if (serviceRecord.detail.Lat && serviceRecord.detail.Lon) {
               const lat = parseFloat(serviceRecord.detail.Lat);
               const lon = parseFloat(serviceRecord.detail.Lon);
