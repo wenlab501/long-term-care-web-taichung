@@ -67,6 +67,9 @@
         },
       });
 
+      // 👤 可用服務人員清單
+      const availableServiceProviders = computed(() => dataStore.availableServiceProviders);
+
       /**
        * 🔘 切換圖層可見性
        * 呼叫 store 中的 action 來切換指定圖層的顯示/隱藏狀態
@@ -206,6 +209,7 @@
         getLayerColor,
         // 👤 服務人員選擇相關
         selectedServiceProvider,
+        availableServiceProviders,
         handleProviderSelected,
         isServiceProviderFilterActive: computed(() => dataStore.isServiceProviderFilterActive),
         // 📁 檔案選擇相關
@@ -232,7 +236,12 @@
         <!-- 👤 服務人員選擇區域 -->
         <div class="p-3">
           <div class="mb-2">
-            <div class="my-title-xs-gray mb-1">選擇服務人員</div>
+            <div class="my-title-xs-gray mb-1">
+              選擇服務人員
+              <span v-if="availableServiceProviders.length > 0" class="my-content-xs-gray">
+                ({{ availableServiceProviders.length }})
+              </span>
+            </div>
             <ServiceProviderPicker
               v-model="selectedServiceProvider"
               @provider-selected="handleProviderSelected"

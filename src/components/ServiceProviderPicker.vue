@@ -77,10 +77,14 @@
         await loadProviders();
       });
 
+      // 📊 計算可用服務人員總數
+      const totalProvidersCount = computed(() => availableProviders.value.length);
+
       // 📤 返回給模板使用
       return {
         selectedProvider,
         availableProviders,
+        totalProvidersCount,
         isLoading,
         error,
         handleProviderSelected,
