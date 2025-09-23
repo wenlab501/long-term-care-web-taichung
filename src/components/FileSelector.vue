@@ -50,11 +50,6 @@
           description: '顯示所有資料來源',
         },
         {
-          value: '新基準中央服務紀錄_all_2.json',
-          label: '新基準中央服務紀錄',
-          description: '中央服務紀錄資料',
-        },
-        {
           value: 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
           label: '臺中洪幸雪',
           description: '臺中洪幸雪服務記錄',
@@ -68,6 +63,16 @@
           value: 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
           label: '新北聯和',
           description: '新北聯和服務記錄',
+        },
+        {
+          value: 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+          label: '新北聯宜',
+          description: '新北聯宜服務記錄',
+        },
+        {
+          value: 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
+          label: '新竹聯廣',
+          description: '新竹聯廣服務記錄',
         },
       ]);
 

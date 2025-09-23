@@ -150,7 +150,7 @@
 
       /**
        * 📅 處理日期選擇事件
-       * @param {string} dateStr - 7碼日期字串 (例如: 1140701)
+       * @param {string} dateStr - 7碼日期字串 (例如: 1140801)
        */
       const handleDateSelected = async (dateStr) => {
         console.log('📅 DateLayersTab 接收到的日期:', dateStr);
@@ -200,12 +200,12 @@
 
       /**
        * 🚀 組件掛載時初始化
-       * 載入預設日期 (7月1日) 的服務人員圖層
+       * 載入預設日期 (8月1日) 的服務人員圖層
        */
       onMounted(async () => {
         console.log('🚀 DateLayersTab 組件掛載，開始載入預設日期數據');
         // 載入預設日期的服務人員圖層
-        await dataStore.loadServiceProviderLayers('1140701');
+        await dataStore.loadServiceProviderLayers('1140801');
       });
 
       // 📤 將需要暴露給 <template> 使用的數據和方法返回

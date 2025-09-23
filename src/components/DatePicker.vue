@@ -31,9 +31,9 @@
       // 響應式數據
       const isOpen = ref(false);
       const selectedDate = ref(props.modelValue || '');
-      // 固定為 2025 年 7 月
+      // 固定為 2025 年 8 月
       const currentYear = ref(2025);
-      const currentMonth = ref(7);
+      const currentMonth = ref(8);
 
       // 計算屬性
 
@@ -103,24 +103,7 @@
         }
       };
 
-      // 啟用月份切換功能
-      const previousMonth = () => {
-        if (currentMonth.value > 1) {
-          currentMonth.value--;
-        } else {
-          currentMonth.value = 12;
-          currentYear.value--;
-        }
-      };
-
-      const nextMonth = () => {
-        if (currentMonth.value < 12) {
-          currentMonth.value++;
-        } else {
-          currentMonth.value = 1;
-          currentYear.value++;
-        }
-      };
+      // 月份切換功能已移除，固定在8月
 
       const closeCalendar = (event) => {
         if (!event.target.closest('.date-picker-container')) {
@@ -153,8 +136,6 @@
         calendarDays,
         toggleCalendar,
         selectDate,
-        previousMonth,
-        nextMonth,
       };
     },
   };
@@ -165,38 +146,8 @@
     <!-- 日曆 -->
     <div class="calendar-container bg-white border rounded shadow-sm p-2">
       <!-- 日曆標題 -->
-      <div class="calendar-header d-flex justify-content-between align-items-center mb-2">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          @click="previousMonth"
-          style="
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <i class="fas fa-chevron-left" style="font-size: 12px"></i>
-        </button>
+      <div class="calendar-header d-flex justify-content-center align-items-center mb-2">
         <h6 class="mb-0 my-font-size-sm">{{ currentYear }}年{{ currentMonth }}月</h6>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          @click="nextMonth"
-          style="
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <i class="fas fa-chevron-right" style="font-size: 12px"></i>
-        </button>
       </div>
 
       <!-- 星期標題 -->

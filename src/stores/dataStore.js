@@ -257,7 +257,7 @@ export const useDataStore = defineStore(
     const selectedFeature = ref(null);
 
     // 📅 日期篩選狀態 (Date Filter State)
-    const selectedServiceDate = ref('1140701'); // 預設為 2025年7月1日
+    const selectedServiceDate = ref('1140801'); // 預設為 2025年8月1日
     const isDateFilterActive = ref(true); // 預設啟用日期篩選
 
     // 👤 服務人員篩選狀態 (Service Provider Filter State)
@@ -269,7 +269,7 @@ export const useDataStore = defineStore(
     const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
 
     // 📁 檔案篩選狀態 (File Filter State)
-    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', '新基準中央服務紀錄_all_2.json', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json')
+    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json', 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json')
     const isFileFilterActive = ref(false); // 檔案篩選是否啟用
 
     /**
@@ -293,7 +293,7 @@ export const useDataStore = defineStore(
 
     /**
      * 📅 設定服務日期篩選
-     * @param {string} dateStr - 7碼日期字串 (例如: 1140701)
+     * @param {string} dateStr - 7碼日期字串 (例如: 1140801)
      */
     const setServiceDateFilter = (dateStr) => {
       selectedServiceDate.value = dateStr;
@@ -495,10 +495,11 @@ export const useDataStore = defineStore(
       try {
         // 載入所有檔案
         const fileNames = [
-          '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -637,10 +638,11 @@ export const useDataStore = defineStore(
 
         // 載入所有檔案
         const fileNames = [
-          '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -898,38 +900,43 @@ export const useDataStore = defineStore(
           }
 
           // 處理 service_points_routes 路線數據，修復缺少的 GeoJSON 屬性
-          if (serviceProvider.service_points_routes && Array.isArray(serviceProvider.service_points_routes)) {
-            serviceProvider.service_points_routes = serviceProvider.service_points_routes.map((routeCollection) => {
-              // 確保 routeCollection 有正確的 GeoJSON 結構
-              if (!routeCollection.type) {
-                routeCollection.type = 'FeatureCollection';
-              }
+          if (
+            serviceProvider.service_points_routes &&
+            Array.isArray(serviceProvider.service_points_routes)
+          ) {
+            serviceProvider.service_points_routes = serviceProvider.service_points_routes.map(
+              (routeCollection) => {
+                // 確保 routeCollection 有正確的 GeoJSON 結構
+                if (!routeCollection.type) {
+                  routeCollection.type = 'FeatureCollection';
+                }
 
-              if (routeCollection.features && Array.isArray(routeCollection.features)) {
-                routeCollection.features = routeCollection.features.map((routeFeature) => {
-                  // 確保 routeFeature 有正確的 GeoJSON 結構
-                  if (!routeFeature.type) {
-                    routeFeature.type = 'Feature';
-                  }
-
-                  if (routeFeature.geometry && routeFeature.geometry.coordinates) {
-                    // 確保 geometry 有正確的 type
-                    if (!routeFeature.geometry.type) {
-                      routeFeature.geometry.type = 'LineString';
+                if (routeCollection.features && Array.isArray(routeCollection.features)) {
+                  routeCollection.features = routeCollection.features.map((routeFeature) => {
+                    // 確保 routeFeature 有正確的 GeoJSON 結構
+                    if (!routeFeature.type) {
+                      routeFeature.type = 'Feature';
                     }
 
-                    // 確保 properties 存在
-                    if (!routeFeature.properties) {
-                      routeFeature.properties = {};
+                    if (routeFeature.geometry && routeFeature.geometry.coordinates) {
+                      // 確保 geometry 有正確的 type
+                      if (!routeFeature.geometry.type) {
+                        routeFeature.geometry.type = 'LineString';
+                      }
+
+                      // 確保 properties 存在
+                      if (!routeFeature.properties) {
+                        routeFeature.properties = {};
+                      }
                     }
-                  }
 
-                  return routeFeature;
-                });
+                    return routeFeature;
+                  });
+                }
+
+                return routeCollection;
               }
-
-              return routeCollection;
-            });
+            );
           }
         }
         // 處理 service_points_routes 路線（與 DateLayersTab 完全一致）

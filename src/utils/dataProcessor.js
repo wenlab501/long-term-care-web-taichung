@@ -62,23 +62,7 @@ async function loadAndMergeJsonFiles(fileNames) {
  * @param {Object} serviceProvider - 服務提供者記錄
  * @returns {Object} 處理後的記錄
  */
-function processNewStandardRecord(serviceProvider) {
-  if (serviceProvider.filename === '新基準中央服務紀錄_all_2.json') {
-    // 處理服務點數據，移除不需要的欄位
-    if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-      serviceProvider.service_points = serviceProvider.service_points.map((point) => {
-        if (point.detail) {
-          // 移除不需要的欄位
-          // eslint-disable-next-line no-unused-vars
-          const { 性別, 個案戶籍縣市, 鄉鎮區, 里別, 個案戶籍地址, ...cleanedDetail } = point.detail;
-          point.detail = cleanedDetail;
-        }
-        return point;
-      });
-    }
-  }
-  return serviceProvider;
-}
+// processNewStandardRecord 函數已移除，因為不再使用新基準中央服務紀錄_all_2.json
 
 /**
  * 處理過濾數據（映射欄位名稱）
@@ -92,6 +76,8 @@ function processFilteredRecord(serviceProvider) {
     'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json': '洪幸雪',
     'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json': '基隆聯祥',
     'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json': '新北聯和',
+    'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json': '新北聯宜',
+    'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json': '新竹聯廣',
   };
 
   const fileName = serviceProvider.filename;
@@ -222,10 +208,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
     // 載入並合併多個JSON文件
     const fileNames = [
-      '新基準中央服務紀錄_all_2.json',
       'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
       'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
     ];
 
     const jsonData = await loadAndMergeJsonFiles(fileNames);
@@ -244,7 +231,6 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
     jsonData.forEach((serviceProvider) => {
       // 根據filename處理不同的數據格式
-      serviceProvider = processNewStandardRecord(serviceProvider);
       serviceProvider = processFilteredRecord(serviceProvider);
 
       // 調試：確認 filename 是否存在
@@ -278,14 +264,14 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
           return;
         }
       } else {
-        // 如果沒有日期篩選，預設只處理 1140701 的資料
+        // 如果沒有日期篩選，預設只處理 1140801 的資料
         console.log('🔍 無日期篩選，檢查預設日期:', {
           serviceDate: serviceProvider['服務日期(請輸入7碼)'],
           filename: serviceProvider.filename,
           serviceProviderId: serviceProvider.服務人員身分證,
-          willProcess: serviceProvider['服務日期(請輸入7碼)'] === 1140701,
+          willProcess: serviceProvider['服務日期(請輸入7碼)'] === 1140801,
         });
-        if (serviceProvider['服務日期(請輸入7碼)'] !== 1140701) {
+        if (serviceProvider['服務日期(請輸入7碼)'] !== 1140801) {
           return;
         }
       }
