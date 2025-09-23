@@ -15,8 +15,8 @@ export const useMapStore = defineStore('map', () => {
   const windowHeight = ref(window.innerHeight);
 
   // ==================== 地圖和控制項狀態 ====================
-  const zoomLevel = ref(10);
-  const currentCoords = ref({ lat: 24.1477, lng: 120.6736 });
+  const zoomLevel = ref(8);
+  const currentCoords = ref({ lat: 23.5, lng: 121.0 });
 
   // ==================== 地圖圖層狀態 ====================
   const mapLayers = ref({

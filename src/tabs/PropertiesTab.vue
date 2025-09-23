@@ -611,12 +611,12 @@
             <div class="mb-3">
               <div v-if="selectedFeature.properties.detail">
                 <DetailItem
-                  label="編號"
-                  :value="selectedFeature.properties.detail.編號 || '無資料'"
-                />
-                <DetailItem
                   label="資料來源"
                   :value="selectedFeature.properties.filename || '無資料'"
+                />
+                <DetailItem
+                  label="編號"
+                  :value="selectedFeature.properties.detail.編號 || '無資料'"
                 />
                 <div class="pb-2">
                   <div class="my-title-xs-gray pb-1">姓名</div>
