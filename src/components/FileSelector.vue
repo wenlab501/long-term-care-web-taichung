@@ -74,6 +74,21 @@
           label: '新竹聯廣',
           description: '新竹聯廣服務記錄',
         },
+        {
+          value: 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
+          label: '桃園聯承',
+          description: '桃園聯承服務記錄',
+        },
+        {
+          value: 'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
+          label: '楊梅聯聚',
+          description: '楊梅聯聚服務記錄',
+        },
+        {
+          value: 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+          label: '臺北聯承',
+          description: '臺北聯承服務記錄',
+        },
       ]);
 
       /**

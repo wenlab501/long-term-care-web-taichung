@@ -78,6 +78,9 @@ function processFilteredRecord(serviceProvider) {
     'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json': '新北聯和',
     'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json': '新北聯宜',
     'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json': '新竹聯廣',
+    'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json': '桃園聯承',
+    'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json': '楊梅聯聚',
+    'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json': '臺北聯承',
   };
 
   const fileName = serviceProvider.filename;
@@ -213,6 +216,9 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
     ];
 
     const jsonData = await loadAndMergeJsonFiles(fileNames);
