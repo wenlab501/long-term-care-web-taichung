@@ -269,7 +269,7 @@ export const useDataStore = defineStore(
     const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
 
     // 📁 檔案篩選狀態 (File Filter State)
-    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', '新基準中央服務紀錄_all_2.json', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json')
+    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', '新基準中央服務紀錄_all_2.json', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json')
     const isFileFilterActive = ref(false); // 檔案篩選是否啟用
 
     /**
@@ -498,6 +498,7 @@ export const useDataStore = defineStore(
           '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -639,6 +640,7 @@ export const useDataStore = defineStore(
           '新基準中央服務紀錄_all_2.json',
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -861,6 +863,72 @@ export const useDataStore = defineStore(
                 point.detail = processedDetail;
               }
               return point;
+            });
+          }
+        }
+
+        // 處理新北聯和數據的欄位映射
+        if (
+          serviceProvider.filename ===
+          'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json'
+        ) {
+          // 處理服務點數據，映射欄位名稱
+          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
+            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
+              if (point.detail) {
+                // 映射欄位名稱
+                const processedDetail = {
+                  ...point.detail,
+                  編號: point.detail.案號, // 案號 -> 編號
+                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
+                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
+                };
+
+                // 移除原始欄位
+                delete processedDetail.案號;
+                delete processedDetail.居住地;
+                delete processedDetail.居住地址;
+                delete processedDetail.戶籍地;
+                delete processedDetail.戶籍地址;
+
+                point.detail = processedDetail;
+              }
+              return point;
+            });
+          }
+
+          // 處理 service_points_routes 路線數據，修復缺少的 GeoJSON 屬性
+          if (serviceProvider.service_points_routes && Array.isArray(serviceProvider.service_points_routes)) {
+            serviceProvider.service_points_routes = serviceProvider.service_points_routes.map((routeCollection) => {
+              // 確保 routeCollection 有正確的 GeoJSON 結構
+              if (!routeCollection.type) {
+                routeCollection.type = 'FeatureCollection';
+              }
+
+              if (routeCollection.features && Array.isArray(routeCollection.features)) {
+                routeCollection.features = routeCollection.features.map((routeFeature) => {
+                  // 確保 routeFeature 有正確的 GeoJSON 結構
+                  if (!routeFeature.type) {
+                    routeFeature.type = 'Feature';
+                  }
+
+                  if (routeFeature.geometry && routeFeature.geometry.coordinates) {
+                    // 確保 geometry 有正確的 type
+                    if (!routeFeature.geometry.type) {
+                      routeFeature.geometry.type = 'LineString';
+                    }
+
+                    // 確保 properties 存在
+                    if (!routeFeature.properties) {
+                      routeFeature.properties = {};
+                    }
+                  }
+
+                  return routeFeature;
+                });
+              }
+
+              return routeCollection;
             });
           }
         }

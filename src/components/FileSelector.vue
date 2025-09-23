@@ -64,6 +64,11 @@
           label: '基隆聯祥',
           description: '基隆聯祥服務記錄',
         },
+        {
+          value: 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
+          label: '新北聯和',
+          description: '新北聯和服務記錄',
+        },
       ]);
 
       /**

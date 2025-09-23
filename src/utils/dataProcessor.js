@@ -81,15 +81,24 @@ function processNewStandardRecord(serviceProvider) {
 }
 
 /**
- * 處理洪幸雪數據（映射欄位名稱）
+ * 處理過濾數據（映射欄位名稱）
+ * 統一處理洪幸雪、基隆聯祥、新北聯和等過濾數據的欄位映射
  * @param {Object} serviceProvider - 服務提供者記錄
  * @returns {Object} 處理後的記錄
  */
-function processGraceRecord(serviceProvider) {
-  if (
-    serviceProvider.filename === 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json'
-  ) {
-    console.log('🔍 處理洪幸雪數據:', {
+function processFilteredRecord(serviceProvider) {
+  // 定義需要處理的檔案名稱和對應的顯示名稱
+  const fileConfigs = {
+    'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json': '洪幸雪',
+    'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json': '基隆聯祥',
+    'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json': '新北聯和',
+  };
+
+  const fileName = serviceProvider.filename;
+  const displayName = fileConfigs[fileName];
+
+  if (displayName) {
+    console.log(`🔍 處理${displayName}數據:`, {
       serviceProviderId: serviceProvider.服務人員身分證,
       serviceDate: serviceProvider['服務日期(請輸入7碼)'],
       servicePointsCount: serviceProvider.service_points?.length || 0,
@@ -99,7 +108,7 @@ function processGraceRecord(serviceProvider) {
     if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
       serviceProvider.service_points = serviceProvider.service_points.map((point, index) => {
         if (point.detail) {
-          console.log(`🔍 洪幸雪服務點 ${index} 處理前:`, {
+          console.log(`🔍 ${displayName}服務點 ${index} 處理前:`, {
             hasLat: !!point.detail.Lat,
             hasLon: !!point.detail.Lon,
             lat: point.detail.Lat,
@@ -122,7 +131,7 @@ function processGraceRecord(serviceProvider) {
           delete processedDetail.戶籍地;
           delete processedDetail.戶籍地址;
 
-          console.log(`🔍 洪幸雪服務點 ${index} 處理後:`, {
+          console.log(`🔍 ${displayName}服務點 ${index} 處理後:`, {
             hasLat: !!processedDetail.Lat,
             hasLon: !!processedDetail.Lon,
             lat: processedDetail.Lat,
@@ -141,70 +150,60 @@ function processGraceRecord(serviceProvider) {
         return point;
       });
     }
-  }
-  return serviceProvider;
-}
 
-/**
- * 處理基隆聯祥數據（映射欄位名稱）
- * @param {Object} serviceProvider - 服務提供者記錄
- * @returns {Object} 處理後的記錄
- */
-function processKeelungRecord(serviceProvider) {
-  if (
-    serviceProvider.filename === 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json'
-  ) {
-    console.log('🔍 處理基隆聯祥數據:', {
-      serviceProviderId: serviceProvider.服務人員身分證,
-      serviceDate: serviceProvider['服務日期(請輸入7碼)'],
-      servicePointsCount: serviceProvider.service_points?.length || 0,
-    });
-
-    // 處理服務點數據，映射欄位名稱
-    if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-      serviceProvider.service_points = serviceProvider.service_points.map((point, index) => {
-        if (point.detail) {
-          console.log(`🔍 基隆聯祥服務點 ${index} 處理前:`, {
-            hasLat: !!point.detail.Lat,
-            hasLon: !!point.detail.Lon,
-            lat: point.detail.Lat,
-            lon: point.detail.Lon,
-            name: point.detail.姓名,
-          });
-
-          // 映射欄位名稱
-          const processedDetail = {
-            ...point.detail,
-            編號: point.detail.案號, // 案號 -> 編號
-            個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
-            個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
-          };
-
-          // 移除原始欄位
-          delete processedDetail.案號;
-          delete processedDetail.居住地;
-          delete processedDetail.居住地址;
-          delete processedDetail.戶籍地;
-          delete processedDetail.戶籍地址;
-
-          console.log(`🔍 基隆聯祥服務點 ${index} 處理後:`, {
-            hasLat: !!processedDetail.Lat,
-            hasLon: !!processedDetail.Lon,
-            lat: processedDetail.Lat,
-            lon: processedDetail.Lon,
-            name: processedDetail.姓名,
-            編號: processedDetail.編號,
-            個案居住地址: processedDetail.個案居住地址,
-            original案號: point.detail.案號,
-            original居住地: point.detail.居住地,
-            original居住地址: point.detail.居住地址,
-            allKeys: Object.keys(processedDetail),
-          });
-
-          point.detail = processedDetail;
-        }
-        return point;
+    // 處理 service_points_routes 路線數據（僅新北聯和有此數據）
+    if (
+      fileName === 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json' &&
+      serviceProvider.service_points_routes &&
+      Array.isArray(serviceProvider.service_points_routes)
+    ) {
+      console.log('🔍 處理新北聯和路線數據:', {
+        serviceProviderId: serviceProvider.服務人員身分證,
+        routesCount: serviceProvider.service_points_routes.length,
       });
+
+      serviceProvider.service_points_routes = serviceProvider.service_points_routes.map(
+        (routeCollection, routeIndex) => {
+          // 確保 routeCollection 有正確的 GeoJSON 結構
+          if (!routeCollection.type) {
+            routeCollection.type = 'FeatureCollection';
+          }
+
+          if (routeCollection.features && Array.isArray(routeCollection.features)) {
+            routeCollection.features = routeCollection.features.map(
+              (routeFeature, featureIndex) => {
+                // 確保 routeFeature 有正確的 GeoJSON 結構
+                if (!routeFeature.type) {
+                  routeFeature.type = 'Feature';
+                }
+
+                if (routeFeature.geometry && routeFeature.geometry.coordinates) {
+                  // 確保 geometry 有正確的 type
+                  if (!routeFeature.geometry.type) {
+                    routeFeature.geometry.type = 'LineString';
+                  }
+
+                  // 確保 properties 存在
+                  if (!routeFeature.properties) {
+                    routeFeature.properties = {};
+                  }
+
+                  console.log(`🔍 新北聯和路線 ${routeIndex}-${featureIndex} 修復後:`, {
+                    type: routeFeature.type,
+                    geometryType: routeFeature.geometry.type,
+                    coordinatesLength: routeFeature.geometry.coordinates.length,
+                    hasProperties: !!routeFeature.properties,
+                  });
+                }
+
+                return routeFeature;
+              }
+            );
+          }
+
+          return routeCollection;
+        }
+      );
     }
   }
   return serviceProvider;
@@ -226,6 +225,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       '新基準中央服務紀錄_all_2.json',
       'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
       'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
     ];
 
     const jsonData = await loadAndMergeJsonFiles(fileNames);
@@ -245,8 +245,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
     jsonData.forEach((serviceProvider) => {
       // 根據filename處理不同的數據格式
       serviceProvider = processNewStandardRecord(serviceProvider);
-      serviceProvider = processGraceRecord(serviceProvider);
-      serviceProvider = processKeelungRecord(serviceProvider);
+      serviceProvider = processFilteredRecord(serviceProvider);
 
       // 調試：確認 filename 是否存在
       console.log('🔍 處理服務提供者資料:', {
