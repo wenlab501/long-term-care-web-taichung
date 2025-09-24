@@ -46,7 +46,17 @@
 
     if (isServiceLayer) {
       // 服務人員圖層只顯示指定的欄位（合併起始/結束為「服務時間」）
-      return ['#', '案號', '姓名', '居住地址', '服務時間', '總時間', '交通時間', '服務數量'];
+      return [
+        '#',
+        '案號',
+        '姓名',
+        '居住地',
+        '居住地址',
+        '服務時間',
+        '總時間',
+        '交通時間',
+        '服務數量',
+      ];
     }
 
     // 其他圖層使用原來的動態欄位邏輯
@@ -204,6 +214,9 @@
           const name = item.姓名;
           return `<span>${name}</span>`;
         }
+        case '居住地':
+          console.log('🔍 居住地檢查:', item.居住地, item.detail?.居住地, item);
+          return item.居住地 || item.detail?.居住地;
         case '居住地址':
           console.log('🔍 地址檢查:', item.居住地址, item.detail?.居住地址, item);
           return item.居住地址 || item.detail?.居住地址;

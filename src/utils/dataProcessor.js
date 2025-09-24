@@ -264,8 +264,6 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               if (
                 typeof lng === 'number' &&
                 typeof lat === 'number' &&
-                !isNaN(lng) &&
-                !isNaN(lat) &&
                 lat >= -90 &&
                 lat <= 90 &&
                 lng >= -180 &&
@@ -286,7 +284,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 })();
 
                 const timeLabel = (() => {
-                  if (typeof timeMinutes === 'number' && !isNaN(timeMinutes)) {
+                  if (typeof timeMinutes === 'number') {
                     const hours = Math.floor(timeMinutes / 60);
                     const minutes = timeMinutes % 60;
                     return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
@@ -349,7 +347,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               const lat = parseFloat(serviceRecord.detail.Lat);
               const lon = parseFloat(serviceRecord.detail.Lon);
 
-              if (!isNaN(lat) && !isNaN(lon)) {
+              if (lat && lon) {
                 const pointFeatureData = {
                   type: 'Feature',
                   geometry: {
@@ -450,12 +448,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             // 用於地圖定位的第一個服務點
             firstServicePoint: firstPointWithCoords
               ? {
-                  lat: !isNaN(parseFloat(firstPointWithCoords.detail.Lat))
-                    ? parseFloat(firstPointWithCoords.detail.Lat)
-                    : null,
-                  lon: !isNaN(parseFloat(firstPointWithCoords.detail.Lon))
-                    ? parseFloat(firstPointWithCoords.detail.Lon)
-                    : null,
+                  lat: parseFloat(firstPointWithCoords.detail.Lat),
+                  lon: parseFloat(firstPointWithCoords.detail.Lon),
                   name: firstPointWithCoords.detail.姓名,
                   address: firstPointWithCoords.detail.居住地址,
                   time: `${firstPointWithCoords.hour_start}:${firstPointWithCoords.min_start.toString().padStart(2, '0')}`,
@@ -475,14 +469,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               戶籍地址: point.detail.戶籍地址,
               居住地: point.detail.居住地,
               居住地址: point.detail.居住地址,
-              緯度:
-                point.detail.Lat && !isNaN(parseFloat(point.detail.Lat))
-                  ? parseFloat(point.detail.Lat)
-                  : null,
-              經度:
-                point.detail.Lon && !isNaN(parseFloat(point.detail.Lon))
-                  ? parseFloat(point.detail.Lon)
-                  : null,
+              緯度: parseFloat(point.detail.Lat),
+              經度: parseFloat(point.detail.Lon),
               // 添加 filename 欄位
               filename: serviceProvider.filename,
               // 添加時間相關欄位
@@ -608,8 +596,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                   戶籍地址: point.戶籍地址,
                   居住地: point.居住地,
                   居住地址: point.居住地址,
-                  Lat: point.緯度 && !isNaN(point.緯度) ? point.緯度 : null,
-                  Lon: point.經度 && !isNaN(point.經度) ? point.經度 : null,
+                  Lat: point.緯度,
+                  Lon: point.經度,
                 },
                 // 添加 service_items
                 service_items: serviceItems,
