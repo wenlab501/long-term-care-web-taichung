@@ -4,6 +4,7 @@
   // 🧩 子組件引入
   import MapTab from '../tabs/MapTab.vue';
   import DashboardTab from '../tabs/DashboardTab.vue';
+  import StatisticsTab from '../tabs/StatisticsTab.vue';
 
   export default {
     name: 'UpperView',
@@ -15,6 +16,7 @@
     components: {
       MapTab,
       DashboardTab,
+      StatisticsTab,
     },
 
     /**
@@ -54,17 +56,22 @@
       const MapTab = ref(null);
       /** 📊 儀表板視圖組件引用 */
       const DashboardTab = ref(null);
+      /** 📊 統計分析視圖組件引用 */
+      const StatisticsTab = ref(null);
       /** 📊 儀表板容器引用 (用於控制滑鼠事件) */
       const dashboardContainerRef = ref(null);
+      /** 📊 統計分析容器引用 (用於控制滑鼠事件) */
+      const statisticsContainerRef = ref(null);
 
       /**
        * 👀 監聽拖曳狀態和分頁變化 (Watch Dragging State and Tab Changes)
-       * 調整儀表板容器的滑鼠指標事件，防止拖曳時的干擾
+       * 調整儀表板和統計分析容器的滑鼠指標事件，防止拖曳時的干擾
        */
       watch(
         [() => props.isPanelDragging, () => props.activeUpperTab],
         ([dragging, tab]) => {
           nextTick(() => {
+            // 處理儀表板容器
             if (dashboardContainerRef.value) {
               if (dragging && tab === 'dashboard') {
                 // 拖曳時禁用儀表板的滑鼠事件
@@ -75,6 +82,25 @@
                 dashboardContainerRef.value.style.pointerEvents = 'auto';
                 console.log(
                   'MainContent: Dashboard container pointer-events set to auto (dragging:',
+                  dragging,
+                  ', tab:',
+                  tab,
+                  ')'
+                );
+              }
+            }
+
+            // 處理統計分析容器
+            if (statisticsContainerRef.value) {
+              if (dragging && tab === 'statistics') {
+                // 拖曳時禁用統計分析的滑鼠事件
+                statisticsContainerRef.value.style.pointerEvents = 'none';
+                console.log('MainContent: Statistics container pointer-events set to none');
+              } else {
+                // 恢復統計分析的滑鼠事件
+                statisticsContainerRef.value.style.pointerEvents = 'auto';
+                console.log(
+                  'MainContent: Statistics container pointer-events set to auto (dragging:',
                   dragging,
                   ', tab:',
                   tab,
@@ -213,7 +239,9 @@
       return {
         MapTab, // 地圖組件引用
         DashboardTab, // 儀表板組件引用
+        StatisticsTab, // 統計分析組件引用
         dashboardContainerRef, // 儀表板容器引用
+        statisticsContainerRef, // 統計分析容器引用
         highlightFeature, // 高亮顯示功能
         resetView, // 重設視圖功能
         fitToTainanBounds, // 適應邊界功能
@@ -255,6 +283,18 @@
           >
             <i class="fas fa-chart-bar"></i>
           </button>
+          <!-- 📈 統計分析按鈕 (Statistics Button) -->
+          <button
+            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'statistics',
+            }"
+            @click="$emit('update:activeUpperTab', 'statistics')"
+            style="width: 30px; height: 30px"
+            title="統計分析"
+          >
+            <i class="fas fa-chart-line"></i>
+          </button>
         </div>
       </div>
 
@@ -283,6 +323,22 @@
         <div style="height: 40px"></div>
         <DashboardTab
           ref="DashboardTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- 統計分析分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'statistics'"
+        ref="statisticsContainerRef"
+        class="h-100 overflow-auto pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <StatisticsTab
+          ref="StatisticsTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"

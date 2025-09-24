@@ -70,6 +70,11 @@
           description: '新北聯宜服務記錄',
         },
         {
+          value: 'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json',
+          label: '新北聯承',
+          description: '新北聯承服務記錄',
+        },
+        {
           value: 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
           label: '新竹聯廣',
           description: '新竹聯廣服務記錄',

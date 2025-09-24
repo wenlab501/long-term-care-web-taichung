@@ -251,7 +251,7 @@ export const useDataStore = defineStore(
     const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
 
     // 📁 檔案篩選狀態 (File Filter State)
-    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json', 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json', 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json', 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json')
+    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json', 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json', 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json')
     const isFileFilterActive = ref(false); // 檔案篩選是否啟用
 
     /**
@@ -488,6 +488,7 @@ export const useDataStore = defineStore(
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
           'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
@@ -626,6 +627,7 @@ export const useDataStore = defineStore(
           'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
           'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
