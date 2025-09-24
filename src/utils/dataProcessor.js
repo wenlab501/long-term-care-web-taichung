@@ -686,7 +686,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 里別: point.里別,
                 個案戶籍地址: point.個案戶籍地址,
                 個案居住縣市: point.個案居住縣市,
-                個案居住地址: point.地址, // 個案居住地址欄位
+                個案居住地址: point.個案居住地址, // 個案居住地址欄位
                 // 添加時間相關欄位
                 hour_start: point.hour_start,
                 min_start: point.min_start,

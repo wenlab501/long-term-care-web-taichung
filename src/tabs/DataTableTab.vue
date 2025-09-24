@@ -85,6 +85,9 @@
    */
   const getSortedData = (layer) => {
     console.log('🔍 getSortedData 被調用:', layer.layerId, layer.tableData);
+    if (layer.tableData && layer.tableData.length > 0) {
+      console.log('🔍 第一筆資料結構:', layer.tableData[0]);
+    }
 
     if (!layer.tableData) {
       console.log('⚠️ 沒有 tableData');
@@ -202,6 +205,7 @@
           // # 欄位應該顯示序號，如果沒有則根據索引生成（從1開始）
           return item['#'] || (index + 1).toString();
         case '編號':
+          console.log('🔍 編號欄位調試:', { item, 編號: item.編號, 所有keys: Object.keys(item) });
           return item.編號 || 'N/A';
         case '姓名': {
           const name = item.姓名 || 'N/A';
@@ -213,6 +217,11 @@
           return `<span class="${colorClass}">${name}${abbr ? ` (${abbr})` : ''}</span>`;
         }
         case '個案居住地址':
+          console.log('🔍 個案居住地址欄位調試:', {
+            item,
+            個案居住地址: item.個案居住地址,
+            所有keys: Object.keys(item),
+          });
           return item.個案居住地址 || 'N/A';
         case '服務時間': {
           // 組合「起始時間 - 結束時間」

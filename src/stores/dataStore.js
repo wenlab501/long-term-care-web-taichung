@@ -289,6 +289,42 @@ export const useDataStore = defineStore(
       selectedFeature.value = null;
     };
 
+    /**
+     * 🔄 嘗試恢復選中的服務點 (Attempt to Restore Selected Service Point)
+     * 在圖層重新載入後，嘗試根據 ID 找到對應的服務點並恢復選中狀態
+     * @param {Object} previousFeature - 之前選中的服務點
+     */
+    const restoreSelectedFeature = (previousFeature) => {
+      if (!previousFeature || !previousFeature.properties) {
+        return;
+      }
+
+      const featureId = previousFeature.properties.id;
+      if (!featureId) {
+        return;
+      }
+
+      console.log('🔄 嘗試恢復選中的服務點，ID:', featureId);
+
+      // 在所有圖層中尋找匹配的服務點
+      const allLayers = getAllLayers();
+      for (const layer of allLayers) {
+        if (layer.geoJsonData && layer.geoJsonData.features) {
+          const matchingFeature = layer.geoJsonData.features.find(
+            (feature) => feature.properties && feature.properties.id === featureId
+          );
+
+          if (matchingFeature) {
+            console.log('✅ 找到匹配的服務點，恢復選中狀態:', matchingFeature);
+            selectedFeature.value = matchingFeature;
+            return;
+          }
+        }
+      }
+
+      console.log('❌ 未找到匹配的服務點，ID:', featureId);
+    };
+
     // 📅 日期篩選相關方法 (Date Filter Methods)
 
     /**
@@ -1262,6 +1298,7 @@ export const useDataStore = defineStore(
       selectedFeature,
       setSelectedFeature,
       clearSelectedFeature,
+      restoreSelectedFeature,
 
       // 📅 日期篩選相關
       selectedServiceDate,

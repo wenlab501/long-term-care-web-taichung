@@ -162,6 +162,12 @@
         // 如果當前選中的服務人員不在新的清單中，選擇第一個可用的服務人員
         if (providers && providers.length > 0) {
           const currentProvider = dataStore.selectedServiceProvider;
+
+          // 重新載入當前服務人員的日期圖層以應用檔案篩選
+          if (currentProvider && dataStore.isServiceProviderFilterActive) {
+            console.log('📁 重新載入服務人員日期圖層以應用檔案篩選');
+            await dataStore.loadServiceProviderDateLayers(currentProvider);
+          }
           const isCurrentProviderAvailable = providers.some((p) => p.id === currentProvider);
 
           if (!isCurrentProviderAvailable) {
