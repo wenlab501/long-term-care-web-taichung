@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-  import { computed, watch, ref, onMounted, nextTick } from 'vue';
+  import { computed, watch, ref, onMounted, onUnmounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
   import * as d3 from 'd3';
 
@@ -273,21 +273,21 @@
     // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
     const distribution = {};
 
-    // 初始化所有可能的區間（5-14, 15-24, ..., 115-124, >125）
-    for (let i = 5; i <= 125; i += 10) {
+    // 初始化所有可能的區間（0-9, 10-19, ..., 110-119, >120）
+    for (let i = 0; i <= 110; i += 10) {
       const intervalKey = `${i}-${i + 9}`;
       distribution[intervalKey] = 0;
     }
-    distribution['>125'] = 0;
+    distribution['>120'] = 0;
 
     // 統計實際數據（過濾掉小於0或NaN的值）
     filteredTrafficTimes.forEach((traffic) => {
       // 確保是有效的正數值
       if (traffic.totalMinutes > 0 && !isNaN(traffic.totalMinutes)) {
-        if (traffic.totalMinutes > 125) {
-          distribution['>125'] += 1;
+        if (traffic.totalMinutes > 120) {
+          distribution['>120'] += 1;
         } else {
-          const interval = Math.floor((traffic.totalMinutes - 5) / 10) * 10 + 5;
+          const interval = Math.floor(traffic.totalMinutes / 10) * 10;
           const intervalKey = `${interval}-${interval + 9}`;
           distribution[intervalKey] += 1;
         }
@@ -344,21 +344,21 @@
     // 按30分鐘區間分組，超過5小時的合併為1個bar，最小刻度是5
     const distribution = {};
 
-    // 初始化所有可能的區間（5-34, 35-64, ..., 275-304, >305）
-    for (let i = 5; i <= 305; i += 30) {
+    // 初始化所有可能的區間（0-29, 30-59, ..., 270-299, >300）
+    for (let i = 0; i <= 270; i += 30) {
       const intervalKey = `${i}-${i + 29}`;
       distribution[intervalKey] = 0;
     }
-    distribution['>305'] = 0;
+    distribution['>300'] = 0;
 
     // 統計實際數據（過濾掉小於0或NaN的值）
     allTotalTimes.forEach((totalMinutes) => {
       // 確保是有效的正數值
       if (totalMinutes > 0 && !isNaN(totalMinutes)) {
-        if (totalMinutes > 305) {
-          distribution['>305'] += 1;
+        if (totalMinutes > 300) {
+          distribution['>300'] += 1;
         } else {
-          const interval = Math.floor((totalMinutes - 5) / 30) * 30 + 5;
+          const interval = Math.floor(totalMinutes / 30) * 30;
           const intervalKey = `${interval}-${interval + 29}`;
           distribution[intervalKey] += 1;
         }
@@ -593,8 +593,8 @@
 
     const data = trafficTimeDistribution.value;
     const containerWidth = chartContainer.value.getBoundingClientRect().width;
-    const containerHeight = 320;
-    const margin = { top: 20, right: 0, bottom: 160, left: 40 };
+    const containerHeight = 200;
+    const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
 
@@ -680,46 +680,23 @@
 
     data.forEach((dataItem) => {
       const x = xScale(dataItem.interval);
-      const text = dataItem.interval;
+      // 顯示整數結尾，例如 "0-9" 顯示為 "10", "10-19" 顯示為 "20"
+      const text = dataItem.interval.includes('>')
+        ? dataItem.interval
+        : (parseInt(dataItem.interval.split('-')[1]) + 1).toString();
 
       const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
 
-      // 將文字按每10個字符分割成多行
-      const lines = [];
-      for (let i = 0; i < text.length; i += 10) {
-        lines.push(text.substring(i, i + 10));
-      }
-
-      const totalLines = lines.length;
-
-      lines.forEach((line, lineIndex) => {
-        const lineOffset =
-          totalLines === 1
-            ? 0
-            : totalLines === 2
-              ? lineIndex === 0
-                ? -8
-                : 8
-              : totalLines === 3
-                ? lineIndex === 0
-                  ? -12
-                  : lineIndex === 1
-                    ? 0
-                    : 12
-                : (lineIndex - (totalLines - 1) / 2) * 8;
-
-        line.split('').forEach((char, charIndex) => {
-          textGroup
-            .append('text')
-            .text(char)
-            .attr('x', lineOffset)
-            .attr('y', charIndex * (12 + 0.6))
-            .style('font-size', '12px')
-            .style('font-family', 'Arial, sans-serif')
-            .style('fill', '#333')
-            .style('text-anchor', 'middle');
-        });
-      });
+      // 橫向顯示文字
+      textGroup
+        .append('text')
+        .text(text)
+        .attr('x', 0)
+        .attr('y', 0)
+        .style('font-size', '12px')
+        .style('font-family', 'Arial, sans-serif')
+        .style('fill', '#333')
+        .style('text-anchor', 'middle');
     });
 
     // 添加 Y 軸
@@ -735,7 +712,21 @@
       .select('.domain')
       .remove();
 
-    g.selectAll('.tick text').style('fill', '#666').style('font-weight', 'normal');
+    g.selectAll('.tick text')
+      .style('fill', '#666')
+      .style('font-weight', 'normal')
+      .style('text-anchor', 'end')
+      .attr('transform', 'rotate(0)');
+
+    // 在X軸左側添加"分鐘"標籤，與X軸刻度文字對齊
+    g.append('text')
+      .text('分鐘')
+      .attr('x', -8)
+      .attr('y', height + 15)
+      .style('font-size', '12px')
+      .style('font-family', 'Arial, sans-serif')
+      .style('fill', '#333')
+      .style('text-anchor', 'end');
   };
 
   /**
@@ -751,8 +742,8 @@
 
     const data = totalTimeDistribution.value;
     const containerWidth = totalTimeChartContainer.value.getBoundingClientRect().width;
-    const containerHeight = 320;
-    const margin = { top: 20, right: 0, bottom: 160, left: 40 };
+    const containerHeight = 200;
+    const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
 
@@ -838,46 +829,23 @@
 
     data.forEach((dataItem) => {
       const x = xScale(dataItem.interval);
-      const text = dataItem.interval;
+      // 顯示整數結尾，例如 "0-9" 顯示為 "10", "10-19" 顯示為 "20"
+      const text = dataItem.interval.includes('>')
+        ? dataItem.interval
+        : (parseInt(dataItem.interval.split('-')[1]) + 1).toString();
 
       const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
 
-      // 將文字按每10個字符分割成多行
-      const lines = [];
-      for (let i = 0; i < text.length; i += 10) {
-        lines.push(text.substring(i, i + 10));
-      }
-
-      const totalLines = lines.length;
-
-      lines.forEach((line, lineIndex) => {
-        const lineOffset =
-          totalLines === 1
-            ? 0
-            : totalLines === 2
-              ? lineIndex === 0
-                ? -8
-                : 8
-              : totalLines === 3
-                ? lineIndex === 0
-                  ? -12
-                  : lineIndex === 1
-                    ? 0
-                    : 12
-                : (lineIndex - (totalLines - 1) / 2) * 8;
-
-        line.split('').forEach((char, charIndex) => {
-          textGroup
-            .append('text')
-            .text(char)
-            .attr('x', lineOffset)
-            .attr('y', charIndex * (12 + 0.6))
-            .style('font-size', '12px')
-            .style('font-family', 'Arial, sans-serif')
-            .style('fill', '#333')
-            .style('text-anchor', 'middle');
-        });
-      });
+      // 橫向顯示文字
+      textGroup
+        .append('text')
+        .text(text)
+        .attr('x', 0)
+        .attr('y', 0)
+        .style('font-size', '12px')
+        .style('font-family', 'Arial, sans-serif')
+        .style('fill', '#333')
+        .style('text-anchor', 'middle');
     });
 
     // 添加 Y 軸
@@ -893,7 +861,21 @@
       .select('.domain')
       .remove();
 
-    g.selectAll('.tick text').style('fill', '#666').style('font-weight', 'normal');
+    g.selectAll('.tick text')
+      .style('fill', '#666')
+      .style('font-weight', 'normal')
+      .style('text-anchor', 'end')
+      .attr('transform', 'rotate(0)');
+
+    // 在X軸左側添加"分鐘"標籤，與X軸刻度文字對齊
+    g.append('text')
+      .text('分鐘')
+      .attr('x', -8)
+      .attr('y', height + 15)
+      .style('font-size', '12px')
+      .style('font-family', 'Arial, sans-serif')
+      .style('fill', '#333')
+      .style('text-anchor', 'end');
   };
 
   // 監聽交通時間分布變化，重新繪製圖表
@@ -928,12 +910,39 @@
     { deep: true }
   );
 
-  // 組件掛載後繪製圖表
+  // 防抖計時器
+  let resizeTimer = null;
+
+  // 窗口大小變化處理函數（帶防抖）
+  const handleResize = () => {
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+    }
+    resizeTimer = setTimeout(() => {
+      nextTick(() => {
+        drawTrafficTimeChart();
+        drawTotalTimeChart();
+      });
+    }, 150); // 150ms防抖延遲
+  };
+
+  // 組件掛載後繪製圖表並添加監聽器
   onMounted(() => {
     nextTick(() => {
       drawTrafficTimeChart();
       drawTotalTimeChart();
     });
+
+    // 添加窗口大小變化監聽器
+    window.addEventListener('resize', handleResize);
+  });
+
+  // 組件卸載時移除監聽器和清理計時器
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResize);
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+    }
   });
 </script>
 
