@@ -130,7 +130,7 @@
           </div>
         </div>
         <div v-else class="text-center py-5">
-          <div class="my-content-sm-gray">請先選擇服務人員並開啟相關圖層</div>
+          <div class="my-title-md-gray">沒有開啟的圖層</div>
         </div>
       </div>
 

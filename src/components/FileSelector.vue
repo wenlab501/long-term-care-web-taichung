@@ -42,7 +42,7 @@
         },
       });
 
-      // 📁 可用的檔案選項
+      // 📁 可用的檔案選項（按新的順序）
       const availableFiles = ref([
         {
           value: 'all',
@@ -50,14 +50,19 @@
           description: '顯示所有資料來源',
         },
         {
-          value: 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
-          label: '臺中洪幸雪',
-          description: '臺中洪幸雪服務記錄',
-        },
-        {
           value: 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
           label: '基隆聯祥',
           description: '基隆聯祥服務記錄',
+        },
+        {
+          value: 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+          label: '臺北聯承',
+          description: '臺北聯承服務記錄',
+        },
+        {
+          value: 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
+          label: '三重聯恩',
+          description: '三重聯恩服務記錄',
         },
         {
           value: 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
@@ -75,11 +80,6 @@
           description: '新北聯承服務記錄',
         },
         {
-          value: 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
-          label: '新竹聯廣',
-          description: '新竹聯廣服務記錄',
-        },
-        {
           value: 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
           label: '桃園聯承',
           description: '桃園聯承服務記錄',
@@ -90,14 +90,14 @@
           description: '楊梅聯聚服務記錄',
         },
         {
-          value: 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
-          label: '臺北聯承',
-          description: '臺北聯承服務記錄',
+          value: 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
+          label: '新竹聯廣',
+          description: '新竹聯廣服務記錄',
         },
         {
-          value: 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
-          label: '三重聯恩',
-          description: '三重聯恩服務記錄',
+          value: 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+          label: '臺中洪幸雪',
+          description: '臺中洪幸雪服務記錄',
         },
       ]);
 

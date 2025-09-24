@@ -142,18 +142,18 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
   try {
     const layerId = layer.layerId;
 
-    // 載入並合併多個JSON文件
+    // 載入並合併多個JSON文件（按新的順序）
     const fileNames = [
-      'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
       'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
       'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json',
-      'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
       'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
       'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
-      'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
-      'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
     ];
 
     const jsonData = await loadAndMergeJsonFiles(fileNames);
