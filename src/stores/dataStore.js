@@ -896,7 +896,7 @@ export const useDataStore = defineStore(
             const lat = parseFloat(serviceRecord.detail.Lat);
             const lon = parseFloat(serviceRecord.detail.Lon);
 
-            if (!isNaN(lat) && !isNaN(lon)) {
+            if (lat !== null && lon !== null) {
               features.push({
                 type: 'Feature',
                 geometry: {

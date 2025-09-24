@@ -7,7 +7,7 @@
 [![Pinia](https://img.shields.io/badge/Pinia-2.1+-FFC107?style=for-the-badge&logo=vue.js&logoColor=white)](https://pinia.vuejs.org/)
 [![Bootstrap 5](https://img.shields.io/badge/Bootstrap-5.3+-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 
-**台中市長期照護資源供需空間配置分析與視覺化平台**
+**強化照護資源供需空間配置分析的長照韌性社區**
 
 _專為長期照護服務資源配置分析設計的互動式地理資訊系統_
 
@@ -42,19 +42,36 @@ _專為長期照護服務資源配置分析設計的互動式地理資訊系統_
 
 ### 🎯 專案使命
 
-本系統致力於透過先進的地理資訊技術和資料視覺化，協助政策制定者、研究人員和醫療機構深入了解長期照護資源的空間分布與服務效率，以促進更公平、更有效的照護資源配置。
+本系統是台灣大學地理環境資源學系開發的「強化照護資源供需空間配置分析的長照韌性社區」專案核心平台，致力於透過先進的地理資訊技術和資料視覺化，協助政策制定者、研究人員和醫療機構深入了解長期照護資源的空間分布與服務效率，以促進更公平、更有效的照護資源配置。
 
 ### 💡 核心價值
 
-- 🎯 **精確分析**: 基於真實服務記錄的空間配置分析
-- 🔄 **即時互動**: 支援多維度資料探索和動態篩選
-- 📊 **視覺洞察**: 直觀的地圖視覺化和統計圖表
-- 🌐 **開放平台**: 可擴展的架構支援多元資料來源
+- 🎯 **精確分析**: 基於真實服務記錄的空間配置分析，涵蓋9個縣市的長照服務資料
+- 🔄 **即時互動**: 支援多維度資料探索和動態篩選，包含日期、服務人員、檔案來源等
+- 📊
+  **視覺洞察**: 直觀的地圖視覺化和統計圖表，支援服務軌跡、服務點位、服務項目分析
+- 🌐 **開放平台**: 可擴展的架構支援多元資料來源，採用標準化JSON格式
+- 📱 **響應式設計**: 完美適配桌面、平板、手機等各種裝置
 
 ### 🔬 技術特色
 
 這是一個基於 **Vue.js 3** + **Leaflet.js**
-開發的現代化互動式地理資訊系統，專門針對台中市長期照護資源的供需配置分析而設計。系統整合了服務人員軌跡、服務點位、服務項目等多維度資料，透過先進的空間分析技術和資料視覺化方法，提供深入的洞察分析工具。
+開發的現代化互動式地理資訊系統，專門針對長期照護資源的供需配置分析而設計。系統整合了服務人員軌跡、服務點位、服務項目等多維度資料，透過先進的空間分析技術和資料視覺化方法，提供深入的洞察分析工具。
+
+### 📊 資料涵蓋範圍
+
+系統目前整合了來自9個縣市的長照服務記錄：
+
+- 臺中市（洪幸雪）
+- 基隆市（聯祥）
+- 新北市（聯和、聯宜）
+- 新竹市（聯廣）
+- 桃園市（聯承）
+- 楊梅市（聯聚）
+- 臺北市（聯承）
+- 三重市（聯恩）
+
+涵蓋2025年8月1日至8月31日的完整服務記錄，包含服務人員軌跡、服務點位、服務項目等詳細資訊。
 
 ## ✨ 主要功能
 
@@ -209,32 +226,39 @@ src/
 ├── 📁 components/          # 可重用 UI 組件
 │   ├── LoadingOverlay.vue     # 載入狀態覆蓋層
 │   ├── DatePicker.vue         # 日期選擇器
-│   └── DetailItem.vue         # 詳細資訊展示
+│   ├── DetailItem.vue         # 詳細資訊展示
+│   ├── FileSelector.vue       # 檔案選擇器
+│   └── ServiceProviderPicker.vue # 服務人員選擇器
 ├── 📁 views/               # 頁面級視圖組件
-│   ├── HomeView.vue           # 主頁面容器
+│   ├── HomeView.vue           # 主頁面容器（響應式三面板布局）
 │   ├── LeftView.vue           # 左側控制面板
 │   ├── RightView.vue          # 右側資訊面板
 │   ├── MiddleView.vue         # 中間地圖區域
-│   └── ResponsiveView.vue     # 行動版響應式布局
+│   ├── UpperView.vue          # 上半部區域（響應式版）
+│   ├── BottomView.vue         # 下半部區域
+│   └── ResponsiveLowerView.vue # 響應式下半部區域
 ├── 📁 tabs/                # 功能頁籤組件
-│   ├── MapTab.vue             # 地圖展示
+│   ├── MapTab.vue             # 地圖展示（Leaflet整合）
 │   ├── DashboardTab.vue       # 儀表板
 │   ├── DataTableTab.vue       # 資料表格
 │   ├── DateLayersTab.vue      # 日期圖層管理
-│   ├── ServerLayersTab.vue    # 伺服器圖層管理
+│   ├── ServerLayersTab.vue    # 服務人員圖層管理
 │   └── PropertiesTab.vue      # 屬性面板
 ├── 📁 stores/              # Pinia 狀態管理
-│   ├── dataStore.js           # 主要資料狀態
+│   ├── dataStore.js           # 主要資料狀態（圖層、篩選、選中要素）
 │   ├── mapStore.js            # 地圖狀態管理
 │   └── defineStore.js         # Store 定義工具
 ├── 📁 utils/               # 工具函數庫
 │   ├── utils.js               # 通用工具函數
-│   └── dataProcessor.js      # 資料處理工具
+│   └── dataProcessor.js      # 資料處理工具（JSON載入、GeoJSON轉換）
+├── 📁 router/              # 路由配置
+│   └── index.js               # Vue Router 配置
+├── 📁 composables/         # Vue 3 Composition API 組合式函數
 └── 📁 assets/              # 靜態資源
     ├── css/                   # 樣式文件
-    │   ├── variables.css         # CSS 變數定義
-    │   └── common.css            # 通用樣式
-    └── images/                # 圖片資源
+    │   ├── variables.css         # CSS 變數定義（D3.js Category20b色彩）
+    │   └── common.css            # 通用樣式（Bootstrap整合）
+    └── logo.png                # 專案標誌
 ```
 
 #### 🔄 資料流架構
@@ -244,7 +268,7 @@ sequenceDiagram
     participant U as User Interface
     participant S as Pinia Store
     participant P as Data Processor
-    participant A as API/Data Source
+    participant A as JSON Data Files
     participant M as Map Component
 
     U->>S: 觸發資料載入
@@ -258,6 +282,15 @@ sequenceDiagram
     M->>M: 重新渲染地圖
     M-->>U: 視覺更新完成
 ```
+
+#### 📊 狀態管理架構
+
+系統採用 Pinia 進行集中化狀態管理，主要包含：
+
+- **圖層管理**: 服務人員圖層、日期圖層的可見性控制
+- **篩選狀態**: 日期篩選、服務人員篩選、檔案篩選
+- **選中狀態**: 當前選中的地圖要素、服務點詳細資訊
+- **UI狀態**: 面板分頁、載入狀態、響應式布局狀態
 
 ---
 
@@ -347,7 +380,7 @@ VUE_APP_DEFAULT_ZOOM=11
 
 ### 🗃️ 核心資料結構
 
-系統採用標準化的 JSON 格式來處理長期照護服務記錄，以下是詳細的資料結構說明：
+系統採用標準化的 JSON 格式來處理長期照護服務記錄，整合了來自9個縣市的長照服務資料。以下是詳細的資料結構說明：
 
 #### 📋 服務記錄主要格式
 
@@ -355,7 +388,7 @@ VUE_APP_DEFAULT_ZOOM=11
 interface ServiceRecord {
   // 🆔 服務人員識別資訊
   服務人員身分證: string; // 服務人員身分證號
-  服務日期: number; // 7碼日期格式 (YYYYMMDD -> 1140701)
+  '服務日期(請輸入7碼)': number; // 7碼日期格式 (YYYYMMDD -> 1140801)
 
   // ⏰ 服務時間資訊
   hour_start: number; // 服務開始時間 (小時)
@@ -365,7 +398,13 @@ interface ServiceRecord {
   time_total: number; // 總服務時間 (分鐘)
 
   // 🛤️ 路線軌跡資料
-  route: GeoJSON.FeatureCollection; // 服務路線的 GeoJSON 格式資料
+  service_points_routes?: GeoJSON.FeatureCollection[]; // 服務路線的 GeoJSON 格式資料
+  service_points_routes_center?: number[][]; // 路線中心點座標
+  service_points_routes_time?: RouteTime[]; // 路線時間資訊
+
+  // 📍 服務點位資料
+  service_points: ServicePoint[]; // 服務點位陣列
+  service_points_count: number; // 服務點位總數
 
   // 📋 服務項目清單
   service_items: ServiceItem[]; // 詳細服務項目陣列
@@ -415,64 +454,88 @@ interface CaseDetail {
 
 ### 📊 實際資料範例
 
-以下是完整的服務記錄 JSON 資料範例：
+以下是來自實際資料檔案的服務記錄 JSON 範例：
 
 ```json
 {
   "服務人員身分證": "Z067499219",
-  "服務日期(請輸入7碼)": 1140701,
+  "服務日期(請輸入7碼)": 1140801,
   "hour_start": 9,
   "min_start": 26,
   "hour_end": 16,
   "min_end": 4,
   "time_total": 398,
-  "route": {
-    "type": "FeatureCollection",
-    "features": [
-      {
-        "type": "Feature",
-        "geometry": {
-          "type": "LineString",
-          "coordinates": [
-            [120.547411, 24.1477078],
-            [120.548123, 24.1478945],
-            [120.549876, 24.1482341]
-          ]
-        },
-        "properties": {
-          "routeId": "route_001",
-          "distance": 1250.5,
-          "duration": 900
-        }
-      }
-    ]
-  },
-  "service_items": [
+  "service_points_count": 3,
+  "service_points": [
     {
-      "row_id": 2309,
       "身分證字號": "Y526809406",
-      "服務項目代碼": "BA07",
-      "服務類別\n1.補助\n2.自費": 1,
-      "數量\n僅整數": 1,
-      "單價": 325,
       "hour_start": 9,
       "min_start": 26,
       "hour_end": 10,
       "min_end": 3,
-      "time_total": 37
+      "time_total": 37,
+      "hour_traffic": 0,
+      "min_traffic": 15,
+      "service_items": [
+        {
+          "row_id": 2309,
+          "身分證字號": "Y526809406",
+          "服務項目代碼": "BA07",
+          "服務類別\n1.補助\n2.自費": 1,
+          "數量\n僅整數": 1,
+          "單價": 325,
+          "hour_start": 9,
+          "min_start": 26,
+          "hour_end": 10,
+          "min_end": 3,
+          "time_total": 37
+        }
+      ],
+      "detail": {
+        "編號": 141,
+        "姓名": "周詠晴",
+        "性別": "女性",
+        "個案戶籍縣市": "臺中市",
+        "鄉鎮區": "大肚區",
+        "里別": "大東里",
+        "個案居住地址": "臺中市大肚區大東里005鄰沙田路二段470巷43號",
+        "Lat": 24.1477078,
+        "Lon": 120.547411
+      }
     }
   ],
-  "detail": {
-    "編號": 141,
-    "姓名": "周詠晴",
-    "性別": "女性",
-    "個案戶籍縣市": "臺中市",
-    "鄉鎮區": "大肚區",
-    "里別": "大東里",
-    "個案居住地址": "臺中市大肚區大東里005鄰沙田路二段470巷43號",
-    "Lat": 24.1477078,
-    "Lon": 120.547411
-  }
+  "service_points_routes": [
+    {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [120.547411, 24.1477078],
+              [120.548123, 24.1478945],
+              [120.549876, 24.1482341]
+            ]
+          },
+          "properties": {
+            "summary": {
+              "distance": 1250.5,
+              "duration": 900
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "service_points_routes_center": [[120.548123, 24.1478945]],
+  "service_points_routes_time": [
+    {
+      "time_interval": 15,
+      "hour_interval": 0,
+      "min_interval": 15
+    }
+  ]
 }
 ```
 
@@ -786,7 +849,7 @@ graph TD
 
 #### 🗺️ MapTab.vue
 
-地圖展示的核心組件，實現：
+地圖展示的核心組件，負責 Leaflet 地圖的生命週期管理：
 
 ```typescript
 interface MapTabFeatures {
@@ -800,60 +863,117 @@ interface MapTabFeatures {
     clickHandling: () => void; // 點擊事件處理
     hoverEffects: () => void; // 懸停效果
     tooltipDisplay: () => void; // 工具提示顯示
+    popupManagement: () => void; // 彈出視窗管理
   };
 
   // 📊 視覺化功能
   visualization: {
-    dynamicSizing: () => void; // 動態大小計算
-    colorMapping: () => void; // 顏色映射
+    dynamicSizing: () => void; // 動態大小計算（基於服務時間）
+    colorMapping: () => void; // D3.js Category20b 顏色映射
     animationEffects: () => void; // 動畫效果
+    markerClustering: () => void; // 標記聚合
+  };
+
+  // 🔧 工具功能
+  utilities: {
+    mapResize: () => void; // 地圖尺寸調整
+    viewReset: () => void; // 視圖重設
+    featureHighlight: () => void; // 要素高亮
   };
 }
 ```
 
+**主要功能**：
+
+- 整合 Leaflet.js 地圖引擎
+- 支援服務點位、服務路線、路線中心點等多種圖層類型
+- 實現響應式地圖尺寸調整
+- 提供豐富的互動功能（點擊、懸停、彈出視窗）
+
 #### 📦 DataStore.js
 
-主要狀態管理中心：
+主要狀態管理中心，使用 Pinia 進行集中化狀態管理：
 
 ```typescript
 interface DataStoreFeatures {
   // 📊 數據管理
   layerDataManagement: () => void; // 圖層數據載入儲存
   userStateTracking: () => void; // 使用者選擇狀態
-  colorMappingSystem: () => void; // 顏色映射關係
+  colorMappingSystem: () => void; // D3.js Category20b 顏色映射關係
   serviceItemProcessing: () => void; // 服務項目數據處理
 
   // 🔍 查詢功能
   dataQuery: {
     findById: (id: string) => LayerInfo | null;
     filterByDate: (date: string) => LayerInfo[];
+    filterByServiceProvider: (providerId: string) => LayerInfo[];
+    filterByFile: (fileName: string) => LayerInfo[];
     searchByKeyword: (keyword: string) => LayerInfo[];
+  };
+
+  // 🎨 顏色管理
+  colorManagement: {
+    assignColors: () => void; // 為服務人員分配顏色
+    getColorForProvider: (providerId: string) => string;
+    resetColorMapping: () => void; // 重置顏色映射
+  };
+
+  // 📅 篩選功能
+  filtering: {
+    dateFilter: () => void; // 日期篩選
+    serviceProviderFilter: () => void; // 服務人員篩選
+    fileFilter: () => void; // 檔案來源篩選
   };
 }
 ```
 
+**主要功能**：
+
+- 管理9個縣市的長照服務資料
+- 實現日期、服務人員、檔案來源等多維度篩選
+- 提供 D3.js Category20b 色彩配置系統
+- 支援圖層可見性控制和狀態持久化
+
 #### ⚙️ DataProcessor.js
 
-數據處理引擎：
+數據處理引擎，負責載入和轉換長照服務資料：
 
 ```typescript
 interface DataProcessorFeatures {
   // 📥 數據載入
-  jsonDataLoading: () => Promise<any>; // JSON 數據載入解析
-  geoJsonConversion: () => GeoJSON; // GeoJSON 格式轉換
-
-  // 🎨 處理算法
-  colorAllocation: () => string; // 顏色分配算法
-  spatialDataProcessing: () => void; // 空間數據處理
+  loadAndMergeJsonFiles: (fileNames: string[]) => Promise<any[]>; // 載入並合併多個JSON檔案
+  loadNewStandardCentralServiceData: (
+    layer: any,
+    dateFilter?: string
+  ) => Promise<any>; // 載入標準化服務資料
 
   // 🔄 數據轉換
   dataTransformation: {
-    normalize: (data: any) => any; // 數據標準化
-    validate: (data: any) => boolean; // 數據驗證
-    sanitize: (data: any) => any; // 數據清理
+    processFilteredRecord: (serviceProvider: any) => any; // 處理過濾資料
+    convertToGeoJSON: (data: any) => GeoJSON; // 轉換為GeoJSON格式
+    normalizeCoordinates: (coords: any) => any; // 座標標準化
+  };
+
+  // 🎨 處理算法
+  spatialDataProcessing: () => void; // 空間數據處理
+  servicePointProcessing: () => void; // 服務點位處理
+  routeProcessing: () => void; // 路線資料處理
+
+  // 📊 統計計算
+  statistics: {
+    calculateServiceMetrics: () => void; // 計算服務指標
+    generateSummaryData: () => void; // 生成摘要資料
+    computeDistrictCounts: () => void; // 計算行政區統計
   };
 }
 ```
+
+**主要功能**：
+
+- 載入9個縣市的長照服務JSON檔案
+- 處理服務點位、服務路線、服務項目等複雜資料結構
+- 轉換為標準化GeoJSON格式供地圖顯示
+- 計算服務統計指標和摘要資料
 
 ### 🎯 特色演算法實現
 
@@ -1287,6 +1407,14 @@ const calculateDistance = (point1, point2) => {
 - 🐛 **問題回報**: [Issues 頁面]
 - 💬 **討論區**: [Discussions 頁面]
 
+### 📊 專案統計
+
+- **📁 資料檔案**: 9個縣市的長照服務記錄
+- **🗺️ 地圖圖層**: 支援服務點位、服務路線、路線中心點
+- **📅 資料期間**: 2025年8月1日至8月31日
+- **🎨 色彩系統**: D3.js Category20b 20色配置
+- **📱 響應式設計**: 支援桌面、平板、手機三種布局
+
 ---
 
 ## 🔄 版本歷史
@@ -1308,6 +1436,8 @@ const calculateDistance = (point1, point2) => {
 - 🎨 **視覺系統升級**: 新的色彩系統和響應式設計
 - ⚡ **效能大幅提升**: 載入速度提升 40%，記憶體使用降低 25%
 - 🛠️ **開發體驗改善**: 完整的 TypeScript 支援和文檔
+- 📊 **多縣市資料整合**: 支援9個縣市的長照服務資料
+- 🔍 **進階篩選功能**: 日期、服務人員、檔案來源等多維度篩選
 
 #### 🔧 改進項目
 
@@ -1315,12 +1445,14 @@ const calculateDistance = (point1, point2) => {
 - 🎯 **組件設計最佳化**: LoadingOverlay 等組件全面重寫
 - 📊 **狀態管理改進**: Pinia Store 結構最佳化
 - 📖 **文檔大幅更新**: 全面的使用指南和開發文檔
+- 🗺️ **地圖功能增強**: 支援服務路線、路線中心點等新圖層類型
 
 #### 🐛 修復問題
 
 - 修復響應式布局在某些裝置上的顯示問題
 - 解決大型資料集載入時的記憶體洩漏
 - 修正顏色分配算法的一致性問題
+- 改善地圖載入和渲染效能
 
 ### 📋 舊版本紀錄
 
@@ -1367,5 +1499,36 @@ const calculateDistance = (point1, point2) => {
 **📅 最後更新**: 2025-01-15 | **📖 文檔版本**: 2.0.0 | **💻 系統版本**: v2.0.0
 
 _本文檔遵循 [語意化版本控制](https://semver.org/lang/zh-TW/) 標準_
+
+---
+
+## 🎯 專案特色總結
+
+本系統是台灣大學地理環境資源學系「強化照護資源供需空間配置分析的長照韌性社區」專案的核心平台，具有以下特色：
+
+### 🌟 核心優勢
+
+1. **📊 多維度資料整合**: 整合9個縣市的長照服務資料，提供全面的空間分析視角
+2. **🎨 專業視覺化**: 採用D3.js Category20b色彩系統，確保視覺效果的一致性
+3. **📱 響應式設計**: 完美適配各種裝置，提供一致的使用體驗
+4. **🔍 進階篩選功能**: 支援日期、服務人員、檔案來源等多維度篩選
+5. **🗺️ 豐富地圖功能**: 支援服務點位、服務路線、路線中心點等多種圖層類型
+
+### 🚀 技術亮點
+
+- **Vue.js 3 + Composition API**: 現代化前端架構
+- **Leaflet.js**: 高效能地圖渲染引擎
+- **Pinia**: 集中化狀態管理
+- **Bootstrap 5**: 響應式UI框架
+- **D3.js**: 專業色彩配置系統
+
+### 📈 應用價值
+
+本系統為長期照護資源配置分析提供了強大的技術支撐，有助於：
+
+- 提升照護資源配置效率
+- 優化服務人員工作路徑
+- 識別服務空白區域
+- 支援政策決策制定
 
 </div>

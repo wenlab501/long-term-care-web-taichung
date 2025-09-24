@@ -402,7 +402,7 @@
                   const label = feature.properties.traffic_time_label;
                   if (label) return label;
                   const minutes = feature.properties.traffic_time_minutes;
-                  if (typeof minutes === 'number' && !isNaN(minutes)) {
+                  if (typeof minutes === 'number') {
                     const hours = Math.floor(minutes / 60);
                     const mins = minutes % 60;
                     return hours > 0 ? `${hours}h${mins}m` : `${mins}m`;

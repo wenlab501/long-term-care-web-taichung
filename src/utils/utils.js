@@ -713,7 +713,7 @@ export function formatNumber(num, separator = ',') {
  * @returns {string} 百分比字串
  */
 export function formatPercentage(num, decimals = 1, isPercent = false) {
-  if (num === null || num === undefined || isNaN(num)) {
+  if (num === null || num === undefined) {
     return '0%';
   }
 
@@ -736,7 +736,6 @@ export function formatDate(date, format = 'YYYY-MM-DD') {
   if (!date) return '';
 
   const d = new Date(date);
-  if (isNaN(d.getTime())) return '';
 
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');

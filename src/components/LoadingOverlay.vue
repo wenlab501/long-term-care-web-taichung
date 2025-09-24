@@ -57,7 +57,7 @@
         type: Number,
         default: -1,
         validator: (value) => {
-          return typeof value === 'number' && !isNaN(value) && value >= -1 && value <= 100;
+          return typeof value === 'number' && value >= -1 && value <= 100;
         },
       },
 
