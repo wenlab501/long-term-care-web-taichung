@@ -2,6 +2,9 @@
 node_modules
 /dist
 
+# Large data files
+public/data/json/*.json
+
 
 # local env files
 .env.local
