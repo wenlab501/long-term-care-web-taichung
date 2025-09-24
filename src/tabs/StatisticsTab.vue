@@ -3,39 +3,6 @@
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
     <!-- 統計內容 -->
     <div class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
-      <!-- 📊 統計圖表區塊 -->
-      <div
-        v-if="
-          (isServiceDateMode || isServiceProviderMode) &&
-          (trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0)
-        "
-        class="mb-4"
-      >
-        <div class="row">
-          <!-- 交通時間分布圖表 -->
-          <div class="col-12 col-md-6 mb-3">
-            <div
-              v-if="trafficTimeDistribution.length > 0"
-              class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
-            >
-              <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
-              <div ref="chartContainer" class="d-flex justify-content-center"></div>
-            </div>
-          </div>
-
-          <!-- 總時間分布圖表 -->
-          <div class="col-12 col-md-6 mb-3">
-            <div
-              v-if="totalTimeDistribution.length > 0"
-              class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
-            >
-              <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
-              <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 📊 服務日期統計：當選擇了服務日期時顯示 -->
       <div v-if="isServiceDateMode">
         <div class="mb-4">
@@ -44,6 +11,36 @@
             服務日期統計
           </h5>
           <div class="my-content-sm-gray">選擇的日期：{{ selectedServiceDate || '未選擇' }}</div>
+        </div>
+
+        <!-- 📊 統計圖表區塊 -->
+        <div
+          v-if="trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0"
+          class="mb-4"
+        >
+          <div class="row">
+            <!-- 交通時間分布圖表 -->
+            <div class="col-12 col-md-6 mb-3">
+              <div
+                v-if="trafficTimeDistribution.length > 0"
+                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+              >
+                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
+                <div ref="chartContainer" class="d-flex justify-content-center"></div>
+              </div>
+            </div>
+
+            <!-- 總時間分布圖表 -->
+            <div class="col-12 col-md-6 mb-3">
+              <div
+                v-if="totalTimeDistribution.length > 0"
+                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+              >
+                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
+                <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 服務人員列表表格 -->
@@ -95,6 +92,36 @@
           </h5>
           <div class="my-content-sm-gray">
             選擇的服務人員：{{ selectedServiceProvider || '未選擇' }}
+          </div>
+        </div>
+
+        <!-- 📊 統計圖表區塊 -->
+        <div
+          v-if="trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0"
+          class="mb-4"
+        >
+          <div class="row">
+            <!-- 交通時間分布圖表 -->
+            <div class="col-12 col-md-6 mb-3">
+              <div
+                v-if="trafficTimeDistribution.length > 0"
+                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+              >
+                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
+                <div ref="chartContainer" class="d-flex justify-content-center"></div>
+              </div>
+            </div>
+
+            <!-- 總時間分布圖表 -->
+            <div class="col-12 col-md-6 mb-3">
+              <div
+                v-if="totalTimeDistribution.length > 0"
+                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+              >
+                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
+                <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
+              </div>
+            </div>
           </div>
         </div>
 
