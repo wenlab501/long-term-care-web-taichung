@@ -3,6 +3,16 @@
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
     <!-- 統計內容 -->
     <div class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
+      <!-- 📊 交通時間分布圖表 -->
+      <div
+        v-if="(isServiceDateMode || isServiceProviderMode) && trafficTimeDistribution.length > 0"
+        class="mb-4"
+      >
+        <div class="rounded-4 my-bgcolor-gray-100 p-3">
+          <div ref="chartContainer" class="d-flex justify-content-center"></div>
+        </div>
+      </div>
+
       <!-- 📊 服務日期統計：當選擇了服務日期時顯示 -->
       <div v-if="isServiceDateMode">
         <div class="mb-4">
@@ -109,10 +119,12 @@
 </template>
 
 <script setup>
-  import { computed, watch } from 'vue';
+  import { computed, watch, ref, onMounted, nextTick } from 'vue';
   import { useDataStore } from '@/stores/dataStore.js';
+  import * as d3 from 'd3';
 
   const dataStore = useDataStore();
+  const chartContainer = ref(null);
 
   // 獲取當前選擇的服務日期和服務人員
   const selectedServiceDate = computed(() => dataStore.selectedServiceDate);
@@ -125,6 +137,60 @@
 
   const isServiceProviderMode = computed(() => {
     return dataStore.activeLeftTab === 'server' && selectedServiceProvider.value;
+  });
+
+  /**
+   * 📊 計算交通時間分布統計
+   */
+  const trafficTimeDistribution = computed(() => {
+    let allTrafficTimes = [];
+
+    if (isServiceDateMode.value) {
+      // 服務日期模式：收集所有服務人員的交通時間
+      const serviceProviderGroup = dataStore.layers.find(
+        (group) => group.groupName === '服務人員列表'
+      );
+      if (serviceProviderGroup) {
+        const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
+        visibleLayers.forEach((layer) => {
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          allTrafficTimes.push(...trafficTimes);
+        });
+      }
+    } else if (isServiceProviderMode.value) {
+      // 服務人員模式：收集所有服務日期的交通時間
+      const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
+      if (serviceDateGroup) {
+        const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
+        visibleLayers.forEach((layer) => {
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          allTrafficTimes.push(...trafficTimes);
+        });
+      }
+    }
+
+    // 過濾掉0分鐘的交通時間（起點）
+    const filteredTrafficTimes = allTrafficTimes.filter((traffic) => traffic.totalMinutes > 0);
+
+    // 按10分鐘區間分組
+    const distribution = {};
+    filteredTrafficTimes.forEach((traffic) => {
+      const interval = Math.floor(traffic.totalMinutes / 10) * 10;
+      const intervalKey = `${interval}-${interval + 9}分鐘`;
+      distribution[intervalKey] = (distribution[intervalKey] || 0) + 1;
+    });
+
+    // 轉換為數組格式供D3使用
+    return Object.entries(distribution)
+      .map(([interval, count]) => ({
+        interval,
+        count,
+      }))
+      .sort((a, b) => {
+        const aStart = parseInt(a.interval.split('-')[0]);
+        const bStart = parseInt(b.interval.split('-')[0]);
+        return aStart - bStart;
+      });
   });
 
   /**
@@ -247,6 +313,105 @@
       .filter((date) => date !== null);
   });
 
+  /**
+   * 📊 繪製交通時間分布長條圖
+   */
+  const drawTrafficTimeChart = () => {
+    if (!chartContainer.value || trafficTimeDistribution.value.length === 0) {
+      return;
+    }
+
+    // 清除之前的圖表
+    d3.select(chartContainer.value).selectAll('*').remove();
+
+    const data = trafficTimeDistribution.value;
+    const margin = { top: 20, right: 30, bottom: 60, left: 60 };
+    const width = 400 - margin.left - margin.right;
+    const height = 200 - margin.top - margin.bottom;
+
+    const svg = d3
+      .select(chartContainer.value)
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom);
+
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // 設定比例尺
+    const xScale = d3
+      .scaleBand()
+      .domain(data.map((d) => d.interval))
+      .range([0, width])
+      .padding(0.1);
+
+    const yScale = d3
+      .scaleLinear()
+      .domain([0, d3.max(data, (d) => d.count)])
+      .range([height, 0]);
+
+    // 繪製長條
+    g.selectAll('.bar')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', (d) => xScale(d.interval))
+      .attr('width', xScale.bandwidth())
+      .attr('y', (d) => yScale(d.count))
+      .attr('height', (d) => height - yScale(d.count))
+      .attr('fill', '#007bff')
+      .attr('rx', 4)
+      .attr('ry', 4);
+
+    // 添加數值標籤
+    g.selectAll('.bar-label')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'bar-label')
+      .attr('x', (d) => xScale(d.interval) + xScale.bandwidth() / 2)
+      .attr('y', (d) => yScale(d.count) - 5)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '12px')
+      .attr('fill', '#333')
+      .text((d) => d.count);
+
+    // 添加 X 軸
+    g.append('g')
+      .attr('transform', `translate(0,${height})`)
+      .call(d3.axisBottom(xScale))
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .attr('text-anchor', 'end')
+      .attr('dx', '-0.5em')
+      .attr('dy', '0.5em')
+      .attr('font-size', '10px');
+
+    // 添加 Y 軸
+    g.append('g').call(d3.axisLeft(yScale).ticks(5)).attr('font-size', '10px');
+
+    // 添加圖表標題
+    g.append('text')
+      .attr('x', width / 2)
+      .attr('y', -5)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '14px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#333')
+      .text('交通時間分布統計');
+  };
+
+  // 監聽交通時間分布變化，重新繪製圖表
+  watch(
+    () => trafficTimeDistribution.value,
+    () => {
+      nextTick(() => {
+        drawTrafficTimeChart();
+      });
+    },
+    { deep: true, immediate: true }
+  );
+
   // 監聽圖層可見性變化，觸發重新計算
   watch(
     () => dataStore.layers,
@@ -256,6 +421,13 @@
     },
     { deep: true }
   );
+
+  // 組件掛載後繪製圖表
+  onMounted(() => {
+    nextTick(() => {
+      drawTrafficTimeChart();
+    });
+  });
 </script>
 
 <style scoped></style>
