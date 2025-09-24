@@ -476,8 +476,12 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             // 用於地圖定位的第一個服務點
             firstServicePoint: firstPointWithCoords
               ? {
-                  lat: parseFloat(firstPointWithCoords.detail.Lat),
-                  lon: parseFloat(firstPointWithCoords.detail.Lon),
+                  lat: !isNaN(parseFloat(firstPointWithCoords.detail.Lat))
+                    ? parseFloat(firstPointWithCoords.detail.Lat)
+                    : null,
+                  lon: !isNaN(parseFloat(firstPointWithCoords.detail.Lon))
+                    ? parseFloat(firstPointWithCoords.detail.Lon)
+                    : null,
                   name: firstPointWithCoords.detail.姓名,
                   address: firstPointWithCoords.detail.個案居住地址,
                   time: `${firstPointWithCoords.hour_start}:${firstPointWithCoords.min_start.toString().padStart(2, '0')}`,
@@ -498,8 +502,14 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               個案戶籍地址: point.detail.個案戶籍地址,
               個案居住縣市: point.detail.個案居住縣市,
               個案居住地址: point.detail.個案居住地址, // 添加個案居住地址欄位
-              緯度: point.detail.Lat ? parseFloat(point.detail.Lat) : null,
-              經度: point.detail.Lon ? parseFloat(point.detail.Lon) : null,
+              緯度:
+                point.detail.Lat && !isNaN(parseFloat(point.detail.Lat))
+                  ? parseFloat(point.detail.Lat)
+                  : null,
+              經度:
+                point.detail.Lon && !isNaN(parseFloat(point.detail.Lon))
+                  ? parseFloat(point.detail.Lon)
+                  : null,
               // 添加 filename 欄位
               filename: serviceProvider.filename,
               // 添加時間相關欄位
@@ -627,8 +637,8 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                   個案戶籍地址: point.個案戶籍地址,
                   個案居住縣市: point.個案居住縣市,
                   個案居住地址: point.地址,
-                  Lat: point.緯度,
-                  Lon: point.經度,
+                  Lat: point.緯度 && !isNaN(point.緯度) ? point.緯度 : null,
+                  Lon: point.經度 && !isNaN(point.經度) ? point.經度 : null,
                 },
                 // 添加 service_items
                 service_items: serviceItems,
