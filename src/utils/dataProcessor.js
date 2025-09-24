@@ -63,8 +63,8 @@ async function loadAndMergeJsonFiles(fileNames) {
 // processNewStandardRecord 函數已移除，因為不再使用新基準中央服務紀錄_all_2.json
 
 /**
- * 處理過濾數據（映射欄位名稱）
- * 統一處理洪幸雪、基隆聯祥、新北聯和等過濾數據的欄位映射
+ * 處理過濾數據（移除欄位映射，直接使用原始欄位名稱）
+ * 統一處理洪幸雪、基隆聯祥、新北聯和等過濾數據
  * @param {Object} serviceProvider - 服務提供者記錄
  * @returns {Object} 處理後的記錄
  */
@@ -86,28 +86,6 @@ function processFilteredRecord(serviceProvider) {
   const displayName = fileConfigs[fileName];
 
   if (displayName) {
-    // 處理服務點數據，映射欄位名稱
-    if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-      serviceProvider.service_points = serviceProvider.service_points.map((point) => {
-        if (point.detail) {
-          // 映射欄位名稱 - 直接修改 point.detail 而不是創建新物件
-          point.detail.編號 = point.detail.案號; // 案號 -> 編號
-          point.detail.個案居住地址 =
-            `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(); // 合併居住地+居住地址
-          point.detail.個案戶籍地址 =
-            `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(); // 合併戶籍地+戶籍地址
-
-          // 移除原始欄位
-          delete point.detail.案號;
-          delete point.detail.居住地;
-          delete point.detail.居住地址;
-          delete point.detail.戶籍地;
-          delete point.detail.戶籍地址;
-        }
-        return point;
-      });
-    }
-
     // 處理 service_points_routes 路線數據（僅新北聯和有此數據）
     if (
       fileName === 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json' &&
@@ -387,7 +365,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     serviceProviderId: serviceProvider.服務人員身分證,
                     routeOrder: index + 1,
                     serviceTime: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
-                    address: serviceRecord.detail.個案居住地址,
+                    address: serviceRecord.detail.居住地址,
                     // 添加 filename 欄位
                     filename: serviceProvider.filename,
                     // 添加 service_items 資料
@@ -396,15 +374,17 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                       ? serviceRecord.service_items.length
                       : 0,
                     // 添加其他原始資料欄位
-                    編號: serviceRecord.detail.編號,
+                    編號: serviceRecord.detail.案號,
                     姓名: serviceRecord.detail.姓名,
                     性別: serviceRecord.detail.性別,
                     個案戶籍縣市: serviceRecord.detail.個案戶籍縣市,
                     鄉鎮區: serviceRecord.detail.鄉鎮區,
                     里別: serviceRecord.detail.里別,
-                    個案戶籍地址: serviceRecord.detail.個案戶籍地址,
+                    戶籍地: serviceRecord.detail.戶籍地,
+                    戶籍地址: serviceRecord.detail.戶籍地址,
                     個案居住縣市: serviceRecord.detail.個案居住縣市,
-                    個案居住地址: serviceRecord.detail.個案居住地址,
+                    居住地: serviceRecord.detail.居住地,
+                    居住地址: serviceRecord.detail.居住地址,
                     hour_start: serviceRecord.hour_start,
                     min_start: serviceRecord.min_start,
                     hour_end: serviceRecord.hour_end,
@@ -480,7 +460,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     ? parseFloat(firstPointWithCoords.detail.Lon)
                     : null,
                   name: firstPointWithCoords.detail.姓名,
-                  address: firstPointWithCoords.detail.個案居住地址,
+                  address: firstPointWithCoords.detail.居住地址,
                   time: `${firstPointWithCoords.hour_start}:${firstPointWithCoords.min_start.toString().padStart(2, '0')}`,
                 }
               : null,
@@ -488,17 +468,19 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             allServicePoints: servicePoints.map((point, index) => ({
               順序: index + 1,
               姓名: point.detail.姓名,
-              地址: point.detail.個案居住地址,
+              地址: point.detail.居住地址,
               時間: `${point.hour_start}:${point.min_start.toString().padStart(2, '0')}`,
               身分證字號: point['身分證字號'],
-              編號: point.detail.編號,
+              編號: point.detail.案號,
               性別: point.detail.性別,
               個案戶籍縣市: point.detail.個案戶籍縣市,
               鄉鎮區: point.detail.鄉鎮區,
               里別: point.detail.里別,
-              個案戶籍地址: point.detail.個案戶籍地址,
+              戶籍地: point.detail.戶籍地,
+              戶籍地址: point.detail.戶籍地址,
               個案居住縣市: point.detail.個案居住縣市,
-              個案居住地址: point.detail.個案居住地址, // 添加個案居住地址欄位
+              居住地: point.detail.居住地,
+              居住地址: point.detail.居住地址,
               緯度:
                 point.detail.Lat && !isNaN(parseFloat(point.detail.Lat))
                   ? parseFloat(point.detail.Lat)
