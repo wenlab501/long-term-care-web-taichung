@@ -348,6 +348,21 @@ body {
   color: var(--my-color-gray-600);
 }
 
+.my-title-lg-black {
+  font-size: var(--my-font-size-lg);
+  color: var(--my-color-black);
+}
+
+.my-title-lg-gray {
+  font-size: var(--my-font-size-lg);
+  color: var(--my-color-gray-600);
+}
+
+.my-title-md-black {
+  font-size: var(--my-font-size-lg);
+  color: var(--my-color-black);
+}
+
 .my-title-md-gray {
   font-size: var(--my-font-size-md);
   color: var(--my-color-gray-600);

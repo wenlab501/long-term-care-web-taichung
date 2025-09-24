@@ -6,17 +6,16 @@
       <!-- 📊 服務日期統計：當選擇了服務日期時顯示 -->
       <div v-if="isServiceDateMode">
         <div class="mb-4">
-          <h5 class="my-title-md-black">
-            <i class="fas fa-calendar-alt me-2 text-primary"></i>
-            服務日期統計
-          </h5>
-          <div class="my-content-sm-gray">選擇的日期：{{ selectedServiceDate || '未選擇' }}</div>
+          <div class="my-title-lg-black">服務日期統計 - {{ selectedServiceDate || '未選擇' }}</div>
         </div>
 
         <!-- 📊 統計圖表區塊 -->
         <div
-          v-if="trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0"
-          class="mb-4"
+          v-if="
+            serviceDateStatistics.length > 0 &&
+            (trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0)
+          "
+          class="mb-3"
         >
           <div class="row">
             <!-- 交通時間分布圖表 -->
@@ -44,34 +43,55 @@
         </div>
 
         <!-- 服務人員列表表格 -->
-        <div v-if="serviceDateStatistics.length > 0">
-          <div class="mb-3">
-            <h6 class="my-title-sm-black">服務人員列表交通時間統計</h6>
-          </div>
+        <div
+          v-if="serviceDateStatistics.length > 0"
+          class="rounded-4 my-bgcolor-gray-100 p-4 h-100"
+        >
+          <div class="my-title-sm-black text-center mb-3">服務人員列表交通時間統計</div>
           <div
             v-for="provider in serviceDateStatistics"
             :key="provider.serviceProviderId"
             class="mb-4"
           >
-            <div class="mb-2">
-              <h6 class="my-title-sm-black">{{ provider.serviceProviderId }}</h6>
-            </div>
+            <div class="my-title-xs-gray text-center mb-2">{{ provider.serviceProviderId }}</div>
             <div class="table-responsive">
-              <table class="table table-hover table-sm">
-                <thead class="table-light">
-                  <tr>
-                    <th class="my-title-sm-black">序號</th>
-                    <th class="my-title-sm-black">交通時間</th>
-                    <th class="my-title-sm-black">總時間</th>
-                    <th class="my-title-sm-black">路線說明</th>
+              <table class="table w-100 mb-0">
+                <thead class="sticky-top my-table-thead">
+                  <tr class="text-center text-nowrap">
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">#</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">總時間</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(trafficTime, index) in provider.trafficTimes" :key="index">
-                    <td class="my-content-sm-black">{{ index + 1 }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.time }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.totalTime }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.routeDescription }}</td>
+                  <tr
+                    v-for="(trafficTime, index) in provider.trafficTimes"
+                    :key="index"
+                    class="text-center text-nowrap border-bottom"
+                  >
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
+                      <div class="my-content-xs-black px-3 py-2">
+                        {{ trafficTime.routeDescription }}
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -86,18 +106,17 @@
       <!-- 📊 服務人員統計：當選擇了服務人員時顯示 -->
       <div v-else-if="isServiceProviderMode">
         <div class="mb-4">
-          <h5 class="my-title-md-black">
-            <i class="fas fa-user-md me-2 text-primary"></i>
-            服務人員統計
-          </h5>
-          <div class="my-content-sm-gray">
-            選擇的服務人員：{{ selectedServiceProvider || '未選擇' }}
+          <div class="my-title-lg-black">
+            服務人員統計 - {{ selectedServiceProvider || '未選擇' }}
           </div>
         </div>
 
         <!-- 📊 統計圖表區塊 -->
         <div
-          v-if="trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0"
+          v-if="
+            serviceProviderStatistics.length > 0 &&
+            (trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0)
+          "
           class="mb-4"
         >
           <div class="row">
@@ -126,30 +145,51 @@
         </div>
 
         <!-- 服務日期列表表格 -->
-        <div v-if="serviceProviderStatistics.length > 0">
-          <div class="mb-3">
-            <h6 class="my-title-sm-black">服務日期列表交通時間統計</h6>
-          </div>
+        <div
+          v-if="serviceProviderStatistics.length > 0"
+          class="rounded-4 my-bgcolor-gray-100 p-4 h-100"
+        >
+          <div class="my-title-sm-black text-center mb-3">服務日期列表交通時間統計</div>
           <div v-for="date in serviceProviderStatistics" :key="date.serviceDate" class="mb-4">
-            <div class="mb-2">
-              <h6 class="my-title-sm-black">{{ date.serviceDate }}</h6>
-            </div>
+            <div class="my-title-xs-gray text-center mb-2">{{ date.serviceDate }}</div>
             <div class="table-responsive">
-              <table class="table table-hover table-sm">
-                <thead class="table-light">
-                  <tr>
-                    <th class="my-title-sm-black">序號</th>
-                    <th class="my-title-sm-black">交通時間</th>
-                    <th class="my-title-sm-black">總時間</th>
-                    <th class="my-title-sm-black">路線說明</th>
+              <table class="table w-100 mb-0">
+                <thead class="sticky-top my-table-thead">
+                  <tr class="text-center text-nowrap">
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">#</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">總時間</span>
+                    </th>
+                    <th class="p-1">
+                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(trafficTime, index) in date.trafficTimes" :key="index">
-                    <td class="my-content-sm-black">{{ index + 1 }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.time }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.totalTime }}</td>
-                    <td class="my-content-sm-black">{{ trafficTime.routeDescription }}</td>
+                  <tr
+                    v-for="(trafficTime, index) in date.trafficTimes"
+                    :key="index"
+                    class="text-center text-nowrap border-bottom"
+                  >
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
+                      <div class="my-content-xs-black px-3 py-2">
+                        {{ trafficTime.routeDescription }}
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -224,22 +264,33 @@
       }
     }
 
-    // 過濾掉序號1的0分鐘交通時間（起點），其他0分鐘要計算
+    // 過濾掉#1的0分鐘交通時間（起點），其他0分鐘要計算
     const filteredTrafficTimes = allTrafficTimes.filter((traffic) => {
-      // 只有序號1的0分鐘不計算，其他0分鐘都要計算
+      // 只有#1的0分鐘不計算，其他0分鐘都要計算
       return !(traffic.sequenceNumber === 1 && traffic.totalMinutes === 0);
     });
 
-    // 按10分鐘區間分組，超過2小時的合併為1個bar
+    // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
     const distribution = {};
+
+    // 初始化所有可能的區間（5-14, 15-24, ..., 115-124, >125）
+    for (let i = 5; i <= 125; i += 10) {
+      const intervalKey = `${i}-${i + 9}`;
+      distribution[intervalKey] = 0;
+    }
+    distribution['>125'] = 0;
+
+    // 統計實際數據（過濾掉小於0或NaN的值）
     filteredTrafficTimes.forEach((traffic) => {
-      if (traffic.totalMinutes > 120) {
-        // 超過2小時的合併為一個區間
-        distribution['120分鐘以上'] = (distribution['120分鐘以上'] || 0) + 1;
-      } else {
-        const interval = Math.floor(traffic.totalMinutes / 10) * 10;
-        const intervalKey = `${interval}-${interval + 9}分鐘`;
-        distribution[intervalKey] = (distribution[intervalKey] || 0) + 1;
+      // 確保是有效的正數值
+      if (traffic.totalMinutes > 0 && !isNaN(traffic.totalMinutes)) {
+        if (traffic.totalMinutes > 125) {
+          distribution['>125'] += 1;
+        } else {
+          const interval = Math.floor((traffic.totalMinutes - 5) / 10) * 10 + 5;
+          const intervalKey = `${interval}-${interval + 9}`;
+          distribution[intervalKey] += 1;
+        }
       }
     });
 
@@ -250,9 +301,9 @@
         count,
       }))
       .sort((a, b) => {
-        // 處理"以上"的區間，將其排在最後
-        if (a.interval.includes('以上')) return 1;
-        if (b.interval.includes('以上')) return -1;
+        // 處理">"的區間，將其排在最後
+        if (a.interval.includes('>')) return 1;
+        if (b.interval.includes('>')) return -1;
 
         const aStart = parseInt(a.interval.split('-')[0]);
         const bStart = parseInt(b.interval.split('-')[0]);
@@ -275,7 +326,7 @@
         const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
           const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（每一筆都要算，包括序號1）
+          // 收集每個交通時間的累積總時間（每一筆都要算，包括#1）
           trafficTimes.forEach((traffic) => {
             allTotalTimes.push(traffic.cumulativeTotalMinutes);
           });
@@ -288,7 +339,7 @@
         const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
           const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（每一筆都要算，包括序號1）
+          // 收集每個交通時間的累積總時間（每一筆都要算，包括#1）
           trafficTimes.forEach((traffic) => {
             allTotalTimes.push(traffic.cumulativeTotalMinutes);
           });
@@ -296,16 +347,27 @@
       }
     }
 
-    // 按30分鐘區間分組，超過5小時的合併為1個bar
+    // 按30分鐘區間分組，超過5小時的合併為1個bar，最小刻度是5
     const distribution = {};
+
+    // 初始化所有可能的區間（5-34, 35-64, ..., 275-304, >305）
+    for (let i = 5; i <= 305; i += 30) {
+      const intervalKey = `${i}-${i + 29}`;
+      distribution[intervalKey] = 0;
+    }
+    distribution['>305'] = 0;
+
+    // 統計實際數據（過濾掉小於0或NaN的值）
     allTotalTimes.forEach((totalMinutes) => {
-      if (totalMinutes > 300) {
-        // 超過5小時的合併為一個區間
-        distribution['300分鐘以上'] = (distribution['300分鐘以上'] || 0) + 1;
-      } else {
-        const interval = Math.floor(totalMinutes / 30) * 30;
-        const intervalKey = `${interval}-${interval + 29}分鐘`;
-        distribution[intervalKey] = (distribution[intervalKey] || 0) + 1;
+      // 確保是有效的正數值
+      if (totalMinutes > 0 && !isNaN(totalMinutes)) {
+        if (totalMinutes > 305) {
+          distribution['>305'] += 1;
+        } else {
+          const interval = Math.floor((totalMinutes - 5) / 30) * 30 + 5;
+          const intervalKey = `${interval}-${interval + 29}`;
+          distribution[intervalKey] += 1;
+        }
       }
     });
 
@@ -316,9 +378,9 @@
         count,
       }))
       .sort((a, b) => {
-        // 處理"以上"的區間，將其排在最後
-        if (a.interval.includes('以上')) return 1;
-        if (b.interval.includes('以上')) return -1;
+        // 處理">"的區間，將其排在最後
+        if (a.interval.includes('>')) return 1;
+        if (b.interval.includes('>')) return -1;
 
         const aStart = parseInt(a.interval.split('-')[0]);
         const bStart = parseInt(b.interval.split('-')[0]);
@@ -392,7 +454,7 @@
             cumulativeTotalMinutes: cumulativeTotalMinutes,
             hourTraffic: hourTraffic,
             minTraffic: minTraffic,
-            sequenceNumber: index + 1, // 添加序號
+            sequenceNumber: index + 1, // 添加#
           });
         }
       }
@@ -497,7 +559,7 @@
       .domain([0, d3.max(data, (d) => d.count)])
       .range([height, 0]);
 
-    // 繪製長條
+    // 繪製長條（只繪製數量大於0的bar）
     g.selectAll('.bar')
       .data(data)
       .enter()
@@ -505,8 +567,8 @@
       .attr('class', 'bar')
       .attr('x', (d) => xScale(d.interval) + (xScale.bandwidth() - 8) / 2)
       .attr('width', 8)
-      .attr('y', (d) => yScale(d.count))
-      .attr('height', (d) => height - yScale(d.count))
+      .attr('y', (d) => (d.count > 0 ? yScale(d.count) : height))
+      .attr('height', (d) => (d.count > 0 ? height - yScale(d.count) : 0))
       .attr('fill', '#007bff');
 
     // 添加數值標籤
