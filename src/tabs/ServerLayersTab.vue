@@ -76,7 +76,6 @@
        * @param {string} layerId - 要切換的圖層 ID
        */
       const toggleLayer = (layerId) => {
-        console.log('🔘 ServerLayersTab: 切換圖層', layerId);
         dataStore.toggleLayerVisibility(layerId);
       };
 
@@ -86,7 +85,6 @@
        * @param {string} groupName - 要切換的群組名稱
        */
       const toggleGroup = (groupName) => {
-        console.log('🔘 ServerLayersTab: 切換群組', groupName);
         dataStore.toggleGroupVisibility(groupName);
       };
 
@@ -122,15 +120,12 @@
        * @param {string} providerId - 服務人員身分證 ID
        */
       const handleProviderSelected = async (providerId) => {
-        console.log('👤 ServerLayersTab 接收到的服務人員ID:', providerId);
-
         // 切換服務人員時清空 right panel
         dataStore.setSelectedFeature(null);
 
         if (providerId) {
           dataStore.setServiceProviderFilter(providerId);
           // 載入該服務人員的所有日期圖層
-          console.log('👤 開始載入服務人員日期圖層');
           await dataStore.loadServiceProviderDateLayers(providerId);
         } else {
           dataStore.clearServiceProviderFilter();
@@ -144,8 +139,6 @@
        * @param {string} fileName - 檔案名稱
        */
       const handleFileSelected = async (fileName) => {
-        console.log('📁 ServerLayersTab 接收到的檔案:', fileName);
-
         // 切換檔案時清空 right panel
         dataStore.setSelectedFeature(null);
 
@@ -156,7 +149,6 @@
         }
 
         // 重新載入服務人員清單以應用檔案篩選
-        console.log('📁 重新載入服務人員清單以應用檔案篩選');
         const providers = await dataStore.loadAvailableServiceProviders();
 
         // 如果當前選中的服務人員不在新的清單中，選擇第一個可用的服務人員
@@ -165,23 +157,19 @@
 
           // 重新載入當前服務人員的日期圖層以應用檔案篩選
           if (currentProvider && dataStore.isServiceProviderFilterActive) {
-            console.log('📁 重新載入服務人員日期圖層以應用檔案篩選');
             await dataStore.loadServiceProviderDateLayers(currentProvider);
           }
           const isCurrentProviderAvailable = providers.some((p) => p.id === currentProvider);
 
           if (!isCurrentProviderAvailable) {
-            console.log('📁 當前服務人員不在篩選後的清單中，選擇第一個可用服務人員');
             const firstProvider = providers[0];
             await handleProviderSelected(firstProvider.id);
           } else if (currentProvider) {
             // 如果當前服務人員仍然可用，重新載入其日期圖層
-            console.log('📁 重新載入當前服務人員的日期圖層');
             await dataStore.loadServiceProviderDateLayers(currentProvider);
           }
         } else {
           // 如果沒有可用的服務人員，清除選擇
-          console.log('📁 沒有可用的服務人員，清除選擇');
           dataStore.clearServiceProviderFilter();
           dataStore.clearServiceProviderDateLayers();
         }
@@ -192,14 +180,12 @@
        * 載入服務人員清單並預設選擇第一個服務人員
        */
       onMounted(async () => {
-        console.log('🚀 ServerLayersTab 組件掛載，開始載入服務人員清單');
         // 載入可用的服務人員清單
         const providers = await dataStore.loadAvailableServiceProviders();
 
         // 預設選擇第一個服務人員
         if (providers && providers.length > 0) {
           const firstProvider = providers[0];
-          console.log('👤 預設選擇第一個服務人員:', firstProvider.id);
           await handleProviderSelected(firstProvider.id);
         }
       });

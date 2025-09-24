@@ -89,6 +89,11 @@
           label: '臺北聯承',
           description: '臺北聯承服務記錄',
         },
+        {
+          value: 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
+          label: '三重聯恩',
+          description: '三重聯恩服務記錄',
+        },
       ]);
 
       /**
@@ -106,7 +111,6 @@
        */
       onMounted(async () => {
         // 檔案選項已經在 computed 中定義，無需額外載入
-        console.log('📁 FileSelector 組件掛載，檔案選項已準備就緒');
       });
 
       // 📤 返回給模板使用

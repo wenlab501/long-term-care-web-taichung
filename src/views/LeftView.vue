@@ -81,19 +81,10 @@
         if (tabName === 'date') {
           // 切換到服務日期 tab 時，根據當前選中的日期載入服務人員圖層
           if (dataStore.selectedServiceDate && dataStore.isDateFilterActive) {
-            console.log('🔄 切換到服務日期 tab，重新載入服務人員圖層', {
-              selectedDate: dataStore.selectedServiceDate,
-              fileFilter: dataStore.selectedFileFilter,
-              isFileFilterActive: dataStore.isFileFilterActive,
-            });
             await dataStore.loadServiceProviderLayers(dataStore.selectedServiceDate);
           }
         } else if (tabName === 'server') {
           // 切換到服務人員 tab 時，先重新載入服務人員清單
-          console.log('🔄 切換到服務人員 tab，重新載入服務人員清單', {
-            fileFilter: dataStore.selectedFileFilter,
-            isFileFilterActive: dataStore.isFileFilterActive,
-          });
           const providers = await dataStore.loadAvailableServiceProviders();
 
           // 檢查是否有可用的服務人員
@@ -108,32 +99,21 @@
               !isCurrentProviderAvailable
             ) {
               const firstProvider = providers[0];
-              console.log(
-                '🔄 沒有選中服務人員或當前服務人員不可用，自動選擇第一個:',
-                firstProvider.id
-              );
               dataStore.setServiceProviderFilter(firstProvider.id);
             }
 
             // 載入當前選中服務人員的日期圖層
             if (dataStore.selectedServiceProvider && dataStore.isServiceProviderFilterActive) {
-              console.log('🔄 切換到服務人員 tab，重新載入日期圖層', {
-                selectedProvider: dataStore.selectedServiceProvider,
-                fileFilter: dataStore.selectedFileFilter,
-                isFileFilterActive: dataStore.isFileFilterActive,
-              });
               await dataStore.loadServiceProviderDateLayers(dataStore.selectedServiceProvider);
             }
           } else {
             // 如果沒有可用的服務人員，清除服務人員群組的圖層
-            console.log('🔄 切換到服務人員 tab，但沒有可用的服務人員，清除圖層');
             dataStore.clearServiceProviderDateLayers();
           }
         }
 
         // 資料載入完成後，嘗試恢復之前選中的服務點
         if (currentSelectedFeature) {
-          console.log('🔄 嘗試恢復之前選中的服務點:', currentSelectedFeature);
           // 延遲一點時間確保圖層載入完成，然後使用智能恢復函數
           setTimeout(() => {
             dataStore.restoreSelectedFeature(currentSelectedFeature);

@@ -84,19 +84,12 @@
    * @returns {Array} 排序後的資料陣列
    */
   const getSortedData = (layer) => {
-    console.log('🔍 getSortedData 被調用:', layer.layerId, layer.tableData);
-    if (layer.tableData && layer.tableData.length > 0) {
-      console.log('🔍 第一筆資料結構:', layer.tableData[0]);
-    }
-
     if (!layer.tableData) {
-      console.log('⚠️ 沒有 tableData');
       return [];
     }
 
     const sortState = layerSortStates.value[layer.layerId];
     if (!sortState || !sortState.key) {
-      console.log('📊 返回原始 tableData:', layer.tableData.length, '筆資料');
       return layer.tableData;
     }
 
@@ -205,7 +198,6 @@
           // # 欄位應該顯示序號，如果沒有則根據索引生成（從1開始）
           return item['#'] || (index + 1).toString();
         case '編號':
-          console.log('🔍 編號欄位調試:', { item, 編號: item.編號, 所有keys: Object.keys(item) });
           return item.編號 || 'N/A';
         case '姓名': {
           const name = item.姓名 || 'N/A';
@@ -217,11 +209,6 @@
           return `<span class="${colorClass}">${name}${abbr ? ` (${abbr})` : ''}</span>`;
         }
         case '個案居住地址':
-          console.log('🔍 個案居住地址欄位調試:', {
-            item,
-            個案居住地址: item.個案居住地址,
-            所有keys: Object.keys(item),
-          });
           return item.個案居住地址 || 'N/A';
         case '服務時間': {
           // 組合「起始時間 - 結束時間」
@@ -298,8 +285,6 @@
    * @param {Object} layer - 圖層物件
    */
   const handleHighlight = (item, layer, rowIndex = 0) => {
-    console.log('🎯 DataTableTab: 準備高亮顯示:', { item, layer: layer.layerName });
-
     // 檢查是否已經選取了相同的要素
     const itemId = item.id || item['#'] || item.編號;
     const isSameFeature =
@@ -309,7 +294,6 @@
 
     if (isSameFeature) {
       // 如果點擊的是已經選取的要素，清除選取
-      console.log('🎯 DataTableTab: 點擊已選取的要素，清除選取');
       dataStore.setSelectedFeature(null);
 
       // 發送地圖高亮清除事件
@@ -331,15 +315,11 @@
       (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
     if (isServiceLayer) {
-      console.log('🎯 DataTableTab: 處理服務人員圖層點擊:', item);
-
       // 先清除之前的選取
       dataStore.setSelectedFeature(null);
 
       // 使用共用的工具函數創建服務項目資料
       const { serviceItemsData } = dataStore.createServiceItemsData(item, layer);
-
-      console.log('🎯 DataTableTab: 創建的服務項目資料:', serviceItemsData);
 
       // 發送服務項目列表到父組件，觸發右側面板顯示
       emit('show-service-point-detail', serviceItemsData);
@@ -359,8 +339,6 @@
         },
       };
 
-      console.log('🎯 DataTableTab: 發送服務項目高亮事件:', serviceHighlightData);
-
       setTimeout(() => {
         emit('highlight-on-map', serviceHighlightData);
       }, 100);
@@ -372,8 +350,6 @@
         layerName: layer.layerName,
         item: item,
       };
-
-      console.log('🎯 DataTableTab: 發送一般高亮事件:', highlightData);
 
       // 添加小延遲，確保地圖已準備就緒
       setTimeout(() => {
@@ -407,9 +383,6 @@
       if (addedLayerIds.length > 0) {
         const newestAddedLayerId = addedLayerIds[addedLayerIds.length - 1];
         activeLayerTab.value = newestAddedLayerId;
-        console.log(
-          `🔄 自動切換到新開啟的圖層: ${newLayers.find((layer) => layer.layerId === newestAddedLayerId)?.layerName}`
-        );
       }
       // 如果當前沒有選中分頁，或選中的分頁不在可見列表中，選中第一個
       else if (
@@ -429,8 +402,6 @@
    * 🚀 組件掛載事件 (Component Mounted Event)
    */
   onMounted(() => {
-    console.log('[MultiLayerDataTableTab] Component Mounted');
-
     // 初始化第一個可見圖層為作用中分頁
     if (visibleLayers.value.length > 0 && !activeLayerTab.value) {
       activeLayerTab.value = visibleLayers.value[0].layerId;
@@ -511,7 +482,6 @@
                   class="my-table-tr-hover text-center text-nowrap border-bottom my-cursor-pointer"
                   @click="
                     () => {
-                      console.log('🔥 表格行被點擊了!', item, layer, rowIndex);
                       handleHighlight(item, layer, rowIndex);
                     }
                   "

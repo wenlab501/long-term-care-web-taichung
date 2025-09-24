@@ -119,8 +119,6 @@
 
       // 🏗️ 創建地圖實例函數 (Create Map Instance Function)
       const createMap = () => {
-        console.log('[MapTab] createMap 被調用');
-
         // 檢查地圖容器是否存在
         if (!mapContainer.value) {
           console.error('[MapTab] 地圖容器不存在，無法創建地圖');
@@ -135,14 +133,6 @@
 
         // 檢查容器尺寸是否有效
         const rect = mapContainer.value.getBoundingClientRect(); // 獲取容器的邊界矩形
-        console.log('[MapTab] 容器尺寸:', {
-          width: rect.width,
-          height: rect.height,
-          top: rect.top,
-          left: rect.left,
-          containerId: mapContainer.value.id,
-          containerClasses: mapContainer.value.className,
-        });
 
         // 如果寬度或高度為零，無法創建有效的地圖
         if (rect.width === 0 || rect.height === 0) {
@@ -160,8 +150,6 @@
         }
 
         try {
-          console.log('[MapTab] 開始創建 Leaflet 地圖實例');
-
           // 創建 Leaflet 地圖實例，使用 mapStore 中保存的視圖狀態
           mapInstance = L.map(mapContainer.value, {
             center: mapStore.mapView.center, // 使用保存的地圖中心點
@@ -172,8 +160,6 @@
             zoomAnimation: true, // 啟用縮放動畫
           });
 
-          console.log('[MapTab] Leaflet 地圖實例創建成功');
-
           // 綁定地圖事件處理器
           mapInstance.on('zoomend', handleZoomEnd); // 縮放結束事件
           mapInstance.on('moveend', handleMoveEnd); // 移動結束事件
@@ -182,7 +168,6 @@
           mapInstance.on('click', function (e) {
             if (!e.originalEvent.target.closest('.leaflet-interactive')) {
               // 如果點擊的是地圖空白處，清除所有選取和高亮顯示
-              console.log('🎯 MapTab: 點擊空白處，清除選取和高亮顯示');
               // 刪除地圖上的任何臨時標記
               mapInstance.eachLayer((layer) => {
                 if (
@@ -212,7 +197,6 @@
           // 如果已經處於點擊模式，確保樣式正確應用
           // 注意：路徑規劃點擊模式相關代碼已移除
 
-          console.log('[MapTab] 地圖創建成功，初始化完成'); // 輸出成功訊息
           return true; // 返回成功狀態
         } catch (error) {
           console.error('[MapTab] 地圖創建失敗:', error);
@@ -470,9 +454,6 @@
                 const fontSize = 12; // 固定字體大小 12px，確保所有數字清晰可讀
 
                 // 調試信息
-                console.log(
-                  `🎯 Service Point ${routeOrder}: time_total=${timeTotal}min (${timeInHours.toFixed(2)}h), area=${totalArea.toFixed(1)}px², radius=${radius.toFixed(1)}px, size=${size.toFixed(1)}px`
-                );
 
                 // 優先使用feature.properties中的顏色，如果沒有則使用layer的colorName
                 let pointColor = `var(--my-color-${colorName})`; // 預設使用layer顏色
@@ -802,7 +783,6 @@
 
                 if (isSameFeature) {
                   // 如果點擊的是已經選取的要素，清除選取並回到預設視圖
-                  console.log('🎯 MapTab: 點擊已選取的要素，清除選取');
                   dataStore.setSelectedFeature(null);
                   resetAllLayerStyles();
                   showFullCity();
@@ -815,13 +795,6 @@
                     Array.isArray(feature.properties.service_items) &&
                     feature.properties.service_items.length > 0)
                 ) {
-                  console.log('🎯 MapTab: 檢測到服務人員圖層點擊');
-                  console.log('🎯 MapTab: feature.properties:', feature.properties);
-                  console.log('🎯 MapTab: layer信息 (from store layer):', {
-                    layerId: storeLayerId,
-                    layerName: storeLayerName,
-                  });
-
                   // 清除之前的選取，確保單一選擇
                   dataStore.setSelectedFeature(null);
                   resetAllLayerStyles();
@@ -832,8 +805,6 @@
                       layerId: storeLayerId,
                       layerName: storeLayerName,
                     };
-
-                  console.log('🎯 MapTab: storeLayer:', storeLayer);
 
                   // 應用地圖上的高亮樣式
                   this._originalStyle = {
@@ -856,12 +827,6 @@
                       storeLayer
                     );
 
-                    console.log('🎯 MapTab: 成功創建 serviceItemsData:', serviceItemsData);
-                    console.log(
-                      '🎯 MapTab: serviceItems數量:',
-                      serviceItemsData.serviceItems?.length || 0
-                    );
-
                     // 創建完整的服務項目特徵物件，這將觸發右側面板顯示
                     const serviceItemsFeature = {
                       type: 'Feature',
@@ -877,18 +842,13 @@
                       },
                     };
 
-                    console.log('🎯 MapTab: 創建 serviceItemsFeature:', serviceItemsFeature);
-
                     // 設置到dataStore中，這會觸發右側面板更新
                     dataStore.setSelectedFeature(serviceItemsFeature);
-                    console.log('🎯 MapTab: 已設置 selectedFeature 到 dataStore');
 
                     // 同時發送事件到父組件，確保事件鏈完整
                     emit('show-service-point-detail', serviceItemsData);
-                    console.log('🎯 MapTab: 已發送 show-service-point-detail 事件');
 
                     // 移除縮放和 popup 功能 - 只保留選擇功能
-                    console.log('🎯 MapTab: 服務點已選擇，不再縮放或顯示 popup');
                   } catch (error) {
                     console.error('❌ MapTab: 創建服務項目資料時發生錯誤:', error);
 
@@ -941,14 +901,12 @@
             center: [center.lat, center.lng],
             zoom: zoom,
           };
-          console.log('🎯 保存當前視圖狀態:', previousViewState);
         }
       };
 
       // 🎯 恢復之前的視圖狀態函數 (Restore Previous View State Function)
       const restorePreviousViewState = () => {
         if (mapInstance && previousViewState) {
-          console.log('🎯 恢復之前的視圖狀態:', previousViewState);
           mapInstance.setView(previousViewState.center, previousViewState.zoom);
           // 同時更新 mapStore 中的值，保持一致性
           mapStore.setMapView(previousViewState.center, previousViewState.zoom);
@@ -958,8 +916,6 @@
 
       // 🔄 重設所有圖層樣式函數 (Reset All Layer Styles Function)
       const resetAllLayerStyles = () => {
-        console.log('🔄 MapTab: 重設所有圖層樣式');
-
         // 刪除地圖上的任何臨時標記
         if (mapInstance) {
           // 確保 mapInstance 存在
@@ -1035,14 +991,11 @@
         // 找出需要移除的圖層（在當前地圖上但不在可見列表中的圖層）
         const layersToRemove = currentLayerIds.filter((id) => !visibleLayerIds.includes(id));
 
-        console.log(`🔄 圖層同步: 新增 ${newLayerIds.length} 個, 移除 ${layersToRemove.length} 個`);
-
         // 只移除不可見的圖層，避免不必要的重新渲染
         layersToRemove.forEach((layerId) => {
           if (layerGroups[layerId]) {
             mapInstance.removeLayer(layerGroups[layerId]);
             delete layerGroups[layerId];
-            console.log(`🗺️ 移除圖層: ${layerId}`);
           }
         });
 
@@ -1089,8 +1042,6 @@
                 if (newLayerIds.includes(layerId) && !layer.isAnalysisLayer) {
                   newAddedLayers.push(newLayer);
                 }
-
-                console.log(`🗺️ 圖層 "${layer.layerName}" 已添加到地圖`);
               }
             } catch (error) {
               console.error(`添加圖層 "${layer.layerName}" 時發生錯誤:`, error);
@@ -1115,7 +1066,6 @@
           if (hasValidBounds) {
             setTimeout(() => {
               mapInstance.fitBounds(bounds, { padding: [50, 50] });
-              console.log(`🎯 自動縮放到新添加的 ${newAddedLayers.length} 個圖層範圍`);
             }, 200); // 稍微延遲確保圖層完全載入
           }
         }
@@ -1126,8 +1076,6 @@
           0 // 初始值為 0
         );
         emit('update:activeMarkers', totalMarkers); // 發送標記數量更新事件
-
-        console.log(`🗺️ 圖層同步完成，共 ${visibleLayers.length} 個可見圖層`); // 輸出同步完成訊息
       };
 
       // 🔍 顯示全部要素函數 (Show All Features Function) - 顯示圖面所有資料
@@ -1167,8 +1115,6 @@
         const defaultCenter = [24.1477, 120.6736]; // 台中市政府
         const defaultZoom = 11; // 適合台中市的縮放等級
 
-        console.log(`🌍 顯示全市: 中心點 ${defaultCenter}, 縮放等級 ${defaultZoom}`);
-
         // 回到預設的地圖中心和縮放等級
         mapInstance.setView(defaultCenter, defaultZoom);
 
@@ -1178,8 +1124,6 @@
 
       // 🎯 高亮顯示特定要素函數 (Highlight Specific Feature Function)
       const highlightFeature = (highlightData) => {
-        console.log('🎯 MapTab: 開始高亮顯示要素:', highlightData); // 輸出開始高亮的訊息
-
         // 檢查地圖是否準備就緒
         if (!mapInstance || !isMapReady.value) {
           console.warn('⚠️ 地圖尚未準備就緒，延遲執行高亮顯示'); // 輸出警告訊息
@@ -1199,8 +1143,6 @@
 
         // 檢查是否為服務人員高亮事件
         if (highlightData.type === 'service-provider') {
-          console.log('🎯 處理服務人員高亮事件:', highlightData);
-
           // 將地圖中心移動到第一個服務點
           if (highlightData.firstServicePoint) {
             const { lat, lon } = highlightData.firstServicePoint;
@@ -1237,7 +1179,6 @@
                 .openPopup();
             } else {
               // 如果沒有座標，只顯示提示訊息
-              console.log('⚠️ 第一個服務點沒有座標，無法在地圖上顯示');
             }
 
             // 設置選中的特徵到資料存儲（用於右側面板顯示）
@@ -1254,7 +1195,6 @@
             });
           }
 
-          console.log('✅ 服務人員高亮事件處理完成，退出函數');
           return; // 確保退出函數
         }
 
@@ -1264,7 +1204,6 @@
           highlightData !== null &&
           highlightData.id === null
         ) {
-          console.log('🎯 MapTab: 接收到清除高亮事件');
           // 清除所有圖層的樣式
           resetAllLayerStyles();
           // 回到預設視圖
@@ -1274,8 +1213,6 @@
 
         // 檢查是否為服務項目高亮（從底部面板點擊）
         if (highlightData.type === 'service-item-highlight') {
-          console.log('🎯 MapTab: 處理服務項目高亮事件:', highlightData);
-
           // 清除所有圖層的樣式
           resetAllLayerStyles();
 
@@ -1288,8 +1225,6 @@
           const lon = coordinates?.lon;
 
           if (lat && lon) {
-            console.log('🎯 MapTab: 移動地圖到座標:', lat, lon);
-
             // 移動地圖視圖到服務點位置（底部面板選擇時縮放到中心）
             saveCurrentViewState();
             mapInstance.setView([lat, lon], 16);
@@ -1299,8 +1234,6 @@
             const targetLayerGroup = layerGroups[highlightData.layerId];
 
             if (targetLayerGroup) {
-              console.log('🎯 MapTab: 在圖層中尋找對應的服務點');
-
               targetLayerGroup.eachLayer((layer) => {
                 if (foundAndHighlighted) return; // 找到第一個就停止
 
@@ -1312,8 +1245,6 @@
 
                   // 檢查座標是否匹配（允許小數點差異）
                   if (Math.abs(featureLat - lat) < 0.0001 && Math.abs(featureLon - lon) < 0.0001) {
-                    console.log('✅ 找到匹配的服務點，添加 popup');
-
                     // 只添加 popup，不修改樣式
                     const props = highlightData.item || {};
                     const popupContent = createServicePointContent(props);
@@ -1331,7 +1262,6 @@
                     }
 
                     foundAndHighlighted = true;
-                    console.log('✅ popup 添加完成');
                   }
                 }
               });
@@ -1339,8 +1269,6 @@
 
             // 如果沒有找到現有服務點，創建臨時 popup
             if (!foundAndHighlighted) {
-              console.log('⚠️ 沒有找到現有服務點，創建臨時 popup');
-
               // 創建一個不可見的臨時標記來承載 popup
               const item = highlightData.item;
               const tempMarker = L.marker([lat, lon], {
@@ -1401,9 +1329,6 @@
           targetFeatureId = highlightData; // 直接使用作為要素 ID
         }
 
-        console.log(`🔍 尋找要素: layerId="${targetLayerId}", featureId="${targetFeatureId}"`); // 輸出搜尋資訊
-        console.log('🔍 可用的圖層群組:', Object.keys(layerGroups)); // 輸出可用圖層列表
-
         // 執行高亮顯示的核心邏輯函數
         const performHighlight = () => {
           // 重置所有圖層樣式
@@ -1415,7 +1340,6 @@
 
           // 如果指定了圖層 ID，在特定圖層中搜尋
           if (targetLayerId && layerGroups[targetLayerId]) {
-            console.log(`🔍 在指定圖層 "${targetLayerId}" 中尋找要素`); // 輸出搜尋訊息
             const specificLayerGroup = layerGroups[targetLayerId]; // 獲取指定圖層群組
 
             // 遍歷圖層中的每個要素
@@ -1427,22 +1351,17 @@
                 const featureId =
                   feature.properties.id || feature.properties['#'] || feature.properties.編號;
 
-                console.log(`🔍 檢查要素 ID: ${featureId} (目標: ${targetFeatureId})`); // 輸出檢查訊息
-
                 // 比較要素 ID（轉換為字串進行比較）
                 if (String(featureId) === String(targetFeatureId)) {
                   targetLayer = layer; // 設定目標圖層
                   targetFeature = feature; // 設定目標要素
-                  console.log(`✅ 在圖層 "${targetLayerId}" 中找到要素 "${targetFeatureId}"`); // 輸出找到訊息
                   return;
                 }
               }
             });
           } else {
-            console.log('🔍 在所有圖層中尋找要素'); // 輸出搜尋訊息
             // 在所有圖層中尋找要素
             for (const [layerId, layerGroup] of Object.entries(layerGroups)) {
-              console.log(`🔍 檢查圖層: ${layerId}`); // 輸出當前檢查的圖層
               // 遍歷圖層中的每個要素
               layerGroup.eachLayer((layer) => {
                 const feature = layer.feature; // 獲取要素物件
@@ -1452,14 +1371,11 @@
                   const featureId =
                     feature.properties.id || feature.properties['#'] || feature.properties.編號;
 
-                  console.log(`🔍 檢查要素 ID: ${featureId} (目標: ${targetFeatureId})`); // 輸出檢查訊息
-
                   // 比較要素 ID（轉換為字串進行比較）
                   if (String(featureId) === String(targetFeatureId)) {
                     targetLayer = layer; // 設定目標圖層
                     targetFeature = feature; // 設定目標要素
                     targetLayerId = layerId; // 設定目標圖層 ID
-                    console.log(`✅ 在圖層 "${layerId}" 中找到要素 "${targetFeatureId}"`); // 輸出找到訊息
                     return;
                   }
                 }
@@ -1563,7 +1479,6 @@
               }, 1500);
             }
 
-            console.log('✅ 顯示位置功能完成'); // 輸出完成訊息
             return true; // 返回成功狀態
           } else {
             // 如果未找到目標要素，輸出警告訊息
@@ -1578,7 +1493,6 @@
         const success = performHighlight(); // 執行高亮顯示
         if (!success) {
           // 如果第一次失敗
-          console.log('🔄 第一次高亮顯示失敗，1秒後重試...'); // 輸出重試訊息
           setTimeout(() => {
             const retrySuccess = performHighlight(); // 重試執行高亮顯示
             if (!retrySuccess) {
@@ -1607,7 +1521,6 @@
                       const newRect = mapContainer.value.getBoundingClientRect();
                       if (newRect.width > 0 && newRect.height > 0) {
                         mapInstance.invalidateSize();
-                        console.log('🗺️ 地圖尺寸已延遲刷新');
                       }
                     }
                   }, 100);
@@ -1616,7 +1529,6 @@
               }
 
               mapInstance.invalidateSize(); // 刷新地圖尺寸
-              console.log('🗺️ 地圖尺寸已刷新'); // 輸出成功訊息
             } catch (error) {
               console.error('❌ 刷新地圖尺寸時發生錯誤:', error); // 輸出錯誤訊息
             }
@@ -1636,7 +1548,6 @@
       const clearAnalysisLayer = () => {
         // 調用 dataStore 的方法清除分析圖層
         dataStore.clearAnalysisLayer();
-        console.log('🗑️ 清除分析圖層');
       };
 
       // 注意：路徑優化相關函數已移除
@@ -1652,8 +1563,6 @@
           y: event.pageY || event.clientY,
         };
         showContextMenu.value = true;
-
-        console.log('🖱️ 顯示分析要素右鍵菜單:', feature.properties.name);
       };
 
       // 🗑️ 刪除單個分析點 (Delete Single Analysis Point)
@@ -1675,7 +1584,6 @@
         // 根據圖層類型調用對應的刪除方法
         if (layerId === 'analysis-layer') {
           dataStore.deleteAnalysisPoint(pointId);
-          console.log('🗑️ 刪除分析點:', pointId);
         }
 
         // 隱藏右鍵菜單
@@ -1697,10 +1605,8 @@
         if (mapContainer.value && window.ResizeObserver) {
           // 創建 ResizeObserver 實例
           resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-              // 遍歷所有變化的元素
-              console.log('🔄 地圖容器大小變化:', entry.contentRect); // 輸出容器尺寸變化資訊
-
+            // 遍歷所有變化的元素
+            if (entries.length > 0) {
               // 使用防抖機制，避免短時間內多次觸發
               if (resizeTimeout) {
                 clearTimeout(resizeTimeout);
@@ -1715,7 +1621,6 @@
             }
           });
           resizeObserver.observe(mapContainer.value); // 開始觀察地圖容器
-          console.log('✅ ResizeObserver 已設置'); // 輸出設置成功訊息
         }
       };
 
@@ -1737,13 +1642,6 @@
       let initTimeoutId = null; // 初始化超時計時器
 
       const initMap = () => {
-        console.log('[MapTab] initMap 被調用，當前狀態:', {
-          mapInstance: !!mapInstance,
-          isMapReady: isMapReady.value,
-          isInitializing: isInitializing,
-          containerExists: !!mapContainer.value,
-        });
-
         // 檢查是否已經有地圖實例存在，避免重複初始化
         if (mapInstance && isMapReady.value) {
           console.warn('[MapTab] 地圖已初始化，跳過重複初始化');
@@ -1762,7 +1660,6 @@
           initTimeoutId = null;
         }
 
-        console.log('[MapTab] 開始初始化地圖');
         isInitializing = true; // 設置初始化標誌
         let attempts = 0; // 初始化嘗試次數計數器
         const maxAttempts = 20; // 最大嘗試次數
@@ -1776,15 +1673,6 @@
 
           const rect = mapContainer.value.getBoundingClientRect();
           const computedStyle = window.getComputedStyle(mapContainer.value);
-
-          console.log(`[MapTab] 嘗試 ${attempts}: 容器狀態`, {
-            width: rect.width,
-            height: rect.height,
-            display: computedStyle.display,
-            visibility: computedStyle.visibility,
-            parentElement: mapContainer.value.parentElement?.tagName,
-            parentRect: mapContainer.value.parentElement?.getBoundingClientRect(),
-          });
 
           // 檢查容器是否可見且有有效尺寸
           if (rect.width === 0 || rect.height === 0) {
@@ -1825,20 +1713,16 @@
           // 檢查容器是否準備就緒
           if (!isContainerReady()) {
             const delay = Math.min(200 * attempts, 1000); // 漸進式延遲，最多1秒
-            console.log(`[MapTab] 容器未準備就緒，${delay}ms 後重試 (${attempts}/${maxAttempts})`);
             setTimeout(tryInit, delay);
             return;
           }
 
           try {
-            console.log(`[MapTab] 容器準備就緒，嘗試創建地圖 (${attempts}/${maxAttempts})`);
             if (createMap()) {
               // 嘗試創建地圖
-              console.log('[MapTab] 地圖創建成功，設定底圖和同步圖層');
               setBasemap(); // 設定底圖
               syncLayers(); // 同步圖層
               isInitializing = false; // 重置初始化標誌
-              console.log('[MapTab] 地圖初始化完成');
             } else {
               console.warn('[MapTab] 地圖創建失敗，繼續重試');
               setTimeout(tryInit, 200); // 延遲 200ms 後重試
@@ -1867,12 +1751,9 @@
 
       // 🔄 生命週期：組件掛載 (Lifecycle: Component Mounted)
       onMounted(() => {
-        console.log('[MapTab] 組件已掛載，開始初始化流程');
-
         nextTick(() => {
           // 等待 DOM 更新完成
           setTimeout(() => {
-            console.log('[MapTab] DOM 更新完成，開始地圖初始化');
             // 延遲執行確保容器準備就緒
             initMap(); // 初始化地圖
 
@@ -1893,13 +1774,10 @@
 
       // 🧹 生命週期：組件卸載 (Lifecycle: Component Unmounted)
       onUnmounted(() => {
-        console.log('[MapTab] 組件卸載，清理資源');
-
         // 清理初始化相關計時器
         if (initTimeoutId) {
           clearTimeout(initTimeoutId);
           initTimeoutId = null;
-          console.log('🧹 初始化超時計時器已清理');
         }
 
         if (isInitializing) {
@@ -1917,7 +1795,6 @@
           // 如果 ResizeObserver 存在
           resizeObserver.disconnect(); // 停止觀察
           resizeObserver = null; // 清空引用
-          console.log('🧹 ResizeObserver 已清理'); // 輸出清理訊息
         }
 
         // 清理地圖事件和實例
@@ -1927,7 +1804,6 @@
           mapInstance.off('moveend', handleMoveEnd); // 移除移動結束事件監聽器
           mapInstance.remove(); // 移除地圖實例
           mapInstance = null; // 清空引用
-          console.log('🧹 地圖實例已清理');
         }
 
         // 清理圖層相關變數
@@ -1937,8 +1813,6 @@
 
         // 🖱️ 移除全域點擊事件監聽器
         document.removeEventListener('click', hideContextMenu);
-
-        console.log('[MapTab] 資源清理完成');
       });
 
       // 👀 監聽器：監聽資料存儲中的圖層變化 (Watcher: Watch Data Store Layers)
@@ -1958,12 +1832,8 @@
       watch(
         () => dataStore.selectedFeature,
         (newFeature, oldFeature) => {
-          console.log('🎯 MapTab: selectedFeature 變化', { newFeature, oldFeature });
-
           // 當有新的選擇時，確保只有一個物件被高亮顯示
           if (newFeature) {
-            console.log('🎯 MapTab: 新的選擇，確保只有一個物件被高亮顯示');
-
             // 如果是服務項目類型，不需要額外處理，因為已經在highlightFeature函數中處理
             if (newFeature.properties?.type === 'service-items') {
               // 不需要額外操作，讓專屬處理來管理
@@ -1972,7 +1842,6 @@
 
           // 如果從有選中變為沒有選中，恢復預設視圖
           if (oldFeature && !newFeature) {
-            console.log('🎯 MapTab: 清除選取，恢復預設視圖');
             // 重置所有圖層樣式以確保沒有高亮顯示
             resetAllLayerStyles();
 

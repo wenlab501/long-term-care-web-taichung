@@ -71,7 +71,6 @@
        * @param {string} layerId - 要切換的圖層 ID
        */
       const toggleLayer = (layerId) => {
-        console.log('🔘 DateLayersTab: 切換圖層', layerId);
         dataStore.toggleLayerVisibility(layerId);
 
         // 如果是服務人員圖層，設置或清除對應的服務人員
@@ -80,13 +79,11 @@
           if (layer && layer.visible) {
             // 從圖層 ID 中提取服務人員身分證號碼
             const serviceProviderId = layerId.replace('service-provider-', '');
-            console.log('🔘 DateLayersTab: 設置服務人員', serviceProviderId);
             dataStore.selectedServiceProvider = serviceProviderId;
           } else {
             // 圖層被關閉時，如果當前選中的服務人員就是這個圖層的，則清除選擇
             const serviceProviderId = layerId.replace('service-provider-', '');
             if (dataStore.selectedServiceProvider === serviceProviderId) {
-              console.log('🔘 DateLayersTab: 清除服務人員選擇');
               dataStore.selectedServiceProvider = '';
             }
           }
@@ -98,13 +95,11 @@
           if (layer && layer.visible) {
             // 從圖層 ID 中提取服務日期
             const serviceDate = layerId.replace('service-date-', '');
-            console.log('🔘 DateLayersTab: 設置服務日期', serviceDate);
             dataStore.setServiceDateFilter(serviceDate);
           } else {
             // 圖層被關閉時，如果當前選中的服務日期就是這個圖層的，則清除選擇
             const serviceDate = layerId.replace('service-date-', '');
             if (dataStore.selectedServiceDate === serviceDate) {
-              console.log('🔘 DateLayersTab: 清除服務日期選擇');
               dataStore.clearServiceDateFilter();
             }
           }
@@ -117,7 +112,6 @@
        * @param {string} groupName - 要切換的群組名稱
        */
       const toggleGroup = (groupName) => {
-        console.log('🔘 DateLayersTab: 切換群組', groupName);
         dataStore.toggleGroupVisibility(groupName);
       };
 
@@ -153,17 +147,12 @@
        * @param {string} dateStr - 7碼日期字串 (例如: 1140801)
        */
       const handleDateSelected = async (dateStr) => {
-        console.log('📅 DateLayersTab 接收到的日期:', dateStr);
-        console.log('📅 日期長度:', dateStr ? dateStr.length : 'null');
-        console.log('📅 預期的民國年格式:', dateStr);
-
         // 切換服務日期時清空 right panel
         dataStore.setSelectedFeature(null);
 
         if (dateStr) {
           dataStore.setServiceDateFilter(dateStr);
           // 載入該日期的服務人員圖層
-          console.log('📅 開始載入服務人員圖層');
           await dataStore.loadServiceProviderLayers(dateStr);
         } else {
           dataStore.clearServiceDateFilter();
@@ -177,8 +166,6 @@
        * @param {string} fileName - 檔案名稱
        */
       const handleFileSelected = async (fileName) => {
-        console.log('📁 DateLayersTab 接收到的檔案:', fileName);
-
         // 切換檔案時清空 right panel
         dataStore.setSelectedFeature(null);
 
@@ -186,7 +173,6 @@
           dataStore.setFileFilter(fileName);
           // 重新載入當前日期的服務人員圖層以應用檔案篩選
           if (dataStore.selectedServiceDate) {
-            console.log('📁 重新載入服務人員圖層以應用檔案篩選');
             await dataStore.loadServiceProviderLayers(dataStore.selectedServiceDate);
           }
         } else {
@@ -203,7 +189,6 @@
        * 載入預設日期 (8月1日) 的服務人員圖層
        */
       onMounted(async () => {
-        console.log('🚀 DateLayersTab 組件掛載，開始載入預設日期數據');
         // 載入預設日期的服務人員圖層
         await dataStore.loadServiceProviderLayers('1140801');
       });

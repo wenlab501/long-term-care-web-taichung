@@ -38,16 +38,7 @@
        * 提供響應式的選中物件數據
        */
       const selectedFeature = computed(() => {
-        const feature = dataStore.selectedFeature;
-        if (feature) {
-          console.log('🔍 PropertiesTab - selectedFeature:', {
-            type: feature.type,
-            properties: feature.properties,
-            filename: feature.properties?.filename,
-            hasFilename: !!feature.properties?.filename,
-          });
-        }
-        return feature;
+        return dataStore.selectedFeature;
       });
 
       const selectedLayer = computed(() => {

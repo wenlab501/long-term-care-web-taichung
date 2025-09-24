@@ -39,7 +39,6 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Bootstrap JS（含 Popper
 // 提供下拉選單、模態框、工具提示等互動功能
 
 // 🐛 調試資訊輸出 (Debug Information Output)
-console.log('🎨 樣式文件載入完成');
 
 // 🚀 創建並配置 Vue 應用程式實例 (Create and Configure Vue Application Instance)
 const app = createApp(App);
@@ -58,9 +57,3 @@ app.use(pinia);
 app.mount('#app');
 
 // 🐛 應用程式啟動完成的調試資訊 (Application Startup Debug Information)
-console.log('🚀 空間分析視覺化平台已啟動');
-console.log('📦 Pinia 狀態管理已初始化');
-console.log('🗺️ Vue Router 路由系統已就緒');
-console.log('🎨 Bootstrap 5 UI 框架已載入');
-console.log('🗺️ Leaflet 地圖庫已準備就緒');
-console.log('🔤 Font Awesome 圖示庫已載入');

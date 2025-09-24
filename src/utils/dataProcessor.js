@@ -38,7 +38,6 @@ async function loadAndMergeJsonFiles(fileNames) {
       }
 
       const jsonData = await response.json();
-      console.log(`📁 載入文件: ${fileName}, 記錄數: ${jsonData.length}`);
 
       // 為每個記錄添加filename欄位
       const dataWithFilename = jsonData.map((record) => ({
@@ -53,7 +52,6 @@ async function loadAndMergeJsonFiles(fileNames) {
     }
   }
 
-  console.log(`📊 合併後總記錄數: ${allData.length}`);
   return allData;
 }
 
@@ -81,30 +79,17 @@ function processFilteredRecord(serviceProvider) {
     'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json': '桃園聯承',
     'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json': '楊梅聯聚',
     'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json': '臺北聯承',
+    'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json': '三重聯恩',
   };
 
   const fileName = serviceProvider.filename;
   const displayName = fileConfigs[fileName];
 
   if (displayName) {
-    console.log(`🔍 處理${displayName}數據:`, {
-      serviceProviderId: serviceProvider.服務人員身分證,
-      serviceDate: serviceProvider['服務日期(請輸入7碼)'],
-      servicePointsCount: serviceProvider.service_points?.length || 0,
-    });
-
     // 處理服務點數據，映射欄位名稱
     if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-      serviceProvider.service_points = serviceProvider.service_points.map((point, index) => {
+      serviceProvider.service_points = serviceProvider.service_points.map((point) => {
         if (point.detail) {
-          console.log(`🔍 ${displayName}服務點 ${index} 處理前:`, {
-            hasLat: !!point.detail.Lat,
-            hasLon: !!point.detail.Lon,
-            lat: point.detail.Lat,
-            lon: point.detail.Lon,
-            name: point.detail.姓名,
-          });
-
           // 映射欄位名稱
           const processedDetail = {
             ...point.detail,
@@ -120,20 +105,6 @@ function processFilteredRecord(serviceProvider) {
           delete processedDetail.戶籍地;
           delete processedDetail.戶籍地址;
 
-          console.log(`🔍 ${displayName}服務點 ${index} 處理後:`, {
-            hasLat: !!processedDetail.Lat,
-            hasLon: !!processedDetail.Lon,
-            lat: processedDetail.Lat,
-            lon: processedDetail.Lon,
-            name: processedDetail.姓名,
-            編號: processedDetail.編號,
-            個案居住地址: processedDetail.個案居住地址,
-            original案號: point.detail.案號,
-            original居住地: point.detail.居住地,
-            original居住地址: point.detail.居住地址,
-            allKeys: Object.keys(processedDetail),
-          });
-
           point.detail = processedDetail;
         }
         return point;
@@ -146,48 +117,34 @@ function processFilteredRecord(serviceProvider) {
       serviceProvider.service_points_routes &&
       Array.isArray(serviceProvider.service_points_routes)
     ) {
-      console.log('🔍 處理新北聯和路線數據:', {
-        serviceProviderId: serviceProvider.服務人員身分證,
-        routesCount: serviceProvider.service_points_routes.length,
-      });
-
       serviceProvider.service_points_routes = serviceProvider.service_points_routes.map(
-        (routeCollection, routeIndex) => {
+        (routeCollection) => {
           // 確保 routeCollection 有正確的 GeoJSON 結構
           if (!routeCollection.type) {
             routeCollection.type = 'FeatureCollection';
           }
 
           if (routeCollection.features && Array.isArray(routeCollection.features)) {
-            routeCollection.features = routeCollection.features.map(
-              (routeFeature, featureIndex) => {
-                // 確保 routeFeature 有正確的 GeoJSON 結構
-                if (!routeFeature.type) {
-                  routeFeature.type = 'Feature';
-                }
-
-                if (routeFeature.geometry && routeFeature.geometry.coordinates) {
-                  // 確保 geometry 有正確的 type
-                  if (!routeFeature.geometry.type) {
-                    routeFeature.geometry.type = 'LineString';
-                  }
-
-                  // 確保 properties 存在
-                  if (!routeFeature.properties) {
-                    routeFeature.properties = {};
-                  }
-
-                  console.log(`🔍 新北聯和路線 ${routeIndex}-${featureIndex} 修復後:`, {
-                    type: routeFeature.type,
-                    geometryType: routeFeature.geometry.type,
-                    coordinatesLength: routeFeature.geometry.coordinates.length,
-                    hasProperties: !!routeFeature.properties,
-                  });
-                }
-
-                return routeFeature;
+            routeCollection.features = routeCollection.features.map((routeFeature) => {
+              // 確保 routeFeature 有正確的 GeoJSON 結構
+              if (!routeFeature.type) {
+                routeFeature.type = 'Feature';
               }
-            );
+
+              if (routeFeature.geometry && routeFeature.geometry.coordinates) {
+                // 確保 geometry 有正確的 type
+                if (!routeFeature.geometry.type) {
+                  routeFeature.geometry.type = 'LineString';
+                }
+
+                // 確保 properties 存在
+                if (!routeFeature.properties) {
+                  routeFeature.properties = {};
+                }
+              }
+
+              return routeFeature;
+            });
           }
 
           return routeCollection;
@@ -219,11 +176,10 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
       'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
       'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+      'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
     ];
 
     const jsonData = await loadAndMergeJsonFiles(fileNames);
-
-    console.log('📅 載入服務紀錄數據，日期篩選:', dateFilter);
 
     // 按服務人員分組的圖層數據
     const serviceProviderLayers = new Map();
@@ -240,43 +196,18 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       serviceProvider = processFilteredRecord(serviceProvider);
 
       // 調試：確認 filename 是否存在
-      console.log('🔍 處理服務提供者資料:', {
-        serviceProviderId: serviceProvider.服務人員身分證,
-        filename: serviceProvider.filename,
-        hasFilename: !!serviceProvider.filename,
-      });
 
       // 日期篩選邏輯
       if (dateFilter) {
         // 如果有日期篩選，只處理符合條件的資料
         const filterValue = parseInt(dateFilter);
         const serviceDate = serviceProvider['服務日期(請輸入7碼)'];
-        console.log('🔍 日期篩選檢查:', {
-          filterValue,
-          serviceDate,
-          serviceDateType: typeof serviceDate,
-          matches: serviceDate === filterValue,
-          filename: serviceProvider.filename,
-          serviceProviderId: serviceProvider.服務人員身分證,
-        });
 
         if (serviceDate !== filterValue) {
-          console.log('❌ 日期不匹配，跳過處理:', {
-            serviceProviderId: serviceProvider.服務人員身分證,
-            filename: serviceProvider.filename,
-            serviceDate,
-            filterValue,
-          });
           return;
         }
       } else {
         // 如果沒有日期篩選，預設只處理 1140801 的資料
-        console.log('🔍 無日期篩選，檢查預設日期:', {
-          serviceDate: serviceProvider['服務日期(請輸入7碼)'],
-          filename: serviceProvider.filename,
-          serviceProviderId: serviceProvider.服務人員身分證,
-          willProcess: serviceProvider['服務日期(請輸入7碼)'] === 1140801,
-        });
         if (serviceProvider['服務日期(請輸入7碼)'] !== 1140801) {
           return;
         }
@@ -439,18 +370,6 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
 
           // 3. 在地圖上繪製有座標的服務點
           servicePoints.forEach((serviceRecord, index) => {
-            console.log('🔍 檢查服務點座標:', {
-              serviceProviderId: serviceProvider.服務人員身分證,
-              filename: serviceProvider.filename,
-              serviceRecordIndex: index,
-              hasDetail: !!serviceRecord.detail,
-              hasLat: !!serviceRecord.detail?.Lat,
-              hasLon: !!serviceRecord.detail?.Lon,
-              lat: serviceRecord.detail?.Lat,
-              lon: serviceRecord.detail?.Lon,
-              name: serviceRecord.detail?.姓名,
-            });
-
             if (serviceRecord.detail.Lat && serviceRecord.detail.Lon) {
               const lat = parseFloat(serviceRecord.detail.Lat);
               const lon = parseFloat(serviceRecord.detail.Lon);

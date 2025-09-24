@@ -174,24 +174,14 @@ export const useDataStore = defineStore(
      * @param {string} layerId
      */
     const toggleLayerVisibility = async (layerId) => {
-      console.log('🔧 DataStore: toggleLayerVisibility 被調用', layerId);
       const layer = findLayerById(layerId);
       if (!layer) {
         console.error(`Layer with id "${layerId}" not found.`);
         return;
       }
 
-      console.log('🔧 DataStore: 找到圖層', layer.layerName, '當前狀態:', layer.visible);
-
       // 切換可見性狀態
       layer.visible = !layer.visible;
-      console.log('🔧 DataStore: 新狀態:', layer.visible);
-
-      // 注意：服務人員圖層的顏色已在載入時分配，不需要在這裡動態分配
-      // 移除了原本的動態顏色分配邏輯
-
-      // 服務人員圖層已經在創建時載入好了數據，這裡只需要處理可見性切換
-      console.log(`🔄 圖層 "${layer.layerName}" 可見性切換為:`, layer.visible);
     };
 
     /**
@@ -203,7 +193,6 @@ export const useDataStore = defineStore(
           layer.visible = false;
         }
       });
-      console.log('🗺️ 已將所有圖層設為不可見（清空地圖顯示）');
     };
 
     /**
@@ -211,7 +200,6 @@ export const useDataStore = defineStore(
      * @param {string} groupName
      */
     const toggleGroupVisibility = async (groupName) => {
-      console.log('🔧 DataStore: toggleGroupVisibility 被調用', groupName);
       const group = layers.value.find((g) => g.groupName === groupName);
       if (!group) {
         console.error(`Group with name "${groupName}" not found.`);
@@ -224,18 +212,12 @@ export const useDataStore = defineStore(
       // 如果有可見圖層，則全部隱藏；如果沒有可見圖層，則全部顯示
       const newVisibility = !hasVisibleLayers;
 
-      console.log(
-        `🔧 DataStore: 群組 "${groupName}" 將 ${newVisibility ? '顯示' : '隱藏'} 所有圖層`
-      );
-
       // 設置所有圖層的可見性
       group.groupLayers.forEach((layer) => {
         layer.visible = newVisibility;
 
         // 注意：服務人員圖層的顏色已在載入時分配，不需要在這裡動態分配
         // 移除了原本的動態顏色分配邏輯
-
-        console.log(`🔄 圖層 "${layer.layerName}" 可見性設為:`, newVisibility);
       });
     };
 
@@ -269,7 +251,7 @@ export const useDataStore = defineStore(
     const activeLeftTab = ref('date'); // 當前活躍的左側分頁 ('date' 或 'server')
 
     // 📁 檔案篩選狀態 (File Filter State)
-    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json', 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json', 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json', 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json')
+    const selectedFileFilter = ref('all'); // 選中的檔案篩選 ('all', 'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json', 'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json', 'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json', 'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json', 'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json', 'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json', 'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json')
     const isFileFilterActive = ref(false); // 檔案篩選是否啟用
 
     /**
@@ -278,7 +260,6 @@ export const useDataStore = defineStore(
      */
     const setActiveLeftTab = (tabName) => {
       activeLeftTab.value = tabName;
-      console.log('📑 設置左側面板分頁:', tabName);
     };
 
     const setSelectedFeature = (feature) => {
@@ -304,8 +285,6 @@ export const useDataStore = defineStore(
         return;
       }
 
-      console.log('🔄 嘗試恢復選中的服務點，ID:', featureId);
-
       // 在所有圖層中尋找匹配的服務點
       const allLayers = getAllLayers();
       for (const layer of allLayers) {
@@ -315,14 +294,11 @@ export const useDataStore = defineStore(
           );
 
           if (matchingFeature) {
-            console.log('✅ 找到匹配的服務點，恢復選中狀態:', matchingFeature);
             selectedFeature.value = matchingFeature;
             return;
           }
         }
       }
-
-      console.log('❌ 未找到匹配的服務點，ID:', featureId);
     };
 
     // 📅 日期篩選相關方法 (Date Filter Methods)
@@ -334,7 +310,6 @@ export const useDataStore = defineStore(
     const setServiceDateFilter = (dateStr) => {
       selectedServiceDate.value = dateStr;
       isDateFilterActive.value = !!dateStr;
-      console.log('📅 設定服務日期篩選:', dateStr);
     };
 
     /**
@@ -343,7 +318,6 @@ export const useDataStore = defineStore(
     const clearServiceDateFilter = () => {
       selectedServiceDate.value = '';
       isDateFilterActive.value = false;
-      console.log('📅 清除服務日期篩選');
     };
 
     /**
@@ -351,9 +325,6 @@ export const useDataStore = defineStore(
      */
     const loadServiceProviderLayers = async (dateStr) => {
       try {
-        console.log('📅 dataStore 接收到的日期參數:', dateStr);
-        console.log('📅 將用此日期查詢 JSON 中的服務日期(請輸入7碼)');
-
         // 找到服務記錄群組（日期）
         const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
         if (serviceRecordGroup) {
@@ -396,8 +367,6 @@ export const useDataStore = defineStore(
 
           // 如果有服務人員數據，為每個服務人員創建圖層
           if (result.serviceProviderLayers && result.serviceProviderLayers.length > 0) {
-            console.log('📅 找到', result.serviceProviderLayers.length, '個服務人員');
-
             // 根據檔案篩選過濾服務人員圖層
             let filteredLayers = result.serviceProviderLayers;
             if (selectedFileFilter.value !== 'all') {
@@ -411,7 +380,6 @@ export const useDataStore = defineStore(
                 }
                 return false;
               });
-              console.log('📁 檔案篩選後剩餘', filteredLayers.length, '個服務人員');
             }
 
             // ============================================
@@ -424,11 +392,8 @@ export const useDataStore = defineStore(
               .map((layer) => layer.serviceProviderId)
               .sort(); // 按字母順序排序，確保一致性
 
-            console.log('📅 服務人員ID排序:', serviceProviderIds);
-
             // 2. 按照當天的順序分配顏色（每天重新開始）
             // 不需要跨日期保持相同顏色，每天按照出現順序分配 category20b 顏色
-            console.log('🎨 為當天服務人員分配顏色（按順序）');
 
             // 3. 按照固定順序創建圖層並分配顏色
             serviceProviderIds.forEach((serviceProviderId, index) => {
@@ -486,21 +451,10 @@ export const useDataStore = defineStore(
 
               // 添加到群組的圖層列表中
               serviceRecordGroup.groupLayers.push(serviceLayerObj);
-              console.log(
-                `📅 創建服務人員圖層: ${serviceLayer.serviceProviderId} (索引: ${index}, 顏色: ${assignedColor}, 已更新GeoJSON顏色)`
-              );
             });
 
             // 顏色已在上方直接分配，無需額外操作
-          } else {
-            console.log('📅 沒有找到該日期的服務人員數據');
           }
-
-          console.log(
-            '📅 服務人員圖層載入完成，共',
-            serviceRecordGroup.groupLayers.length,
-            '個圖層'
-          );
         }
       } catch (error) {
         console.error('📅 載入服務人員圖層失敗:', error);
@@ -516,7 +470,6 @@ export const useDataStore = defineStore(
       if (serviceRecordGroup) {
         serviceRecordGroup.groupLayers = [];
         // 清除服務人員圖層（每天重新載入和分配顏色）
-        console.log('📅 已清除所有服務人員圖層');
       }
     };
 
@@ -539,6 +492,7 @@ export const useDataStore = defineStore(
           'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
           'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -557,7 +511,6 @@ export const useDataStore = defineStore(
             }
 
             const jsonData = await response.json();
-            console.log(`📁 載入服務人員清單文件: ${fileName}, 記錄數: ${jsonData.length}`);
 
             // 為每個記錄添加filename欄位
             const dataWithFilename = jsonData.map((record) => ({
@@ -572,13 +525,10 @@ export const useDataStore = defineStore(
           }
         }
 
-        console.log(`📊 合併後總記錄數: ${allData.length}`);
-
         // 根據檔案篩選過濾資料
         let filteredData = allData;
         if (selectedFileFilter.value !== 'all') {
           filteredData = allData.filter((record) => record.filename === selectedFileFilter.value);
-          console.log('📁 檔案篩選後剩餘', filteredData.length, '筆記錄');
         }
 
         // 提取所有唯一的服務人員身分證
@@ -614,7 +564,6 @@ export const useDataStore = defineStore(
         providersWithStats.sort((a, b) => a.id.localeCompare(b.id, 'en', { numeric: true }));
 
         availableServiceProviders.value = providersWithStats;
-        console.log('👤 載入服務人員清單，共', providersWithStats.length, '位服務人員');
 
         return providersWithStats;
       } catch (error) {
@@ -630,7 +579,6 @@ export const useDataStore = defineStore(
     const setServiceProviderFilter = (providerId) => {
       selectedServiceProvider.value = providerId;
       isServiceProviderFilterActive.value = !!providerId;
-      console.log('👤 設定服務人員篩選:', providerId);
     };
 
     /**
@@ -639,7 +587,6 @@ export const useDataStore = defineStore(
     const clearServiceProviderFilter = () => {
       selectedServiceProvider.value = '';
       isServiceProviderFilterActive.value = false;
-      console.log('👤 清除服務人員篩選');
     };
 
     /**
@@ -647,8 +594,6 @@ export const useDataStore = defineStore(
      */
     const loadServiceProviderDateLayers = async (providerId) => {
       try {
-        console.log('👤 dataStore 接收到的服務人員ID:', providerId);
-
         // 找到服務記錄群組（服務人員）
         const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務日期列表');
         if (serviceRecordGroup) {
@@ -685,6 +630,7 @@ export const useDataStore = defineStore(
           'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
           'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
           'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+          'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
         ];
 
         const allData = [];
@@ -703,7 +649,6 @@ export const useDataStore = defineStore(
             }
 
             const jsonData = await response.json();
-            console.log(`📁 載入服務人員日期圖層文件: ${fileName}, 記錄數: ${jsonData.length}`);
 
             // 為每個記錄添加filename欄位
             const dataWithFilename = jsonData.map((record) => ({
@@ -718,8 +663,6 @@ export const useDataStore = defineStore(
           }
         }
 
-        console.log(`📊 合併後總記錄數: ${allData.length}`);
-
         // 篩選出該服務人員的所有記錄
         let providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
 
@@ -728,7 +671,6 @@ export const useDataStore = defineStore(
           providerRecords = providerRecords.filter(
             (record) => record.filename === selectedFileFilter.value
           );
-          console.log('📁 檔案篩選後剩餘', providerRecords.length, '筆記錄');
         }
 
         // 按日期分組
@@ -823,8 +765,6 @@ export const useDataStore = defineStore(
               serviceRecordGroup.groupLayers.push(layerObj);
             }
           });
-
-          console.log('👤 載入完成，共', sortedDates.length, '個日期的圖層');
         }
       } catch (error) {
         console.error('👤 載入服務人員日期圖層失敗:', error);
@@ -838,7 +778,6 @@ export const useDataStore = defineStore(
       const providerGroup = layers.value.find((g) => g.groupName === '服務日期列表');
       if (providerGroup) {
         providerGroup.groupLayers = [];
-        console.log('👤 已清除服務人員群組的所有圖層');
       }
     };
 
@@ -1112,7 +1051,6 @@ export const useDataStore = defineStore(
     const setFileFilter = (fileName) => {
       selectedFileFilter.value = fileName;
       isFileFilterActive.value = fileName !== 'all';
-      console.log('📁 設定檔案篩選:', fileName);
     };
 
     /**
@@ -1121,7 +1059,6 @@ export const useDataStore = defineStore(
     const clearFileFilter = () => {
       selectedFileFilter.value = 'all';
       isFileFilterActive.value = false;
-      console.log('📁 清除檔案篩選');
     };
 
     /**
@@ -1176,11 +1113,6 @@ export const useDataStore = defineStore(
           layer.geoJsonData
       );
 
-      console.log(
-        '🔍 檢查可見的點圖層:',
-        visiblePointLayers.map((l) => l.layerName)
-      );
-
       visiblePointLayers.forEach((layer) => {
         if (layer.geoJsonData && layer.geoJsonData.features) {
           layer.geoJsonData.features.forEach((feature) => {
@@ -1206,7 +1138,6 @@ export const useDataStore = defineStore(
       // 按距離排序
       pointsInRange.sort((a, b) => a.distance - b.distance);
 
-      console.log(`🎯 在 ${radiusMeters / 1000}公里範圍內找到 ${pointsInRange.length} 個點物件`);
       return pointsInRange;
     };
 
@@ -1222,11 +1153,6 @@ export const useDataStore = defineStore(
           !layer.isAnalysisLayer &&
           !layer.isIsochroneAnalysisLayer &&
           layer.geoJsonData
-      );
-
-      console.log(
-        '🔍 檢查可見的多邊形圖層:',
-        visiblePolygonLayers.map((l) => l.layerName)
       );
 
       visiblePolygonLayers.forEach((layer) => {
@@ -1256,9 +1182,6 @@ export const useDataStore = defineStore(
         }
       });
 
-      console.log(
-        `🎯 在 ${radiusMeters / 1000}公里範圍內找到 ${polygonInRange.length} 個重疊多邊形`
-      );
       return polygonInRange;
     };
 
@@ -1338,11 +1261,6 @@ export const useDataStore = defineStore(
 
       // 創建服務項目資料的工具函數 - 重寫版本
       createServiceItemsData: (itemOrFeature, layer) => {
-        console.log('>> [1] createServiceItemsData: 開始處理', {
-          itemOrFeature,
-          layerName: layer.layerName,
-        });
-
         const isFeature = itemOrFeature.type === 'Feature';
         const properties = isFeature ? itemOrFeature.properties : itemOrFeature;
 
@@ -1356,11 +1274,6 @@ export const useDataStore = defineStore(
           console.warn(
             '!! [1a] createServiceItemsData: `properties` 中缺少 `service_items` 或其為空!',
             properties
-          );
-        } else {
-          console.log(
-            '>> [1b] createServiceItemsData: 成功找到 service_items，數量:',
-            serviceItems.length
           );
         }
 
@@ -1382,10 +1295,6 @@ export const useDataStore = defineStore(
           },
         };
 
-        console.log(
-          '>> [2] createServiceItemsData: 處理完成，返回 serviceItemsData',
-          serviceItemsData
-        );
         return { serviceItemsData };
       },
     };
