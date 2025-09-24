@@ -963,7 +963,6 @@ interface DataProcessorFeatures {
   statistics: {
     calculateServiceMetrics: () => void; // 計算服務指標
     generateSummaryData: () => void; // 生成摘要資料
-    computeDistrictCounts: () => void; // 計算行政區統計
   };
 }
 ```

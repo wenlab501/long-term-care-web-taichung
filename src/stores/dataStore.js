@@ -342,7 +342,7 @@ export const useDataStore = defineStore(
             isIsochroneAnalysisLayer: false,
             geoJsonData: null,
             tableData: [],
-            summaryData: { totalCount: 0, routeCount: 0, districtCount: [] },
+            summaryData: { totalCount: 0, routeCount: 0 },
             legendData: null,
             colorName: 'category20b-1',
             type: 'point',
@@ -438,7 +438,6 @@ export const useDataStore = defineStore(
                 summaryData: {
                   totalCount: serviceLayer.servicePointsCount || serviceLayer.pointCount, // 優先使用 service_points_count
                   routeCount: serviceLayer.routeCount,
-                  districtCount: [],
                 },
                 legendData: null,
                 loader: loadNewStandardCentralServiceData,
@@ -612,7 +611,7 @@ export const useDataStore = defineStore(
             isIsochroneAnalysisLayer: false,
             geoJsonData: null,
             tableData: [],
-            summaryData: { totalCount: 0, routeCount: 0, districtCount: [] },
+            summaryData: { totalCount: 0, routeCount: 0 },
             legendData: null,
             colorName: 'category20b-1',
             type: 'point',
