@@ -198,7 +198,8 @@
           // # 欄位應該顯示序號，如果沒有則根據索引生成（從1開始）
           return item['#'] || (index + 1).toString();
         case '編號':
-          return item.編號 || 'N/A';
+          console.log('🔍 編號檢查:', item.編號, item.detail?.編號, item);
+          return item.編號 || item.detail?.編號 || 'N/A';
         case '姓名': {
           const name = item.姓名 || 'N/A';
           const gender = item.性別 || '';
@@ -209,7 +210,8 @@
           return `<span class="${colorClass}">${name}${abbr ? ` (${abbr})` : ''}</span>`;
         }
         case '個案居住地址':
-          return item.個案居住地址 || 'N/A';
+          console.log('🔍 地址檢查:', item.個案居住地址, item.detail?.個案居住地址, item);
+          return item.個案居住地址 || item.detail?.個案居住地址 || 'N/A';
         case '服務時間': {
           // 組合「起始時間 - 結束時間」
           const start = (() => {

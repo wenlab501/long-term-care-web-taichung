@@ -90,22 +90,19 @@ function processFilteredRecord(serviceProvider) {
     if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
       serviceProvider.service_points = serviceProvider.service_points.map((point) => {
         if (point.detail) {
-          // 映射欄位名稱
-          const processedDetail = {
-            ...point.detail,
-            編號: point.detail.案號, // 案號 -> 編號
-            個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
-            個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
-          };
+          // 映射欄位名稱 - 直接修改 point.detail 而不是創建新物件
+          point.detail.編號 = point.detail.案號; // 案號 -> 編號
+          point.detail.個案居住地址 =
+            `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(); // 合併居住地+居住地址
+          point.detail.個案戶籍地址 =
+            `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(); // 合併戶籍地+戶籍地址
 
           // 移除原始欄位
-          delete processedDetail.案號;
-          delete processedDetail.居住地;
-          delete processedDetail.居住地址;
-          delete processedDetail.戶籍地;
-          delete processedDetail.戶籍地址;
-
-          point.detail = processedDetail;
+          delete point.detail.案號;
+          delete point.detail.居住地;
+          delete point.detail.居住地址;
+          delete point.detail.戶籍地;
+          delete point.detail.戶籍地址;
         }
         return point;
       });
