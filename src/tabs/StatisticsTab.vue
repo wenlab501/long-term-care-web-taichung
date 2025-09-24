@@ -22,7 +22,7 @@
             <div class="col-12 col-md-6 mb-3">
               <div
                 v-if="trafficTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+                class="rounded-4 my-bgcolor-gray-100 pt-3 h-100"
               >
                 <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
                 <div ref="chartContainer" class="d-flex justify-content-center"></div>
@@ -33,7 +33,7 @@
             <div class="col-12 col-md-6 mb-3">
               <div
                 v-if="totalTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
+                class="rounded-4 my-bgcolor-gray-100 pt-3 h-100"
               >
                 <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
                 <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
@@ -325,11 +325,8 @@
       if (serviceProviderGroup) {
         const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（全部都要算，不略過任何一筆）
-          trafficTimes.forEach((traffic) => {
-            allTotalTimes.push(traffic.cumulativeTotalMinutes);
-          });
+          const totalTimes = extractServiceTotalTimesFromLayer(layer);
+          allTotalTimes.push(...totalTimes);
         });
       }
     } else if (isServiceProviderMode.value) {
@@ -338,11 +335,8 @@
       if (serviceDateGroup) {
         const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（全部都要算，不略過任何一筆）
-          trafficTimes.forEach((traffic) => {
-            allTotalTimes.push(traffic.cumulativeTotalMinutes);
-          });
+          const totalTimes = extractServiceTotalTimesFromLayer(layer);
+          allTotalTimes.push(...totalTimes);
         });
       }
     }
@@ -389,6 +383,40 @@
   });
 
   /**
+   * 📊 從圖層數據中提取服務總時間信息（底部面板的總時間）
+   * @param {Object} layer - 圖層對象
+   * @returns {Array} 服務總時間列表（分鐘）
+   */
+  const extractServiceTotalTimesFromLayer = (layer) => {
+    const totalTimes = [];
+
+    if (!layer.tableData || !Array.isArray(layer.tableData)) {
+      return totalTimes;
+    }
+
+    layer.tableData.forEach((item) => {
+      // 計算服務時間的總時間（結束時間 - 起始時間）
+      if (
+        item.hour_start !== undefined &&
+        item.min_start !== undefined &&
+        item.hour_end !== undefined &&
+        item.min_end !== undefined
+      ) {
+        const startMinutes = item.hour_start * 60 + item.min_start;
+        const endMinutes = item.hour_end * 60 + item.min_end;
+        const totalMinutes = endMinutes - startMinutes;
+
+        // 只收集有效的正數值
+        if (totalMinutes > 0 && !isNaN(totalMinutes)) {
+          totalTimes.push(totalMinutes);
+        }
+      }
+    });
+
+    return totalTimes;
+  };
+
+  /**
    * 📊 從圖層數據中提取交通時間信息
    * @param {Object} layer - 圖層對象
    * @returns {Array} 交通時間列表
@@ -399,6 +427,38 @@
     if (!layer.geoJsonData || !layer.geoJsonData.features) {
       return trafficTimes;
     }
+
+    // 獲取對應的服務時間總時間數據
+    const getServiceTotalTime = (serviceName) => {
+      if (!layer.tableData || !Array.isArray(layer.tableData)) {
+        return null;
+      }
+
+      const serviceItem = layer.tableData.find(
+        (item) => item.姓名 === serviceName || item.name === serviceName
+      );
+
+      if (serviceItem) {
+        // 計算服務時間的總時間（結束時間 - 起始時間）
+        if (
+          serviceItem.hour_start !== undefined &&
+          serviceItem.min_start !== undefined &&
+          serviceItem.hour_end !== undefined &&
+          serviceItem.min_end !== undefined
+        ) {
+          const startMinutes = serviceItem.hour_start * 60 + serviceItem.min_start;
+          const endMinutes = serviceItem.hour_end * 60 + serviceItem.min_end;
+          const totalMinutes = endMinutes - startMinutes;
+
+          if (totalMinutes > 0 && !isNaN(totalMinutes)) {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
+          }
+        }
+      }
+      return null;
+    };
 
     // 按 routeOrder 排序，確保順序正確
     const sortedFeatures = layer.geoJsonData.features
@@ -420,15 +480,12 @@
 
           const hours = Math.floor(totalMinutes / 60);
           const minutes = totalMinutes % 60;
-          const timeString = hours > 0 ? `${hours}小時${minutes}分鐘` : `${minutes}分鐘`;
+          const timeString = hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
 
-          // 計算總時間
-          const totalHours = Math.floor(cumulativeTotalMinutes / 60);
-          const totalMinutesRemainder = cumulativeTotalMinutes % 60;
-          const totalTimeString =
-            totalHours > 0
-              ? `${totalHours}小時${totalMinutesRemainder}分鐘`
-              : `${totalMinutesRemainder}分鐘`;
+          // 獲取對應服務項目的服務時間總時間
+          const serviceName = feature.properties.姓名 || feature.properties.name || '服務點';
+          const serviceTotalTime = getServiceTotalTime(serviceName);
+          const totalTimeString = serviceTotalTime || '-';
 
           // 生成路線說明
           let routeDescription = '-';
