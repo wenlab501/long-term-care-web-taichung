@@ -45,8 +45,8 @@
       (layer.layerId.startsWith('service-provider-') || layer.layerId.startsWith('service-date-'));
 
     if (isServiceLayer) {
-      // 服務人員圖層只顯示指定的欄位（合併起始/結束為「服務時間」，姓名與性別合併為姓名一欄並以顏色表示）
-      return ['#', '編號', '姓名', '個案居住地址', '服務時間', '總時間', '交通時間', '服務數量'];
+      // 服務人員圖層只顯示指定的欄位（合併起始/結束為「服務時間」）
+      return ['#', '案號', '姓名', '居住地址', '服務時間', '總時間', '交通時間', '服務數量'];
     }
 
     // 其他圖層使用原來的動態欄位邏輯
@@ -197,21 +197,16 @@
         case '#':
           // # 欄位應該顯示序號，如果沒有則根據索引生成（從1開始）
           return item['#'] || (index + 1).toString();
-        case '編號':
-          console.log('🔍 編號檢查:', item.編號, item.detail?.編號, item);
-          return item.編號 || item.detail?.編號 || 'N/A';
+        case '案號':
+          console.log('🔍 案號檢查:', item.案號, item.detail?.案號, item);
+          return item.案號 || item.detail?.案號;
         case '姓名': {
-          const name = item.姓名 || 'N/A';
-          const gender = item.性別 || '';
-          const colorClass =
-            gender === '男性' ? 'my-color-blue' : gender === '女性' ? 'my-color-red' : '';
-          const abbr = gender === '男性' ? 'M' : gender === '女性' ? 'F' : '';
-          // 顯示 姓名 (M/F)，並以顏色標示性別
-          return `<span class="${colorClass}">${name}${abbr ? ` (${abbr})` : ''}</span>`;
+          const name = item.姓名;
+          return `<span>${name}</span>`;
         }
-        case '個案居住地址':
-          console.log('🔍 地址檢查:', item.個案居住地址, item.detail?.個案居住地址, item);
-          return item.個案居住地址 || item.detail?.個案居住地址 || 'N/A';
+        case '居住地址':
+          console.log('🔍 地址檢查:', item.居住地址, item.detail?.居住地址, item);
+          return item.居住地址 || item.detail?.居住地址;
         case '服務時間': {
           // 組合「起始時間 - 結束時間」
           const start = (() => {
@@ -220,7 +215,7 @@
             if (item.hour_start !== undefined && item.min_start !== undefined) {
               return `${item.hour_start}:${String(item.min_start).padStart(2, '0')}`;
             }
-            return 'N/A';
+            return '';
           })();
 
           const end = (() => {
@@ -228,7 +223,7 @@
             if (item.hour_end !== undefined && item.min_end !== undefined) {
               return `${item.hour_end}:${String(item.min_end).padStart(2, '0')}`;
             }
-            return 'N/A';
+            return '';
           })();
 
           return `${start} - ${end}`;
@@ -252,7 +247,7 @@
               return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
             }
           }
-          return 'N/A';
+          return '';
         case '交通時間':
           // 優先使用已格式化的交通時間
           if (item.交通時間) {
@@ -273,12 +268,12 @@
             0
           ).toString();
         default:
-          return item[column] || 'N/A';
+          return item[column];
       }
     }
 
     // 其他圖層使用原始值
-    return item[column] || 'N/A';
+    return item[column];
   };
 
   /**
@@ -288,7 +283,7 @@
    */
   const handleHighlight = (item, layer, rowIndex = 0) => {
     // 檢查是否已經選取了相同的要素
-    const itemId = item.id || item['#'] || item.編號;
+    const itemId = item.id || item['#'] || item.案號;
     const isSameFeature =
       dataStore.selectedFeature &&
       dataStore.selectedFeature.properties &&
@@ -347,7 +342,7 @@
     } else {
       // 其他圖層的原有邏輯
       const highlightData = {
-        id: item.id || item['#'] || item.編號,
+        id: item.id || item['#'] || item.案號,
         layerId: layer.layerId,
         layerName: layer.layerName,
         item: item,

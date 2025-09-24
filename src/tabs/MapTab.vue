@@ -82,29 +82,24 @@
       // =============================================================
       // Popup Content Helpers
       // =============================================================
-      // 🎯 創建簡化的 popup 內容函數，只顯示編號、姓名、個案居住地址
+      // 🎯 創建簡化的 popup 內容函數，只顯示案號、姓名、居住地址
       const createServicePointContent = (props) => {
-        // 處理姓名和性別顯示
+        // 處理姓名顯示
         const name = props.姓名 || props.name || '';
-        const gender = props.性別 || props.gender || '';
-        const genderInitial = gender === '男性' ? 'M' : gender === '女性' ? 'F' : '';
-        const colorClass =
-          gender === '男性' ? 'my-color-blue' : gender === '女性' ? 'my-color-red' : '';
-        const nameWithGender = name && genderInitial ? `${name}(${genderInitial})` : name;
 
         return `
           <div>
             <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">編號</div>
-              <div class="my-content-sm-black pb-1">${props.編號 || props.id || 'N/A'}</div>
+              <div class="my-title-xs-gray pb-1">案號</div>
+              <div class="my-content-sm-black pb-1">${props.案號 || props.id}</div>
             </div>
             <div class="pb-2">
               <div class="my-title-xs-gray pb-1">姓名</div>
-              <div class="my-content-sm-black pb-1"><span class="${colorClass}">${nameWithGender || 'N/A'}</span></div>
+              <div class="my-content-sm-black pb-1"><span>${name}</span></div>
             </div>
             <div class="pb-2">
-              <div class="my-title-xs-gray pb-1">個案居住地址</div>
-              <div class="my-content-sm-black pb-1">${props.個案居住地址 || props.address || 'N/A'}</div>
+              <div class="my-title-xs-gray pb-1">居住地址</div>
+              <div class="my-content-sm-black pb-1">${props.居住地址 || props.address}</div>
             </div>
           </div>`;
       };
@@ -412,7 +407,7 @@
                     const mins = minutes % 60;
                     return hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
                   }
-                  return 'N/A';
+                  return '';
                 })();
 
                 const icon = L.divIcon({
@@ -632,7 +627,7 @@
                     <div class="my-title-xs-gray pb-2">${feature.properties.layerName}</div>
                     <div class="my-content-sm-black">${feature.properties.name}</div>
                     <div class="my-content-xs-gray pt-1">服務人員: ${feature.properties.serviceProviderId}</div>
-                    <div class="my-content-xs-gray">服務日期: ${dataStore.selectedServiceDate || '無資料'}</div>
+                    <div class="my-content-xs-gray">服務日期: ${dataStore.selectedServiceDate}</div>
                     <div class="my-content-xs-gray">服務點數: ${feature.properties.pointCount} 個</div>
                   </div>
                 `,
@@ -1349,7 +1344,7 @@
                 // 檢查要素是否有屬性
                 // 獲取要素 ID（與 DataTableTab.vue 中的邏輯保持一致）
                 const featureId =
-                  feature.properties.id || feature.properties['#'] || feature.properties.編號;
+                  feature.properties.id || feature.properties['#'] || feature.properties.案號;
 
                 // 比較要素 ID（轉換為字串進行比較）
                 if (String(featureId) === String(targetFeatureId)) {
@@ -1369,7 +1364,7 @@
                   // 檢查要素是否有屬性
                   // 獲取要素 ID（與 DataTableTab.vue 中的邏輯保持一致）
                   const featureId =
-                    feature.properties.id || feature.properties['#'] || feature.properties.編號;
+                    feature.properties.id || feature.properties['#'] || feature.properties.案號;
 
                   // 比較要素 ID（轉換為字串進行比較）
                   if (String(featureId) === String(targetFeatureId)) {
@@ -1454,7 +1449,7 @@
                 }
                 // 移除 tooltip 功能，只保留 popup
                 const f = targetLayer.feature;
-                const hasDetail = f && f.properties && (f.properties.編號 || f.properties.name);
+                const hasDetail = f && f.properties && (f.properties.案號 || f.properties.name);
                 if (hasDetail && targetLayer.getLatLng) {
                   const props = f.properties;
                   // 顯示 popup（簡化的 detail 內容）

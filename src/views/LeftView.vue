@@ -194,42 +194,42 @@
           <div class="col-12">
             <div class="my-content-xs-gray mb-1">姓名</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.name || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.name }}
             </div>
           </div>
 
           <div class="col-12">
             <div class="my-content-xs-gray mb-1">服務地址</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.address || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.address }}
             </div>
           </div>
 
           <div class="col-6">
             <div class="my-content-xs-gray mb-1">服務時間</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.time || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.time }}
             </div>
           </div>
 
           <div class="col-6">
             <div class="my-content-xs-gray mb-1">服務項目代碼</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.serviceType || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.serviceType }}
             </div>
           </div>
 
           <div class="col-6">
             <div class="my-content-xs-gray mb-1">順序</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.order || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.order }}
             </div>
           </div>
 
           <div class="col-6">
             <div class="my-content-xs-gray mb-1">服務日期</div>
             <div class="my-content-sm-black">
-              {{ selectedServicePoint.servicePointInfo?.serviceDate || '無資料' }}
+              {{ selectedServicePoint.servicePointInfo?.serviceDate }}
             </div>
           </div>
 
@@ -240,7 +240,7 @@
                 selectedServicePoint.servicePointInfo?.lat &&
                 selectedServicePoint.servicePointInfo?.lng
                   ? `${selectedServicePoint.servicePointInfo.lat.toFixed(6)}, ${selectedServicePoint.servicePointInfo.lng.toFixed(6)}`
-                  : '無資料'
+                  : ''
               }}
             </div>
           </div>

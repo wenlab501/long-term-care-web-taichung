@@ -350,7 +350,7 @@
        * @returns {string} - 格式化後的日期時間字串
        */
       const formatDateTime = (isoString) => {
-        if (!isoString) return 'N/A';
+        if (!isoString) return '';
         try {
           return new Date(isoString).toLocaleString('zh-TW');
         } catch (error) {
@@ -508,8 +508,8 @@
             <!-- 服務人員基本信息 -->
             <div class="my-title-xs-gray mb-3">服務人員信息</div>
             <DetailItem label="服務人員身分證" :value="serviceProviderLabel" />
-            <DetailItem label="服務日期" :value="serviceDateLabel || '無資料'" />
-            <DetailItem label="資料來源" :value="selectedFeature.properties.filename || '無資料'" />
+            <DetailItem label="服務日期" :value="serviceDateLabel" />
+            <DetailItem label="資料來源" :value="selectedFeature.properties.filename" />
             <DetailItem
               label="服務點位數"
               :value="`${selectedFeature.properties.allServicePoints.length} 個`"
@@ -556,39 +556,26 @@
                 <div class="my-title-xs-gray mb-3">
                   個案詳細信息 - {{ selectedServicePoint.姓名 }}
                 </div>
-                <DetailItem label="編號" :value="selectedServicePoint.編號" />
+                <DetailItem label="案號" :value="selectedServicePoint.案號" />
                 <DetailItem
                   label="資料來源"
-                  :value="
-                    selectedServicePoint.filename || selectedFeature.properties.filename || '無資料'
-                  "
+                  :value="selectedServicePoint.filename || selectedFeature.properties.filename"
                 />
                 <div class="pb-2">
                   <div class="my-title-xs-gray pb-1">姓名</div>
                   <div class="my-content-sm-black pb-1">
-                    <span
-                      :class="
-                        selectedServicePoint.性別 === '男性'
-                          ? 'my-color-blue'
-                          : selectedServicePoint.性別 === '女性'
-                            ? 'my-color-red'
-                            : ''
-                      "
-                    >
-                      {{ selectedServicePoint.姓名
-                      }}<template v-if="selectedServicePoint.性別 === '男性'"> (M)</template
-                      ><template v-else-if="selectedServicePoint.性別 === '女性'"> (F)</template>
+                    <span>
+                      {{ selectedServicePoint.姓名 }}
                     </span>
                   </div>
                 </div>
+                <DetailItem label="身分證字號" :value="selectedServicePoint.身分證字號" />
+                <DetailItem label="戶籍地" :value="selectedServicePoint.戶籍地" />
+                <DetailItem label="戶籍地址" :value="selectedServicePoint.戶籍地址" />
+                <DetailItem label="居住地" :value="selectedServicePoint.居住地" />
                 <DetailItem
-                  label="身分證字號"
-                  :value="selectedServicePoint.身分證字號 || '無資料'"
-                />
-                <DetailItem label="個案戶籍地址" :value="selectedServicePoint.個案戶籍地址" />
-                <DetailItem
-                  label="個案居住地址"
-                  :value="selectedServicePoint.個案居住地址 || selectedServicePoint.地址"
+                  label="居住地址"
+                  :value="selectedServicePoint.居住地址 || selectedServicePoint.地址"
                 />
               </template>
             </template>
@@ -601,32 +588,13 @@
             <div class="my-title-sm-black mb-2">服務點資料</div>
             <div class="mb-3">
               <div v-if="selectedFeature.properties.detail">
-                <DetailItem
-                  label="資料來源"
-                  :value="selectedFeature.properties.filename || '無資料'"
-                />
-                <DetailItem
-                  label="編號"
-                  :value="selectedFeature.properties.detail.編號 || '無資料'"
-                />
+                <DetailItem label="資料來源" :value="selectedFeature.properties.filename" />
+                <DetailItem label="案號" :value="selectedFeature.properties.detail.案號" />
                 <div class="pb-2">
                   <div class="my-title-xs-gray pb-1">姓名</div>
                   <div class="my-content-sm-black pb-1">
-                    <span
-                      :class="
-                        selectedFeature.properties.detail.性別 === '男性'
-                          ? 'my-color-blue'
-                          : selectedFeature.properties.detail.性別 === '女性'
-                            ? 'my-color-red'
-                            : ''
-                      "
-                    >
-                      {{ selectedFeature.properties.detail.姓名 || '無資料' }}
-                      <template v-if="selectedFeature.properties.detail.性別 === '男性'">
-                        (M)</template
-                      ><template v-else-if="selectedFeature.properties.detail.性別 === '女性'">
-                        (F)</template
-                      >
+                    <span>
+                      {{ selectedFeature.properties.detail.姓名 }}
                     </span>
                   </div>
                 </div>
@@ -640,17 +608,13 @@
                     (Array.isArray(selectedFeature.properties.service_items)
                       ? selectedFeature.properties.service_items[0]?.['身分證字號']
                       : null) ||
-                    '無資料'
+                    ''
                   "
                 />
-                <DetailItem
-                  label="個案戶籍地址"
-                  :value="selectedFeature.properties.detail.個案戶籍地址 || '無資料'"
-                />
-                <DetailItem
-                  label="個案居住地址"
-                  :value="selectedFeature.properties.detail.個案居住地址 || '無資料'"
-                />
+                <DetailItem label="戶籍地" :value="selectedFeature.properties.detail.戶籍地" />
+                <DetailItem label="戶籍地址" :value="selectedFeature.properties.detail.戶籍地址" />
+                <DetailItem label="居住地" :value="selectedFeature.properties.detail.居住地" />
+                <DetailItem label="居住地址" :value="selectedFeature.properties.detail.居住地址" />
               </div>
               <div v-else class="text-muted small">此服務點缺少 detail 資料</div>
 
@@ -692,7 +656,7 @@
                             style="max-width: 80px"
                           >
                             <div class="my-content-xs-black px-3 py-2">
-                              {{ item.服務項目代碼 || 'N/A' }}
+                              {{ item.服務項目代碼 }}
                             </div>
                           </td>
                           <td
@@ -700,7 +664,7 @@
                             style="max-width: 80px"
                           >
                             <div class="my-content-xs-black px-3 py-2">
-                              {{ item.單價 || item.unitPrice || 'N/A' }}
+                              {{ item.單價 || item.unitPrice }}
                             </div>
                           </td>
                           <td
@@ -709,7 +673,7 @@
                           >
                             <div class="my-content-xs-black px-3 py-2">
                               {{
-                                `${item.hour_start || 'N/A'}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end || 'N/A'}:${(item.min_end || 0).toString().padStart(2, '0')}`
+                                `${item.hour_start}:${(item.min_start || 0).toString().padStart(2, '0')} - ${item.hour_end}:${(item.min_end || 0).toString().padStart(2, '0')}`
                               }}
                             </div>
                           </td>
@@ -727,7 +691,7 @@
                             style="max-width: 80px"
                           >
                             <div class="my-content-xs-black px-3 py-2">
-                              {{ item.row_id || 'N/A' }}
+                              {{ item.row_id }}
                             </div>
                           </td> -->
                         </tr>
@@ -748,16 +712,10 @@
             <hr class="my-3" />
             <div class="my-title-sm-black mb-3">路線中心點資訊</div>
             <DetailItem label="服務人員身分證" :value="serviceProviderLabel" />
-            <DetailItem label="服務日期" :value="serviceDateLabel || '無資料'" />
+            <DetailItem label="服務日期" :value="serviceDateLabel" />
             <DetailItem label="中心點編號" :value="selectedFeature.properties.centerIndex" />
-            <DetailItem
-              label="緯度"
-              :value="selectedFeature.properties.緯度?.toFixed(6) || '無資料'"
-            />
-            <DetailItem
-              label="經度"
-              :value="selectedFeature.properties.經度?.toFixed(6) || '無資料'"
-            />
+            <DetailItem label="緯度" :value="selectedFeature.properties.緯度?.toFixed(6)" />
+            <DetailItem label="經度" :value="selectedFeature.properties.經度?.toFixed(6)" />
 
             <hr class="my-2" />
             <div class="my-content-xs-gray">

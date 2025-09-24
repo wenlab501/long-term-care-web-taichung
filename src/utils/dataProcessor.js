@@ -291,7 +291,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                     const minutes = timeMinutes % 60;
                     return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
                   }
-                  return 'N/A';
+                  return '';
                 })();
 
                 const routeCenterFeatureData = {
@@ -374,15 +374,12 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                       ? serviceRecord.service_items.length
                       : 0,
                     // 添加其他原始資料欄位
-                    編號: serviceRecord.detail.案號,
+                    案號: serviceRecord.detail.案號,
                     姓名: serviceRecord.detail.姓名,
-                    性別: serviceRecord.detail.性別,
-                    個案戶籍縣市: serviceRecord.detail.個案戶籍縣市,
                     鄉鎮區: serviceRecord.detail.鄉鎮區,
                     里別: serviceRecord.detail.里別,
                     戶籍地: serviceRecord.detail.戶籍地,
                     戶籍地址: serviceRecord.detail.戶籍地址,
-                    個案居住縣市: serviceRecord.detail.個案居住縣市,
                     居住地: serviceRecord.detail.居住地,
                     居住地址: serviceRecord.detail.居住地址,
                     hour_start: serviceRecord.hour_start,
@@ -471,14 +468,11 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
               地址: point.detail.居住地址,
               時間: `${point.hour_start}:${point.min_start.toString().padStart(2, '0')}`,
               身分證字號: point['身分證字號'],
-              編號: point.detail.案號,
-              性別: point.detail.性別,
-              個案戶籍縣市: point.detail.個案戶籍縣市,
+              案號: point.detail.案號,
               鄉鎮區: point.detail.鄉鎮區,
               里別: point.detail.里別,
               戶籍地: point.detail.戶籍地,
               戶籍地址: point.detail.戶籍地址,
-              個案居住縣市: point.detail.個案居住縣市,
               居住地: point.detail.居住地,
               居住地址: point.detail.居住地址,
               緯度:
@@ -569,7 +563,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 const servicePointFeature = geoJsonData.features.find(
                   (feature) =>
                     feature.properties &&
-                    (feature.properties.編號 === point.編號 ||
+                    (feature.properties.案號 === point.案號 ||
                       feature.properties.姓名 === point.姓名)
                 );
                 if (servicePointFeature && servicePointFeature.properties.service_items) {
@@ -582,19 +576,18 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 id: `point_${serviceProviderId}_${index}`, // 添加與 GeoJSON feature 一致的 ID
                 姓名: point.姓名,
                 時間: point.時間,
-                服務項目代碼: point.服務項目代碼 || 'N/A',
+                服務項目代碼: point.服務項目代碼,
                 順序: point.順序,
                 filename: point.filename, // 添加 filename 欄位
                 緯度: point.緯度,
                 經度: point.經度,
-                編號: point.編號,
-                性別: point.性別,
-                個案戶籍縣市: point.個案戶籍縣市,
+                案號: point.案號,
                 鄉鎮區: point.鄉鎮區,
                 里別: point.里別,
-                個案戶籍地址: point.個案戶籍地址,
-                個案居住縣市: point.個案居住縣市,
-                個案居住地址: point.個案居住地址, // 個案居住地址欄位
+                戶籍地: point.戶籍地,
+                戶籍地址: point.戶籍地址,
+                居住地: point.居住地,
+                居住地址: point.居住地址,
                 // 添加時間相關欄位
                 hour_start: point.hour_start,
                 min_start: point.min_start,
@@ -607,15 +600,14 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
                 min_traffic: point.min_traffic,
                 // 原始 detail 物件，方便右側面板顯示
                 detail: {
-                  編號: point.編號,
+                  案號: point.案號,
                   姓名: point.姓名,
-                  性別: point.性別,
-                  個案戶籍縣市: point.個案戶籍縣市,
                   鄉鎮區: point.鄉鎮區,
                   里別: point.里別,
-                  個案戶籍地址: point.個案戶籍地址,
-                  個案居住縣市: point.個案居住縣市,
-                  個案居住地址: point.地址,
+                  戶籍地: point.戶籍地,
+                  戶籍地址: point.戶籍地址,
+                  居住地: point.居住地,
+                  居住地址: point.居住地址,
                   Lat: point.緯度 && !isNaN(point.緯度) ? point.緯度 : null,
                   Lon: point.經度 && !isNaN(point.經度) ? point.經度 : null,
                 },

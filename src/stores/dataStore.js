@@ -707,10 +707,9 @@ export const useDataStore = defineStore(
                 .map((feature) => ({
                   id: feature.properties.id,
                   姓名: feature.properties.姓名,
-                  個案居住地址: feature.properties.個案居住地址,
+                  居住地址: feature.properties.居住地址,
                   起始時間: feature.properties.起始時間,
-                  編號: feature.properties.編號,
-                  性別: feature.properties.性別,
+                  案號: feature.properties.案號,
                   detail: feature.properties.detail,
                   hour_start: feature.properties.hour_start,
                   min_start: feature.properties.min_start,
@@ -788,98 +787,15 @@ export const useDataStore = defineStore(
       const features = [];
 
       dayRecords.forEach((serviceProvider, providerIndex) => {
-        // 處理洪幸雪數據的欄位映射
-        if (
-          serviceProvider.filename ===
-          'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json'
-        ) {
-          // 處理服務點數據，映射欄位名稱
-          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
-              if (point.detail) {
-                // 映射欄位名稱
-                const processedDetail = {
-                  ...point.detail,
-                  編號: point.detail.案號, // 案號 -> 編號
-                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
-                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
-                };
+        // 洪幸雪數據處理 - 移除欄位映射，直接使用原始欄位
 
-                // 移除原始欄位
-                delete processedDetail.案號;
-                delete processedDetail.居住地;
-                delete processedDetail.居住地址;
-                delete processedDetail.戶籍地;
-                delete processedDetail.戶籍地址;
+        // 基隆聯祥數據處理 - 移除欄位映射，直接使用原始欄位
 
-                point.detail = processedDetail;
-              }
-              return point;
-            });
-          }
-        }
-
-        // 處理基隆聯祥數據的欄位映射
-        if (
-          serviceProvider.filename ===
-          'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json'
-        ) {
-          // 處理服務點數據，映射欄位名稱
-          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
-              if (point.detail) {
-                // 映射欄位名稱
-                const processedDetail = {
-                  ...point.detail,
-                  編號: point.detail.案號, // 案號 -> 編號
-                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
-                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
-                };
-
-                // 移除原始欄位
-                delete processedDetail.案號;
-                delete processedDetail.居住地;
-                delete processedDetail.居住地址;
-                delete processedDetail.戶籍地;
-                delete processedDetail.戶籍地址;
-
-                point.detail = processedDetail;
-              }
-              return point;
-            });
-          }
-        }
-
-        // 處理新北聯和數據的欄位映射
+        // 處理新北聯和數據 - 移除欄位映射，直接使用原始欄位
         if (
           serviceProvider.filename ===
           'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json'
         ) {
-          // 處理服務點數據，映射欄位名稱
-          if (serviceProvider.service_points && Array.isArray(serviceProvider.service_points)) {
-            serviceProvider.service_points = serviceProvider.service_points.map((point) => {
-              if (point.detail) {
-                // 映射欄位名稱
-                const processedDetail = {
-                  ...point.detail,
-                  編號: point.detail.案號, // 案號 -> 編號
-                  個案居住地址: `${point.detail.居住地 || ''}${point.detail.居住地址 || ''}`.trim(), // 合併居住地+居住地址
-                  個案戶籍地址: `${point.detail.戶籍地 || ''}${point.detail.戶籍地址 || ''}`.trim(), // 合併戶籍地+戶籍地址
-                };
-
-                // 移除原始欄位
-                delete processedDetail.案號;
-                delete processedDetail.居住地;
-                delete processedDetail.居住地址;
-                delete processedDetail.戶籍地;
-                delete processedDetail.戶籍地址;
-
-                point.detail = processedDetail;
-              }
-              return point;
-            });
-          }
-
           // 處理 service_points_routes 路線數據，修復缺少的 GeoJSON 屬性
           if (
             serviceProvider.service_points_routes &&
@@ -996,10 +912,9 @@ export const useDataStore = defineStore(
                   filename: serviceProvider.filename,
                   姓名: serviceRecord.detail.姓名,
                   身分證字號: serviceRecord['身分證字號'],
-                  個案居住地址: serviceRecord.detail.個案居住地址,
+                  居住地址: serviceRecord.detail.居住地址,
                   起始時間: `${serviceRecord.hour_start}:${serviceRecord.min_start.toString().padStart(2, '0')}`,
-                  編號: serviceRecord.detail.編號,
-                  性別: serviceRecord.detail.性別,
+                  案號: serviceRecord.detail.案號,
                   detail: serviceRecord.detail,
                   hour_start: serviceRecord.hour_start,
                   min_start: serviceRecord.min_start,
@@ -1286,7 +1201,7 @@ export const useDataStore = defineStore(
           serviceItems: serviceItems, // 提取出的服務項目
           servicePointInfo: {
             name: properties.姓名 || properties.name,
-            address: properties.個案居住地址 || properties.address,
+            address: properties.居住地址 || properties.address,
             time: properties.時間 || properties.time,
             serviceType: properties.服務項目代碼 || properties.serviceType,
             order: properties.順序 || properties.order,
