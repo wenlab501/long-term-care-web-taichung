@@ -264,10 +264,10 @@
       }
     }
 
-    // 過濾掉#1的0分鐘交通時間（起點），其他0分鐘要計算
+    // 過濾掉序號1的交通時間（略過序號1）
     const filteredTrafficTimes = allTrafficTimes.filter((traffic) => {
-      // 只有#1的0分鐘不計算，其他0分鐘都要計算
-      return !(traffic.sequenceNumber === 1 && traffic.totalMinutes === 0);
+      // 略過序號1，其他都要計算
+      return traffic.sequenceNumber !== 1;
     });
 
     // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
@@ -326,7 +326,7 @@
         const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
           const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（每一筆都要算，包括#1）
+          // 收集每個交通時間的累積總時間（全部都要算，不略過任何一筆）
           trafficTimes.forEach((traffic) => {
             allTotalTimes.push(traffic.cumulativeTotalMinutes);
           });
@@ -339,7 +339,7 @@
         const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
         visibleLayers.forEach((layer) => {
           const trafficTimes = extractTrafficTimesFromLayer(layer);
-          // 收集每個交通時間的累積總時間（每一筆都要算，包括#1）
+          // 收集每個交通時間的累積總時間（全部都要算，不略過任何一筆）
           trafficTimes.forEach((traffic) => {
             allTotalTimes.push(traffic.cumulativeTotalMinutes);
           });
@@ -535,68 +535,150 @@
     d3.select(chartContainer.value).selectAll('*').remove();
 
     const data = trafficTimeDistribution.value;
-    const margin = { top: 20, right: 30, bottom: 60, left: 60 };
-    const width = 400 - margin.left - margin.right;
-    const height = 200 - margin.top - margin.bottom;
+    const containerWidth = chartContainer.value.getBoundingClientRect().width;
+    const containerHeight = 320;
+    const margin = { top: 20, right: 0, bottom: 160, left: 40 };
+    const width = containerWidth - margin.left - margin.right;
+    const height = 160 - margin.top;
 
     const svg = d3
       .select(chartContainer.value)
       .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom);
+      .attr('width', containerWidth)
+      .attr('height', containerHeight);
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // 設定比例尺
-    const xScale = d3
-      .scaleBand()
-      .domain(data.map((d) => d.interval))
-      .range([0, width])
-      .padding(0.1);
+    // 設定比例尺 - 使用固定寬度柱子
+    const barWidth = 8;
+    const dataCount = data.length;
+    const totalBarWidth = dataCount * barWidth;
+    const availableSpaceWidth = width - totalBarWidth;
+    const spaceUnit = availableSpaceWidth / (dataCount * 2);
 
-    const yScale = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.count)])
-      .range([height, 0]);
+    const xScale = (interval) => {
+      const index = data.findIndex((d) => d.interval === interval);
+      if (index === -1) return 0;
+      return spaceUnit + index * (barWidth + 2 * spaceUnit) + barWidth / 2;
+    };
 
-    // 繪製長條（只繪製數量大於0的bar）
+    const maxValue = d3.max(data, (d) => d.count) || 1;
+    const roundedMaxValue = Math.ceil(maxValue / 5) * 5;
+    const yScale = d3.scaleLinear().domain([0, roundedMaxValue]).range([height, 0]);
+
+    // 計算Y軸刻度
+    const yTicks = [0];
+    let interval = 5;
+    while (roundedMaxValue / interval > 4) {
+      interval += 5;
+    }
+    for (let i = interval; i <= roundedMaxValue; i += interval) {
+      yTicks.push(i);
+      if (yTicks.length >= 5) break;
+    }
+
+    // 繪製水平虛線網格
+    g.selectAll('.grid-line')
+      .data(yTicks)
+      .enter()
+      .append('line')
+      .attr('class', 'grid-line')
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', (d) => yScale(d))
+      .attr('y2', (d) => yScale(d))
+      .attr('stroke', '#bdbdbd')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '3,3')
+      .attr('opacity', (d) => (d === 0 ? 0.8 : 0.4));
+
+    // 繪製長條
     g.selectAll('.bar')
       .data(data)
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('x', (d) => xScale(d.interval) + (xScale.bandwidth() - 8) / 2)
-      .attr('width', 8)
+      .attr('x', (d) => xScale(d.interval) - barWidth / 2)
+      .attr('width', barWidth)
       .attr('y', (d) => (d.count > 0 ? yScale(d.count) : height))
       .attr('height', (d) => (d.count > 0 ? height - yScale(d.count) : 0))
-      .attr('fill', '#007bff');
+      .attr('fill', 'var(--my-color-blue)');
 
     // 添加數值標籤
     g.selectAll('.bar-label')
-      .data(data)
+      .data(data.filter((d) => d.count > 0))
       .enter()
       .append('text')
       .attr('class', 'bar-label')
-      .attr('x', (d) => xScale(d.interval) + xScale.bandwidth() / 2)
+      .attr('x', (d) => xScale(d.interval))
       .attr('y', (d) => yScale(d.count) - 5)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .attr('fill', '#333')
-      .text((d) => d.count);
+      .style('font-size', '12px')
+      .style('fill', '#333')
+      .style('font-weight', 'bold')
+      .text((d) => d3.format(',')(d.count));
 
-    // 添加 X 軸
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .attr('text-anchor', 'end')
-      .attr('dx', '-0.5em')
-      .attr('dy', '0.5em')
-      .attr('font-size', '10px');
+    // 添加 X 軸標籤
+    const xAxisGroup = g.append('g').attr('transform', `translate(0,${height})`);
+
+    data.forEach((dataItem) => {
+      const x = xScale(dataItem.interval);
+      const text = dataItem.interval;
+
+      const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
+
+      // 將文字按每10個字符分割成多行
+      const lines = [];
+      for (let i = 0; i < text.length; i += 10) {
+        lines.push(text.substring(i, i + 10));
+      }
+
+      const totalLines = lines.length;
+
+      lines.forEach((line, lineIndex) => {
+        const lineOffset =
+          totalLines === 1
+            ? 0
+            : totalLines === 2
+              ? lineIndex === 0
+                ? -8
+                : 8
+              : totalLines === 3
+                ? lineIndex === 0
+                  ? -12
+                  : lineIndex === 1
+                    ? 0
+                    : 12
+                : (lineIndex - (totalLines - 1) / 2) * 8;
+
+        line.split('').forEach((char, charIndex) => {
+          textGroup
+            .append('text')
+            .text(char)
+            .attr('x', lineOffset)
+            .attr('y', charIndex * (12 + 0.6))
+            .style('font-size', '12px')
+            .style('font-family', 'Arial, sans-serif')
+            .style('fill', '#333')
+            .style('text-anchor', 'middle');
+        });
+      });
+    });
 
     // 添加 Y 軸
-    g.append('g').call(d3.axisLeft(yScale).ticks(5)).attr('font-size', '10px');
+    g.append('g')
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickValues(yTicks)
+          .tickSize(0)
+          .tickFormat((d) => d3.format(',')(d))
+      )
+      .style('font-size', '11px')
+      .select('.domain')
+      .remove();
+
+    g.selectAll('.tick text').style('fill', '#666').style('font-weight', 'normal');
   };
 
   /**
@@ -611,29 +693,62 @@
     d3.select(totalTimeChartContainer.value).selectAll('*').remove();
 
     const data = totalTimeDistribution.value;
-    const margin = { top: 20, right: 30, bottom: 60, left: 60 };
-    const width = 400 - margin.left - margin.right;
-    const height = 200 - margin.top - margin.bottom;
+    const containerWidth = totalTimeChartContainer.value.getBoundingClientRect().width;
+    const containerHeight = 320;
+    const margin = { top: 20, right: 0, bottom: 160, left: 40 };
+    const width = containerWidth - margin.left - margin.right;
+    const height = 160 - margin.top;
 
     const svg = d3
       .select(totalTimeChartContainer.value)
       .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom);
+      .attr('width', containerWidth)
+      .attr('height', containerHeight);
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // 設定比例尺
-    const xScale = d3
-      .scaleBand()
-      .domain(data.map((d) => d.interval))
-      .range([0, width])
-      .padding(0.1);
+    // 設定比例尺 - 使用固定寬度柱子
+    const barWidth = 8;
+    const dataCount = data.length;
+    const totalBarWidth = dataCount * barWidth;
+    const availableSpaceWidth = width - totalBarWidth;
+    const spaceUnit = availableSpaceWidth / (dataCount * 2);
 
-    const yScale = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.count)])
-      .range([height, 0]);
+    const xScale = (interval) => {
+      const index = data.findIndex((d) => d.interval === interval);
+      if (index === -1) return 0;
+      return spaceUnit + index * (barWidth + 2 * spaceUnit) + barWidth / 2;
+    };
+
+    const maxValue = d3.max(data, (d) => d.count) || 1;
+    const roundedMaxValue = Math.ceil(maxValue / 5) * 5;
+    const yScale = d3.scaleLinear().domain([0, roundedMaxValue]).range([height, 0]);
+
+    // 計算Y軸刻度
+    const yTicks = [0];
+    let interval = 5;
+    while (roundedMaxValue / interval > 4) {
+      interval += 5;
+    }
+    for (let i = interval; i <= roundedMaxValue; i += interval) {
+      yTicks.push(i);
+      if (yTicks.length >= 5) break;
+    }
+
+    // 繪製水平虛線網格
+    g.selectAll('.grid-line')
+      .data(yTicks)
+      .enter()
+      .append('line')
+      .attr('class', 'grid-line')
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', (d) => yScale(d))
+      .attr('y2', (d) => yScale(d))
+      .attr('stroke', '#bdbdbd')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', '3,3')
+      .attr('opacity', (d) => (d === 0 ? 0.8 : 0.4));
 
     // 繪製長條
     g.selectAll('.bar')
@@ -641,38 +756,87 @@
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('x', (d) => xScale(d.interval) + (xScale.bandwidth() - 8) / 2)
-      .attr('width', 8)
-      .attr('y', (d) => yScale(d.count))
-      .attr('height', (d) => height - yScale(d.count))
-      .attr('fill', '#28a745');
+      .attr('x', (d) => xScale(d.interval) - barWidth / 2)
+      .attr('width', barWidth)
+      .attr('y', (d) => (d.count > 0 ? yScale(d.count) : height))
+      .attr('height', (d) => (d.count > 0 ? height - yScale(d.count) : 0))
+      .attr('fill', 'var(--my-color-green)');
 
     // 添加數值標籤
     g.selectAll('.bar-label')
-      .data(data)
+      .data(data.filter((d) => d.count > 0))
       .enter()
       .append('text')
       .attr('class', 'bar-label')
-      .attr('x', (d) => xScale(d.interval) + xScale.bandwidth() / 2)
+      .attr('x', (d) => xScale(d.interval))
       .attr('y', (d) => yScale(d.count) - 5)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
-      .attr('fill', '#333')
-      .text((d) => d.count);
+      .style('font-size', '12px')
+      .style('fill', '#333')
+      .style('font-weight', 'bold')
+      .text((d) => d3.format(',')(d.count));
 
-    // 添加 X 軸
-    g.append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(xScale))
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .attr('text-anchor', 'end')
-      .attr('dx', '-0.5em')
-      .attr('dy', '0.5em')
-      .attr('font-size', '10px');
+    // 添加 X 軸標籤
+    const xAxisGroup = g.append('g').attr('transform', `translate(0,${height})`);
+
+    data.forEach((dataItem) => {
+      const x = xScale(dataItem.interval);
+      const text = dataItem.interval;
+
+      const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
+
+      // 將文字按每10個字符分割成多行
+      const lines = [];
+      for (let i = 0; i < text.length; i += 10) {
+        lines.push(text.substring(i, i + 10));
+      }
+
+      const totalLines = lines.length;
+
+      lines.forEach((line, lineIndex) => {
+        const lineOffset =
+          totalLines === 1
+            ? 0
+            : totalLines === 2
+              ? lineIndex === 0
+                ? -8
+                : 8
+              : totalLines === 3
+                ? lineIndex === 0
+                  ? -12
+                  : lineIndex === 1
+                    ? 0
+                    : 12
+                : (lineIndex - (totalLines - 1) / 2) * 8;
+
+        line.split('').forEach((char, charIndex) => {
+          textGroup
+            .append('text')
+            .text(char)
+            .attr('x', lineOffset)
+            .attr('y', charIndex * (12 + 0.6))
+            .style('font-size', '12px')
+            .style('font-family', 'Arial, sans-serif')
+            .style('fill', '#333')
+            .style('text-anchor', 'middle');
+        });
+      });
+    });
 
     // 添加 Y 軸
-    g.append('g').call(d3.axisLeft(yScale).ticks(5)).attr('font-size', '10px');
+    g.append('g')
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickValues(yTicks)
+          .tickSize(0)
+          .tickFormat((d) => d3.format(',')(d))
+      )
+      .style('font-size', '11px')
+      .select('.domain')
+      .remove();
+
+    g.selectAll('.tick text').style('fill', '#666').style('font-weight', 'normal');
   };
 
   // 監聽交通時間分布變化，重新繪製圖表
