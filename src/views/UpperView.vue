@@ -317,7 +317,7 @@
       <div
         v-show="activeUpperTab === 'dashboard'"
         ref="dashboardContainerRef"
-        class="h-100 overflow-auto pt-5"
+        class="h-100 overflow-hidden pt-5"
       >
         <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
         <div style="height: 40px"></div>
@@ -333,7 +333,7 @@
       <div
         v-show="activeUpperTab === 'statistics'"
         ref="statisticsContainerRef"
-        class="h-100 overflow-auto pt-5"
+        class="h-100 overflow-hidden pt-5"
       >
         <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
         <div style="height: 40px"></div>
