@@ -53,7 +53,7 @@
         '居住地',
         '居住地址',
         '服務時間',
-        '總時間',
+        '總服務時間',
         '交通時間',
         '服務數量',
       ];
@@ -241,10 +241,10 @@
 
           return `${start} - ${end}`;
         }
-        case '總時間':
-          // 優先使用已計算的總時間，否則從時間差計算
-          if (item.總時間) {
-            return item.總時間;
+        case '總服務時間':
+          // 優先使用已計算的總服務時間，否則從時間差計算
+          if (item.總服務時間) {
+            return item.總服務時間;
           } else if (
             item.hour_start !== undefined &&
             item.min_start !== undefined &&

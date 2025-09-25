@@ -7,22 +7,70 @@
       <div v-if="isServiceDateMode || isServiceProviderMode">
         <div class="mb-4">
           <div class="my-title-lg-black">
-            {{ isServiceDateMode ? '服務日期統計' : '服務人員統計' }} -
-            {{
-              isServiceDateMode
-                ? selectedServiceDate || '未選擇'
-                : selectedServiceProvider || '未選擇'
-            }}
+            {{ getStatisticsTitle() }}
+          </div>
+
+          <!-- 子 Tab 導航 -->
+          <div class="mt-3">
+            <div class="d-flex rounded-3 border-0" role="group">
+              <!-- 當前結果 Tab -->
+              <button
+                type="button"
+                class="d-flex rounded-3 border-0 flex-grow-1 py-2 mx-1"
+                :class="{
+                  'my-btn-transparent': !isCurrentTabActive(),
+                  'my-btn-blue': isCurrentTabActive(),
+                }"
+                :style="{
+                  'min-height': '44px',
+                  'touch-action': 'manipulation',
+                  '-webkit-appearance': 'none !important',
+                }"
+                @click="
+                  isServiceDateMode
+                    ? (activeServiceDateSubTab = 'current')
+                    : (activeServiceProviderSubTab = 'current')
+                "
+              >
+                <div class="d-flex flex-column align-items-center justify-content-center w-100">
+                  <span class="my-font-size-xs">當前結果</span>
+                </div>
+              </button>
+
+              <!-- 全部內容 Tab -->
+              <button
+                type="button"
+                class="d-flex rounded-3 border-0 flex-grow-1 py-2 mx-1"
+                :class="{
+                  'my-btn-transparent': !isAllContentTabActive(),
+                  'my-btn-blue': isAllContentTabActive(),
+                }"
+                :style="{
+                  'min-height': '44px',
+                  'touch-action': 'manipulation',
+                  '-webkit-appearance': 'none !important',
+                }"
+                @click="
+                  isServiceDateMode
+                    ? (activeServiceDateSubTab = 'all')
+                    : (activeServiceProviderSubTab = 'all')
+                "
+              >
+                <div class="d-flex flex-column align-items-center justify-content-center w-100">
+                  <span class="my-font-size-xs">全部內容</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- 📊 統計圖表區塊 -->
-        <div v-if="currentStatistics.length > 0" class="mb-3">
+        <div v-if="displayStatistics.length > 0" class="mb-3">
           <div class="row">
-            <!-- 總時間分布圖表 -->
+            <!-- 總服務時間分布圖表 -->
             <div class="col-12 col-md-6 mb-3">
               <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
-                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
+                <h6 class="my-title-sm-black text-center mb-3">總服務時間分布統計</h6>
                 <div
                   ref="totalTimeChartContainer"
                   class="d-flex justify-content-center"
@@ -55,13 +103,22 @@
 
         <!-- 統計表格 -->
         <div
-          v-if="currentStatistics.length > 0"
+          v-if="displayStatistics.length > 0"
           class="rounded-4 my-bgcolor-gray-100 p-4 mb-3 h-100"
         >
           <div class="my-title-sm-black text-center mb-3">
             {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
+            <span
+              v-if="
+                (isServiceDateMode && activeServiceDateSubTab === 'all') ||
+                (isServiceProviderMode && activeServiceProviderSubTab === 'all')
+              "
+              class="text-muted"
+            >
+              (全部內容)
+            </span>
           </div>
-          <div v-for="item in currentStatistics" :key="item.key" class="mb-4">
+          <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
             <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
             <div class="table-responsive">
               <table class="table w-100 mb-0">
@@ -74,7 +131,7 @@
                       <span class="my-title-xs-gray text-nowrap">路線說明</span>
                     </th>
                     <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">總時間</span>
+                      <span class="my-title-xs-gray text-nowrap">總服務時間</span>
                     </th>
                     <th class="p-1">
                       <span class="my-title-xs-gray text-nowrap">交通時間</span>
@@ -108,7 +165,14 @@
           </div>
         </div>
         <div v-else class="text-center">
-          <div class="my-title-md-gray p-3">沒有開啟的圖層</div>
+          <div class="my-title-md-gray p-3">
+            {{
+              (isServiceDateMode && activeServiceDateSubTab === 'all') ||
+              (isServiceProviderMode && activeServiceProviderSubTab === 'all')
+                ? '該資料來源暫無數據'
+                : '沒有開啟的圖層'
+            }}
+          </div>
         </div>
       </div>
 
@@ -152,6 +216,51 @@
   const trafficTimeChartContainer = ref(null);
   const totalTimeChartContainer = ref(null);
 
+  // 子 tab 狀態管理
+  const activeServiceDateSubTab = ref('current'); // 'current' | 'all'
+  const activeServiceProviderSubTab = ref('current'); // 'current' | 'all'
+
+  /**
+   * 📊 獲取統計標題
+   */
+  const getStatisticsTitle = () => {
+    const baseTitle = isServiceDateMode.value ? '服務日期統計' : '服務人員統計';
+
+    // 如果是全部內容 tab，不顯示具體的日期或人員
+    const isAllContentActive =
+      (isServiceDateMode.value && activeServiceDateSubTab.value === 'all') ||
+      (isServiceProviderMode.value && activeServiceProviderSubTab.value === 'all');
+
+    if (isAllContentActive) {
+      return `${baseTitle} - 全部數據`;
+    } else {
+      const selectedItem = isServiceDateMode.value
+        ? selectedServiceDate.value
+        : selectedServiceProvider.value;
+      return `${baseTitle} - ${selectedItem || '未選擇'}`;
+    }
+  };
+
+  /**
+   * 📊 檢查當前結果 tab 是否激活
+   */
+  const isCurrentTabActive = () => {
+    return (
+      (isServiceDateMode.value && activeServiceDateSubTab.value === 'current') ||
+      (isServiceProviderMode.value && activeServiceProviderSubTab.value === 'current')
+    );
+  };
+
+  /**
+   * 📊 檢查全部內容 tab 是否激活
+   */
+  const isAllContentTabActive = () => {
+    return (
+      (isServiceDateMode.value && activeServiceDateSubTab.value === 'all') ||
+      (isServiceProviderMode.value && activeServiceProviderSubTab.value === 'all')
+    );
+  };
+
   // 獲取當前選擇的服務日期和服務人員
   const selectedServiceDate = computed(() => dataStore.selectedServiceDate);
   const selectedServiceProvider = computed(() => dataStore.selectedServiceProvider);
@@ -166,7 +275,7 @@
   });
 
   /**
-   * 📊 統一當前統計數據（合併兩種模式的數據處理）
+   * 📊 當前結果統計數據（受圖層開關影響）
    */
   const currentStatistics = computed(() => {
     if (isServiceDateMode.value) {
@@ -186,36 +295,193 @@
   });
 
   /**
-   * 📊 計算總時間分布統計
+   * 📊 全部內容統計數據（不受圖層開關影響，只看選擇的資料來源）
    */
-  const totalTimeDistribution = computed(() => {
-    let allTotalTimes = [];
-
+  const allContentStatistics = computed(() => {
     if (isServiceDateMode.value) {
-      // 服務日期模式：收集所有服務人員的總時間
+      // 服務日期模式：顯示選擇的服務日期的所有服務人員數據
+      const selectedDate = selectedServiceDate.value;
+      if (!selectedDate) return [];
+
+      // 從所有圖層中收集該日期的數據（不受可見性影響）
+      const allData = [];
       const serviceProviderGroup = dataStore.layers.find(
         (group) => group.groupName === '服務人員列表'
       );
+
       if (serviceProviderGroup) {
-        const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
-        visibleLayers.forEach((layer) => {
-          const totalTimes = extractServiceTotalTimesFromLayer(layer);
-          allTotalTimes.push(...totalTimes);
+        console.log('🔍 AllContentStatistics - 服務日期模式:');
+        console.log('  - 總圖層數:', serviceProviderGroup.groupLayers.length);
+        console.log(
+          '  - 可見圖層數:',
+          serviceProviderGroup.groupLayers.filter((layer) => layer.visible).length
+        );
+
+        serviceProviderGroup.groupLayers.forEach((layer) => {
+          // 收集所有數據，不管圖層是否可見
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          console.log(
+            `  - 圖層 ${layer.layerName} (可見: ${layer.visible}): ${trafficTimes.length} 筆數據`
+          );
+          allData.push(...trafficTimes);
         });
       }
+
+      // 按服務人員分組
+      const groupedByProvider = {};
+      allData.forEach((item) => {
+        if (!groupedByProvider[item.serviceProviderId]) {
+          groupedByProvider[item.serviceProviderId] = [];
+        }
+        groupedByProvider[item.serviceProviderId].push(item);
+      });
+
+      return Object.keys(groupedByProvider).map((providerId) => ({
+        key: providerId,
+        label: providerId,
+        trafficTimes: groupedByProvider[providerId].map((item) => ({
+          routeDescription: item.routeDescription,
+          totalTime: item.totalTime,
+          time: item.time,
+        })),
+      }));
     } else if (isServiceProviderMode.value) {
-      // 服務人員模式：收集所有服務日期的總時間
+      // 服務人員模式：顯示選擇的服務人員的所有服務日期數據
+      const selectedProvider = selectedServiceProvider.value;
+      if (!selectedProvider) return [];
+
+      // 從所有圖層中收集該服務人員的數據（不受可見性影響）
+      const allData = [];
       const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
+
       if (serviceDateGroup) {
-        const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
-        visibleLayers.forEach((layer) => {
-          const totalTimes = extractServiceTotalTimesFromLayer(layer);
-          allTotalTimes.push(...totalTimes);
+        serviceDateGroup.groupLayers.forEach((layer) => {
+          // 收集所有數據，不管圖層是否可見
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          allData.push(...trafficTimes);
         });
       }
+
+      // 按服務日期分組
+      const groupedByDate = {};
+      allData.forEach((item) => {
+        if (!groupedByDate[item.serviceDate]) {
+          groupedByDate[item.serviceDate] = [];
+        }
+        groupedByDate[item.serviceDate].push(item);
+      });
+
+      return Object.keys(groupedByDate).map((date) => ({
+        key: date,
+        label: date,
+        trafficTimes: groupedByDate[date].map((item) => ({
+          routeDescription: item.routeDescription,
+          totalTime: item.totalTime,
+          time: item.time,
+        })),
+      }));
+    }
+    return [];
+  });
+
+  /**
+   * 📊 根據當前子 tab 獲取統計數據
+   */
+  const displayStatistics = computed(() => {
+    if (isServiceDateMode.value) {
+      return activeServiceDateSubTab.value === 'current'
+        ? currentStatistics.value
+        : allContentStatistics.value;
+    } else if (isServiceProviderMode.value) {
+      return activeServiceProviderSubTab.value === 'current'
+        ? currentStatistics.value
+        : allContentStatistics.value;
+    }
+    return [];
+  });
+
+  /**
+   * 📊 根據當前子 tab 計算總服務時間分布統計
+   */
+  const totalTimeDistribution = computed(() => {
+    const statistics = displayStatistics.value;
+    if (!statistics || statistics.length === 0) return [];
+
+    // 收集所有交通時間數據
+    const allTimes = [];
+    statistics.forEach((item) => {
+      if (item.trafficTimes && Array.isArray(item.trafficTimes)) {
+        item.trafficTimes.forEach((trafficTime) => {
+          if (trafficTime.totalTime && trafficTime.totalTime !== 'N/A') {
+            const timeValue = parseTimeToMinutes(trafficTime.totalTime);
+            if (timeValue > 0) {
+              allTimes.push(timeValue);
+            }
+          }
+        });
+      }
+    });
+
+    return calculateTimeDistribution(allTimes);
+  });
+
+  /**
+   * 📊 根據當前子 tab 計算交通時間分布統計
+   */
+  const trafficTimeDistribution = computed(() => {
+    const statistics = displayStatistics.value;
+    if (!statistics || statistics.length === 0) return [];
+
+    // 收集所有交通時間數據
+    const allTimes = [];
+    statistics.forEach((item) => {
+      if (item.trafficTimes && Array.isArray(item.trafficTimes)) {
+        item.trafficTimes.forEach((trafficTime) => {
+          if (trafficTime.time && trafficTime.time !== 'N/A') {
+            const timeValue = parseTimeToMinutes(trafficTime.time);
+            if (timeValue > 0) {
+              allTimes.push(timeValue);
+            }
+          }
+        });
+      }
+    });
+
+    return calculateTrafficTimeDistribution(allTimes);
+  });
+
+  /**
+   * 📊 解析時間字符串為分鐘數
+   * @param {string} timeStr - 時間字符串，如 "1h43m", "26m", "2h56m"
+   * @returns {number} 總分鐘數
+   */
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr || timeStr === 'N/A') return 0;
+
+    let totalMinutes = 0;
+
+    // 解析小時部分 (如 "1h43m" 中的 "1h")
+    const hourMatch = timeStr.match(/(\d+)h/);
+    if (hourMatch) {
+      totalMinutes += parseInt(hourMatch[1]) * 60;
     }
 
-    // 按30分鐘區間分組，超過5小時的合併為1個bar，最小刻度是5
+    // 解析分鐘部分 (如 "1h43m" 中的 "43m" 或 "26m")
+    const minuteMatch = timeStr.match(/(\d+)m/);
+    if (minuteMatch) {
+      totalMinutes += parseInt(minuteMatch[1]);
+    }
+
+    return totalMinutes;
+  };
+
+  /**
+   * 📊 計算總服務時間分布統計（30分鐘區間）
+   */
+  const calculateTimeDistribution = (times) => {
+    if (!times || times.length === 0) return [];
+
+    // 按30分鐘區間分組，超過5小時的合併為1個bar
     const distribution = {};
 
     // 初始化所有可能的區間（0-29, 30-59, ..., 270-299, >300）
@@ -225,90 +491,37 @@
     }
     distribution['>300'] = 0;
 
-    // 統計實際數據（過濾掉小於0或NaN的值）
-    allTotalTimes.forEach((totalMinutes) => {
-      // 確保是有效的正數值
-      if (totalMinutes > 0 && !isNaN(totalMinutes)) {
-        if (totalMinutes > 300) {
+    // 統計實際數據
+    times.forEach((minutes) => {
+      if (minutes > 0 && !isNaN(minutes)) {
+        if (minutes > 300) {
           distribution['>300'] += 1;
         } else {
-          const interval = Math.floor(totalMinutes / 30) * 30;
+          const interval = Math.floor(minutes / 30) * 30;
           const intervalKey = `${interval}-${interval + 29}`;
           distribution[intervalKey] += 1;
         }
       }
     });
 
-    // 轉換為數組格式供D3使用
     return Object.entries(distribution)
-      .map(([interval, count]) => ({
-        interval,
-        count,
-      }))
+      .map(([interval, count]) => ({ interval, count }))
       .sort((a, b) => {
-        // 處理">"的區間，將其排在最後
         if (a.interval.includes('>')) return 1;
         if (b.interval.includes('>')) return -1;
-
         const aStart = parseInt(a.interval.split('-')[0]);
         const bStart = parseInt(b.interval.split('-')[0]);
         return aStart - bStart;
       });
-  });
+  };
 
   /**
-   * 📊 計算交通時間分布統計
+   * 📊 計算交通時間分布統計（10分鐘區間）
    */
-  const trafficTimeDistribution = computed(() => {
-    let allTrafficTimes = [];
+  const calculateTrafficTimeDistribution = (times) => {
+    if (!times || times.length === 0) return [];
 
-    // console.log('🔍 trafficTimeDistribution computed:', {
-    //   isServiceDateMode: isServiceDateMode.value,
-    //   isServiceProviderMode: isServiceProviderMode.value,
-    //   selectedServiceDate: selectedServiceDate.value,
-    //   selectedServiceProvider: selectedServiceProvider.value,
-    //   activeLeftTab: dataStore.activeLeftTab
-    // });
-
-    if (isServiceDateMode.value) {
-      // 服務日期模式：收集所有服務人員的交通時間
-      const serviceProviderGroup = dataStore.layers.find(
-        (group) => group.groupName === '服務人員列表'
-      );
-      console.log('🔍 serviceProviderGroup:', serviceProviderGroup);
-      if (serviceProviderGroup) {
-        const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
-        console.log('🔍 visible service provider layers:', visibleLayers.length);
-        visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          console.log('🔍 extracted traffic times:', trafficTimes.length);
-          allTrafficTimes.push(...trafficTimes);
-        });
-      }
-    } else if (isServiceProviderMode.value) {
-      // 服務人員模式：收集所有服務日期的交通時間
-      const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
-      console.log('🔍 serviceDateGroup:', serviceDateGroup);
-      if (serviceDateGroup) {
-        const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
-        console.log('🔍 visible service date layers:', visibleLayers.length);
-        visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          console.log('🔍 extracted traffic times:', trafficTimes.length);
-          allTrafficTimes.push(...trafficTimes);
-        });
-      }
-    }
-
-    console.log('🔍 allTrafficTimes collected:', allTrafficTimes.length);
-
-    // 過濾掉序號1的交通時間（略過序號1）
-    const filteredTrafficTimes = allTrafficTimes.filter((traffic) => {
-      // 略過序號1，其他都要計算
-      return traffic.sequenceNumber !== 1;
-    });
-
-    // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
+    // 按10分鐘區間分組，超過2小時的合併為1個bar
     const distribution = {};
 
     // 初始化所有可能的區間（0-9, 10-19, ..., 110-119, >120）
@@ -318,69 +531,28 @@
     }
     distribution['>120'] = 0;
 
-    // 統計實際數據（過濾掉小於0或NaN的值）
-    filteredTrafficTimes.forEach((traffic) => {
-      // 確保是有效的正數值
-      if (traffic.totalMinutes > 0 && !isNaN(traffic.totalMinutes)) {
-        if (traffic.totalMinutes > 120) {
+    // 統計實際數據
+    times.forEach((minutes) => {
+      if (minutes > 0 && !isNaN(minutes)) {
+        if (minutes > 120) {
           distribution['>120'] += 1;
         } else {
-          const interval = Math.floor(traffic.totalMinutes / 10) * 10;
+          const interval = Math.floor(minutes / 10) * 10;
           const intervalKey = `${interval}-${interval + 9}`;
           distribution[intervalKey] += 1;
         }
       }
     });
 
-    // 轉換為數組格式供D3使用
     return Object.entries(distribution)
-      .map(([interval, count]) => ({
-        interval,
-        count,
-      }))
+      .map(([interval, count]) => ({ interval, count }))
       .sort((a, b) => {
-        // 處理">"的區間，將其排在最後
         if (a.interval.includes('>')) return 1;
         if (b.interval.includes('>')) return -1;
-
         const aStart = parseInt(a.interval.split('-')[0]);
         const bStart = parseInt(b.interval.split('-')[0]);
         return aStart - bStart;
       });
-  });
-
-  /**
-   * 📊 從圖層數據中提取服務總時間信息（底部面板的總時間）
-   * @param {Object} layer - 圖層對象
-   * @returns {Array} 服務總時間列表（分鐘）
-   */
-  const extractServiceTotalTimesFromLayer = (layer) => {
-    const totalTimes = [];
-
-    if (!layer.tableData || !Array.isArray(layer.tableData)) {
-      return totalTimes;
-    }
-
-    layer.tableData.forEach((item) => {
-      // 計算服務時間的總時間（結束時間 - 起始時間）
-      if (
-        item.hour_start !== undefined &&
-        item.min_start !== undefined &&
-        item.hour_end !== undefined &&
-        item.min_end !== undefined
-      ) {
-        const startMinutes = item.hour_start * 60 + item.min_start;
-        const endMinutes = item.hour_end * 60 + item.min_end;
-        const totalMinutes = endMinutes - startMinutes;
-
-        // 只收集有效的正數值
-        if (totalMinutes > 0 && !isNaN(totalMinutes)) {
-          totalTimes.push(totalMinutes);
-        }
-      }
-    });
-
-    return totalTimes;
   };
 
   /**
@@ -395,7 +567,7 @@
       return trafficTimes;
     }
 
-    // 獲取對應的服務時間總時間數據
+    // 獲取對應的服務時間總服務時間數據
     const getServiceTotalTime = (serviceName) => {
       if (!layer.tableData || !Array.isArray(layer.tableData)) {
         return null;
@@ -406,7 +578,7 @@
       );
 
       if (serviceItem) {
-        // 計算服務時間的總時間（結束時間 - 起始時間）
+        // 計算服務時間的總服務時間（結束時間 - 起始時間）
         if (
           serviceItem.hour_start !== undefined &&
           serviceItem.min_start !== undefined &&
@@ -432,7 +604,7 @@
       .filter((feature) => feature.properties && feature.properties.routeOrder !== undefined)
       .sort((a, b) => a.properties.routeOrder - b.properties.routeOrder);
 
-    // 計算累積總時間
+    // 計算累積總服務時間
     let cumulativeTotalMinutes = 0;
 
     sortedFeatures.forEach((feature, index) => {
@@ -449,7 +621,7 @@
           const minutes = totalMinutes % 60;
           const timeString = hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
 
-          // 獲取對應服務項目的服務時間總時間
+          // 獲取對應服務項目的服務時間總服務時間
           const serviceName = feature.properties.姓名 || feature.properties.name || '服務點';
           const serviceTotalTime = getServiceTotalTime(serviceName);
           const totalTimeString = serviceTotalTime || '-';
@@ -504,6 +676,10 @@
     }
 
     const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
+
+    console.log('🔍 CurrentStatistics - 服務日期模式:');
+    console.log('  - 總圖層數:', serviceProviderGroup.groupLayers.length);
+    console.log('  - 可見圖層數:', visibleLayers.length);
 
     return visibleLayers
       .map((layer) => {
@@ -716,7 +892,7 @@
   };
 
   /**
-   * 📊 繪製總時間分布長條圖
+   * 📊 繪製總服務時間分布長條圖
    */
   const drawTotalTimeChart = () => {
     drawChart(totalTimeChartContainer.value, totalTimeDistribution.value, 'var(--my-color-green)');
@@ -733,7 +909,7 @@
     { deep: true, immediate: true }
   );
 
-  // 監聽總時間分布變化，重新繪製圖表
+  // 監聽總服務時間分布變化，重新繪製圖表
   watch(
     () => totalTimeDistribution.value,
     () => {

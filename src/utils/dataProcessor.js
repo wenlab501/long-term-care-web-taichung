@@ -428,7 +428,7 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
             開始時間: `${serviceProvider.hour_start}:${serviceProvider.min_start.toString().padStart(2, '0')}`,
             結束時間: `${serviceProvider.hour_end}:${serviceProvider.min_end.toString().padStart(2, '0')}`,
             總服務時間: `${serviceProvider.hour_total}h${serviceProvider.min_total}m`,
-            總時間分鐘: serviceProvider.time_total || 0,
+            總服務時間分鐘: serviceProvider.time_total || 0,
             交通時間: (() => {
               // 計算服務人員的總交通時間（所有服務點的交通時間總和）
               const totalTrafficMinutes = servicePoints.reduce((total, point) => {

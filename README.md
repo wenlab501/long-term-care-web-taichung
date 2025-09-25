@@ -430,7 +430,7 @@ interface ServiceItem {
   min_start: number; // 項目開始分鐘
   hour_end: number; // 項目結束時間
   min_end: number; // 項目結束分鐘
-  time_total: number; // 項目總時間 (分鐘)
+  time_total: number; // 項目總服務時間 (分鐘)
 }
 ```
 

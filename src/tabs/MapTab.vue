@@ -431,7 +431,7 @@
                 // 新基準中央服務紀錄點位：根據 time_total 決定大小
                 // ============================================
                 const routeOrder = feature.properties.routeOrder; // 服務順序編號
-                const timeTotal = feature.properties.time_total || 0; // 服務總時間（分鐘）
+                const timeTotal = feature.properties.time_total || 0; // 服務總服務時間（分鐘）
 
                 // ============================================
                 // 圓面積計算邏輯：1小時 = 10px × 10px × π

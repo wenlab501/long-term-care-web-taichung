@@ -638,7 +638,7 @@
                             <span class="my-title-xs-gray text-nowrap">服務時間</span>
                           </th>
                           <th class="p-1">
-                            <span class="my-title-xs-gray text-nowrap">總時間</span>
+                            <span class="my-title-xs-gray text-nowrap">總服務時間</span>
                           </th>
                           <!-- <th class="p-1">
                             <span class="my-title-xs-gray text-nowrap">row_id</span>
