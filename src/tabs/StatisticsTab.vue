@@ -6,21 +6,13 @@
       <!-- 📊 統計分析內容：統一處理服務日期和服務人員模式 -->
       <div v-if="isServiceDateMode || isServiceProviderMode">
         <div class="mb-4">
-          <div class="my-title-lg-black">
-            {{ getStatisticsTitle() }}
-          </div>
-
           <!-- 子 Tab 導航 -->
           <div class="mt-3">
-            <div class="d-flex border border-primary" style="border-radius: 0">
+            <div class="d-flex" style="border-radius: 0">
               <!-- 當前結果 Tab -->
               <button
                 type="button"
                 class="flex-fill border-0 py-2 px-3 text-center"
-                :class="{
-                  'bg-light': isCurrentTabActive(),
-                  'bg-white': !isCurrentTabActive(),
-                }"
                 :style="{
                   'border-bottom': '3px solid var(--bs-primary)',
                   'border-radius': '0',
@@ -32,7 +24,7 @@
                     : (activeServiceProviderSubTab = 'current')
                 "
               >
-                {{ selectedItem }}
+                {{ getCurrentResultTabTitle() }}
               </button>
 
               <!-- 全部內容 Tab -->
@@ -54,9 +46,12 @@
                     : (activeServiceProviderSubTab = 'all')
                 "
               >
-                全部內容
+                {{ getDataSourceName() }}
               </button>
             </div>
+          </div>
+          <div class="my-title-lg-black mt-4">
+            {{ getStatisticsTitle() }}
           </div>
         </div>
 
@@ -255,6 +250,42 @@
       (isServiceDateMode.value && activeServiceDateSubTab.value === 'all') ||
       (isServiceProviderMode.value && activeServiceProviderSubTab.value === 'all')
     );
+  };
+
+  /**
+   * 📊 獲取當前結果 tab 的標題
+   */
+  const getCurrentResultTabTitle = () => {
+    if (isServiceDateMode.value) {
+      return selectedServiceDate.value || '未選擇日期';
+    } else if (isServiceProviderMode.value) {
+      return selectedServiceProvider.value || '未選擇人員';
+    }
+    return '當前結果';
+  };
+
+  /**
+   * 📊 獲取資料來源名稱
+   */
+  const getDataSourceName = () => {
+    // 獲取當前選中的資料來源檔案名稱
+    const selectedFile = dataStore.selectedFileFilter;
+
+    if (selectedFile === 'all') {
+      return '全部資料來源';
+    }
+
+    // 從檔案名稱中提取機構名稱
+    // 例如: "filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json" -> "臺中洪幸雪"
+    const match = selectedFile.match(/filtered_(.+?)-/);
+    if (match && match[1]) {
+      return match[1];
+    }
+
+    // 如果無法解析，返回原始檔案名稱（去掉前綴和後綴）
+    return selectedFile
+      .replace(/^filtered_/, '')
+      .replace(/-20250801-20250831 全部的服務記錄_final\.json$/, '');
   };
 
   // 獲取當前選擇的服務日期和服務人員
