@@ -24,3 +24,5 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+# 排除超過 GitHub 限制的大檔案
+public/data/json/filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json
