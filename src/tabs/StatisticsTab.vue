@@ -1,177 +1,179 @@
 <template>
   <!-- 📊 統計分析視圖組件 -->
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
+    <!-- 📊 統計分析內容：統一處理服務日期和服務人員模式 -->
+    <div v-if="isServiceDateMode || isServiceProviderMode">
+      <!-- 子 Tab 導航 -->
+      <div class="mt-0">
+        <div class="d-flex w-100" style="border-radius: 0">
+          <!-- 當前結果 Tab -->
+          <button
+            type="button"
+            class="flex-fill border-0 py-2 px-3 text-center"
+            :class="{
+              'my-btn-white': isCurrentTabActive(),
+              'my-btn-transparent': !isCurrentTabActive(),
+            }"
+            :style="{
+              'border-bottom': '3px solid var(--bs-primary)',
+              'border-radius': '0',
+              'font-weight': isCurrentTabActive() ? 'bold' : 'normal',
+              'min-height': '44px',
+              'touch-action': 'manipulation',
+              '-webkit-appearance': 'none !important',
+            }"
+            @click="
+              isServiceDateMode
+                ? (activeServiceDateSubTab = 'current')
+                : (activeServiceProviderSubTab = 'current')
+            "
+          >
+            <span class="my-title-sm-black">{{ getCurrentResultTabTitle() }}</span>
+          </button>
+
+          <!-- 全部內容 Tab -->
+          <button
+            type="button"
+            class="flex-fill border-0 py-2 px-3 text-center"
+            :class="{
+              'my-btn-white': isAllContentTabActive(),
+              'my-btn-transparent': !isAllContentTabActive(),
+            }"
+            :style="{
+              'border-bottom': '3px solid var(--bs-primary)',
+              'border-radius': '0',
+              'font-weight': isAllContentTabActive() ? 'bold' : 'normal',
+              'min-height': '44px',
+              'touch-action': 'manipulation',
+              '-webkit-appearance': 'none !important',
+            }"
+            @click="
+              isServiceDateMode
+                ? (activeServiceDateSubTab = 'all')
+                : (activeServiceProviderSubTab = 'all')
+            "
+          >
+            <span class="my-title-sm-black">{{ getDataSourceName() }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📊 未選擇任何模式時顯示 -->
+    <div v-else class="text-center py-5">
+      <div class="my-content-sm-gray">
+        <i class="fas fa-info-circle me-2"></i>
+        請先選擇服務日期或服務人員
+      </div>
+    </div>
+
     <!-- 統計內容 -->
     <div class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
-      <!-- 📊 統計分析內容：統一處理服務日期和服務人員模式 -->
-      <div v-if="isServiceDateMode || isServiceProviderMode">
-        <div class="mb-4">
-          <!-- 子 Tab 導航 -->
-          <div class="mt-3">
-            <div class="d-flex" style="border-radius: 0">
-              <!-- 當前結果 Tab -->
-              <button
-                type="button"
-                class="flex-fill border-0 py-2 px-3 text-center"
-                :style="{
-                  'border-bottom': '3px solid var(--bs-primary)',
-                  'border-radius': '0',
-                  'font-weight': isCurrentTabActive() ? 'bold' : 'normal',
-                }"
-                @click="
-                  isServiceDateMode
-                    ? (activeServiceDateSubTab = 'current')
-                    : (activeServiceProviderSubTab = 'current')
-                "
+      <!-- 📊 統計圖表區塊 -->
+      <div v-if="displayStatistics.length > 0" class="mb-3">
+        <div class="row">
+          <!-- 總服務時間分布圖表 -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+              <h6 class="my-title-sm-black text-center mb-3">總服務時間分布統計</h6>
+              <div
+                ref="totalTimeChartContainer"
+                class="d-flex justify-content-center"
+                style="min-height: 200px"
               >
-                {{ getCurrentResultTabTitle() }}
-              </button>
-
-              <!-- 全部內容 Tab -->
-              <button
-                type="button"
-                class="flex-fill border-0 py-2 px-3 text-center"
-                :class="{
-                  'bg-light': isAllContentTabActive(),
-                  'bg-white': !isAllContentTabActive(),
-                }"
-                :style="{
-                  'border-bottom': '3px solid var(--bs-primary)',
-                  'border-radius': '0',
-                  'font-weight': isAllContentTabActive() ? 'bold' : 'normal',
-                }"
-                @click="
-                  isServiceDateMode
-                    ? (activeServiceDateSubTab = 'all')
-                    : (activeServiceProviderSubTab = 'all')
-                "
-              >
-                {{ getDataSourceName() }}
-              </button>
-            </div>
-          </div>
-          <div class="my-title-lg-black mt-4">
-            {{ getStatisticsTitle() }}
-          </div>
-        </div>
-
-        <!-- 📊 統計圖表區塊 -->
-        <div v-if="displayStatistics.length > 0" class="mb-3">
-          <div class="row">
-            <!-- 總服務時間分布圖表 -->
-            <div class="col-12 col-md-6 mb-3">
-              <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
-                <h6 class="my-title-sm-black text-center mb-3">總服務時間分布統計</h6>
-                <div
-                  ref="totalTimeChartContainer"
-                  class="d-flex justify-content-center"
-                  style="min-height: 200px"
-                >
-                  <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
-                    暫無數據
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 交通時間分布圖表 -->
-            <div class="col-12 col-md-6 mb-3">
-              <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
-                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
-                <div
-                  ref="trafficTimeChartContainer"
-                  class="d-flex justify-content-center"
-                  style="min-height: 200px"
-                >
-                  <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
-                    暫無數據
-                  </div>
+                <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
+                  暫無數據
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 統計表格 -->
-        <div
-          v-if="displayStatistics.length > 0"
-          class="rounded-4 my-bgcolor-gray-100 p-4 mb-3 h-100"
-        >
-          <div class="my-title-sm-black text-center mb-3">
-            {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
-            <span
-              v-if="
-                (isServiceDateMode && activeServiceDateSubTab === 'all') ||
-                (isServiceProviderMode && activeServiceProviderSubTab === 'all')
-              "
-              class="text-muted"
-            >
-              (全部內容)
-            </span>
-          </div>
-          <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
-            <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
-            <div class="table-responsive">
-              <table class="table w-100 mb-0">
-                <thead class="sticky-top my-table-thead">
-                  <tr class="text-center text-nowrap">
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">#</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">總服務時間</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(trafficTime, index) in item.trafficTimes"
-                    :key="index"
-                    class="text-center text-nowrap border-bottom"
-                  >
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
-                      <div class="my-content-xs-black px-3 py-2">
-                        {{ trafficTime.routeDescription }}
-                      </div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <!-- 交通時間分布圖表 -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+              <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
+              <div
+                ref="trafficTimeChartContainer"
+                class="d-flex justify-content-center"
+                style="min-height: 200px"
+              >
+                <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
+                  暫無數據
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div v-else class="text-center">
-          <div class="my-title-md-gray p-3">
-            {{
-              (isServiceDateMode && activeServiceDateSubTab === 'all') ||
-              (isServiceProviderMode && activeServiceProviderSubTab === 'all')
-                ? '該資料來源暫無數據'
-                : '沒有開啟的圖層'
-            }}
           </div>
         </div>
       </div>
 
-      <!-- 📊 未選擇任何模式時顯示 -->
-      <div v-else class="text-center py-5">
-        <div class="my-content-sm-gray">
-          <i class="fas fa-info-circle me-2"></i>
-          請先選擇服務日期或服務人員
+      <!-- 統計表格 -->
+      <div v-if="displayStatistics.length > 0" class="rounded-4 my-bgcolor-gray-100 p-4 mb-3 h-100">
+        <div class="my-title-sm-black text-center mb-3">
+          {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
+          <span
+            v-if="
+              (isServiceDateMode && activeServiceDateSubTab === 'all') ||
+              (isServiceProviderMode && activeServiceProviderSubTab === 'all')
+            "
+            class="text-muted"
+          >
+            (全部內容)
+          </span>
+        </div>
+        <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
+          <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
+          <div class="table-responsive">
+            <table class="table w-100 mb-0">
+              <thead class="sticky-top my-table-thead">
+                <tr class="text-center text-nowrap">
+                  <th class="p-1">
+                    <span class="my-title-xs-gray text-nowrap">#</span>
+                  </th>
+                  <th class="p-1">
+                    <span class="my-title-xs-gray text-nowrap">路線說明</span>
+                  </th>
+                  <th class="p-1">
+                    <span class="my-title-xs-gray text-nowrap">總服務時間</span>
+                  </th>
+                  <th class="p-1">
+                    <span class="my-title-xs-gray text-nowrap">交通時間</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(trafficTime, index) in item.trafficTimes"
+                  :key="index"
+                  class="text-center text-nowrap border-bottom"
+                >
+                  <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                    <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
+                  </td>
+                  <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
+                    <div class="my-content-xs-black px-3 py-2">
+                      {{ trafficTime.routeDescription }}
+                    </div>
+                  </td>
+                  <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                    <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
+                  </td>
+                  <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                    <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center">
+        <div class="my-title-md-gray p-3">
+          {{
+            (isServiceDateMode && activeServiceDateSubTab === 'all') ||
+            (isServiceProviderMode && activeServiceProviderSubTab === 'all')
+              ? '該資料來源暫無數據'
+              : '沒有開啟的圖層'
+          }}
         </div>
       </div>
     </div>
@@ -212,27 +214,6 @@
   const activeServiceProviderSubTab = ref('current'); // 'current' | 'all'
 
   /**
-   * 📊 獲取統計標題
-   */
-  const getStatisticsTitle = () => {
-    const baseTitle = isServiceDateMode.value ? '服務日期統計' : '服務人員統計';
-
-    // 如果是全部內容 tab，不顯示具體的日期或人員
-    const isAllContentActive =
-      (isServiceDateMode.value && activeServiceDateSubTab.value === 'all') ||
-      (isServiceProviderMode.value && activeServiceProviderSubTab.value === 'all');
-
-    if (isAllContentActive) {
-      return `${baseTitle} - 全部數據`;
-    } else {
-      const selectedItem = isServiceDateMode.value
-        ? selectedServiceDate.value
-        : selectedServiceProvider.value;
-      return `${baseTitle} - ${selectedItem || '未選擇'}`;
-    }
-  };
-
-  /**
    * 📊 檢查當前結果 tab 是否激活
    */
   const isCurrentTabActive = () => {
@@ -271,21 +252,23 @@
     // 獲取當前選中的資料來源檔案名稱
     const selectedFile = dataStore.selectedFileFilter;
 
-    if (selectedFile === 'all') {
-      return '全部資料來源';
-    }
+    // 定義檔案選項映射，與 FileSelector.vue 中的選項一致
+    const fileOptions = {
+      all: '全部',
+      'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json': '基隆聯祥',
+      'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json': '臺北聯承',
+      'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json': '三重聯恩',
+      'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json': '新北聯和',
+      'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json': '新北聯宜',
+      'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json': '新北聯承',
+      'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json': '桃園聯承',
+      'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json': '楊梅聯聚',
+      'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json': '新竹聯廣',
+      'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json': '臺中洪幸雪',
+    };
 
-    // 從檔案名稱中提取機構名稱
-    // 例如: "filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json" -> "臺中洪幸雪"
-    const match = selectedFile.match(/filtered_(.+?)-/);
-    if (match && match[1]) {
-      return match[1];
-    }
-
-    // 如果無法解析，返回原始檔案名稱（去掉前綴和後綴）
-    return selectedFile
-      .replace(/^filtered_/, '')
-      .replace(/-20250801-20250831 全部的服務記錄_final\.json$/, '');
+    // 直接返回對應的顯示文字
+    return fileOptions[selectedFile] || selectedFile;
   };
 
   // 獲取當前選擇的服務日期和服務人員
