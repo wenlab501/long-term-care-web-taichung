@@ -66,13 +66,13 @@
                       <span class="my-title-xs-gray text-nowrap">#</span>
                     </th>
                     <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
+                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
                     </th>
                     <th class="p-1">
                       <span class="my-title-xs-gray text-nowrap">總時間</span>
                     </th>
                     <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
+                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
                     </th>
                   </tr>
                 </thead>
@@ -85,16 +85,16 @@
                     <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
                       <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
                     </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
-                    </td>
                     <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
                       <div class="my-content-xs-black px-3 py-2">
                         {{ trafficTime.routeDescription }}
                       </div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
                     </td>
                   </tr>
                 </tbody>
@@ -167,13 +167,13 @@
                       <span class="my-title-xs-gray text-nowrap">#</span>
                     </th>
                     <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
+                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
                     </th>
                     <th class="p-1">
                       <span class="my-title-xs-gray text-nowrap">總時間</span>
                     </th>
                     <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
+                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
                     </th>
                   </tr>
                 </thead>
@@ -186,16 +186,16 @@
                     <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
                       <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
                     </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
-                    </td>
                     <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
                       <div class="my-content-xs-black px-3 py-2">
                         {{ trafficTime.routeDescription }}
                       </div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
+                    </td>
+                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
+                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
                     </td>
                   </tr>
                 </tbody>
