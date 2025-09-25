@@ -107,18 +107,16 @@
       </div>
 
       <!-- 統計表格 -->
-      <div v-if="displayStatistics.length > 0" class="rounded-4 my-bgcolor-gray-100 p-4 mb-3 h-100">
+      <div
+        v-if="
+          displayStatistics.length > 0 &&
+          !(isServiceDateMode && activeServiceDateSubTab === 'all') &&
+          !(isServiceProviderMode && activeServiceProviderSubTab === 'all')
+        "
+        class="rounded-4 my-bgcolor-gray-100 p-4 mb-3"
+      >
         <div class="my-title-sm-black text-center mb-3">
-          {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
-          <span
-            v-if="
-              (isServiceDateMode && activeServiceDateSubTab === 'all') ||
-              (isServiceProviderMode && activeServiceProviderSubTab === 'all')
-            "
-            class="text-muted"
-          >
-            (全部內容)
-          </span>
+          {{ isServiceDateMode ? '服務人員列表' : '服務日期列表' }}
         </div>
         <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
           <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
@@ -166,15 +164,14 @@
           </div>
         </div>
       </div>
-      <div v-else class="text-center">
-        <div class="my-title-md-gray p-3">
-          {{
-            (isServiceDateMode && activeServiceDateSubTab === 'all') ||
-            (isServiceProviderMode && activeServiceProviderSubTab === 'all')
-              ? '該資料來源暫無數據'
-              : '沒有開啟的圖層'
-          }}
-        </div>
+      <div
+        v-else-if="
+          !(isServiceDateMode && activeServiceDateSubTab === 'all') &&
+          !(isServiceProviderMode && activeServiceProviderSubTab === 'all')
+        "
+        class="text-center"
+      >
+        <div class="my-title-md-gray p-3">沒有開啟的圖層</div>
       </div>
     </div>
   </div>
@@ -494,9 +491,9 @@
     // 按30分鐘區間分組，超過5小時的合併為1個bar
     const distribution = {};
 
-    // 初始化所有可能的區間（0-29, 30-59, ..., 270-299, >300）
+    // 初始化所有可能的區間（0-30, 30-60, ..., 270-300, >300）
     for (let i = 0; i <= 270; i += 30) {
-      const intervalKey = `${i}-${i + 29}`;
+      const intervalKey = `${i}-${i + 30}`;
       distribution[intervalKey] = 0;
     }
     distribution['>300'] = 0;
@@ -507,8 +504,9 @@
         if (minutes > 300) {
           distribution['>300'] += 1;
         } else {
+          // 對於30分鐘區間，使用重疊區間：0-30, 30-60, 60-90...
           const interval = Math.floor(minutes / 30) * 30;
-          const intervalKey = `${interval}-${interval + 29}`;
+          const intervalKey = `${interval}-${interval + 30}`;
           distribution[intervalKey] += 1;
         }
       }
@@ -534,9 +532,9 @@
     // 按10分鐘區間分組，超過2小時的合併為1個bar
     const distribution = {};
 
-    // 初始化所有可能的區間（0-9, 10-19, ..., 110-119, >120）
+    // 初始化所有可能的區間（0-10, 10-20, ..., 110-120, >120）
     for (let i = 0; i <= 110; i += 10) {
-      const intervalKey = `${i}-${i + 9}`;
+      const intervalKey = `${i}-${i + 10}`;
       distribution[intervalKey] = 0;
     }
     distribution['>120'] = 0;
@@ -547,8 +545,9 @@
         if (minutes > 120) {
           distribution['>120'] += 1;
         } else {
+          // 對於10分鐘區間，使用重疊區間：0-10, 10-20, 20-30...
           const interval = Math.floor(minutes / 10) * 10;
-          const intervalKey = `${interval}-${interval + 9}`;
+          const intervalKey = `${interval}-${interval + 10}`;
           distribution[intervalKey] += 1;
         }
       }
@@ -843,9 +842,25 @@
 
     data.forEach((dataItem) => {
       const x = xScale(dataItem.interval);
-      const text = dataItem.interval.includes('>')
-        ? dataItem.interval
-        : (parseInt(dataItem.interval.split('-')[1]) + 1).toString();
+      let text;
+
+      if (dataItem.interval.includes('>')) {
+        // 處理 ">120", ">300" 這種格式
+        text = dataItem.interval;
+      } else if (dataItem.interval.includes('-')) {
+        // 處理 "0-30", "30-60", "60-90" 或 "0-9", "10-19" 這種格式
+        const [start, end] = dataItem.interval.split('-').map(Number);
+        if (start === 0) {
+          // 對於 0-30 顯示為 30，對於 0-9 顯示為 9
+          text = end.toString();
+        } else {
+          // 對於 30-60 顯示為 60，對於 60-90 顯示為 90
+          text = end.toString();
+        }
+      } else {
+        // 處理單一數字格式
+        text = dataItem.interval;
+      }
 
       const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
 
