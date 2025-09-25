@@ -565,7 +565,12 @@
     // 獲取容器實際尺寸，確保圖表填滿容器
     const containerRect = container.getBoundingClientRect();
     const containerWidth = Math.max(containerRect.width || 400, 300); // 最小寬度300px
-    const margin = { top: 32, right: 0, bottom: 0, left: 32 };
+
+    // 設定比例尺 - 使用固定寬度柱子
+    const barWidth = 8;
+    const rightPadding = barWidth; // 右邊增加一個長條圖寬度的緩衝
+
+    const margin = { top: 32, right: rightPadding, bottom: 0, left: 40 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
 
@@ -579,8 +584,7 @@
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // 設定比例尺 - 使用固定寬度柱子
-    const barWidth = 8;
+    // 計算長條圖的佈局
     const dataCount = data.length;
     const totalBarWidth = dataCount * barWidth;
     const availableSpaceWidth = width - totalBarWidth;
