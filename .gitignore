@@ -2,8 +2,8 @@
 node_modules
 /dist
 
-# Large data files
-public/data/json/*.json
+# Large data files (now managed by Git LFS)
+# public/data/json/*.json
 
 
 # local env files
@@ -24,7 +24,4 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-# 排除超過 GitHub 限制的大檔案
-public/data/json/filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json
-public/data/json/filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json
-public/data/json/filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json
+# 大檔案現在使用 Git LFS 管理
