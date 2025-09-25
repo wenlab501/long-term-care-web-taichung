@@ -132,7 +132,13 @@
           {{ isServiceDateMode ? '服務人員列表' : '服務日期列表' }}
         </div>
         <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
-          <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
+          <div class="my-title-xs-gray text-center mb-2">
+            <div class="my-content-xs-gray">
+              <span class="me-3">服務日期: {{ item.serviceDate }}</span>
+              <span class="me-3">服務人員: {{ item.servicePersonnel }}</span>
+              <span>資料來源: {{ item.dataSource }}</span>
+            </div>
+          </div>
           <div class="table-responsive">
             <table class="table w-100 mb-0">
               <thead class="sticky-top my-table-thead">
@@ -287,21 +293,107 @@
   });
 
   /**
+   * 📊 從圖層中獲取資料來源名稱
+   * @param {Object} layer - 圖層對象
+   * @returns {string} 資料來源名稱
+   */
+  const getDataSourceFromLayer = (layer) => {
+    if (!layer) return '未知來源';
+
+    // 首先嘗試從 geoJsonData features 中獲取
+    if (layer.geoJsonData?.features?.length > 0) {
+      for (const feature of layer.geoJsonData.features) {
+        if (feature.properties?.filename) {
+          return getSimplifiedDataSourceName(feature.properties.filename);
+        }
+      }
+    }
+
+    // 如果沒有找到，嘗試從 tableData 中獲取
+    if (layer.tableData?.length > 0) {
+      const firstTableItem = layer.tableData[0];
+      if (firstTableItem?.filename) {
+        return getSimplifiedDataSourceName(firstTableItem.filename);
+      }
+    }
+
+    return '未知來源';
+  };
+
+  /**
+   * 📊 將完整的檔案名簡化為易讀的資料來源名稱
+   * @param {string} filename - 完整的檔案名
+   * @returns {string} 簡化的資料來源名稱
+   */
+  const getSimplifiedDataSourceName = (filename) => {
+    if (!filename) return '未知來源';
+
+    if (filename.includes('基隆聯祥')) return '基隆聯祥';
+    else if (filename.includes('臺北聯承')) return '臺北聯承';
+    else if (filename.includes('三重聯恩')) return '三重聯恩';
+    else if (filename.includes('新北聯和')) return '新北聯和';
+    else if (filename.includes('新北聯宜')) return '新北聯宜';
+    else if (filename.includes('新北聯承')) return '新北聯承';
+    else if (filename.includes('桃園聯承')) return '桃園聯承';
+    else if (filename.includes('楊梅聯聚')) return '楊梅聯聚';
+    else if (filename.includes('新竹聯廣')) return '新竹聯廣';
+    else if (filename.includes('臺中洪幸雪')) return '臺中洪幸雪';
+    else return filename; // 如果無法識別，返回原始檔案名
+  };
+
+  /**
    * 📊 當前結果統計數據（受圖層開關影響）
    */
   const currentStatistics = computed(() => {
     if (isServiceDateMode.value) {
-      return serviceDateStatistics.value.map((provider) => ({
-        key: provider.serviceProviderId,
-        label: provider.serviceProviderId,
-        trafficTimes: provider.trafficTimes,
-      }));
+      return serviceDateStatistics.value.map((provider) => {
+        // 從圖層數據中獲取服務日期和資料來源信息
+        const serviceProviderGroup = dataStore.layers.find(
+          (group) => group.groupName === '服務人員列表'
+        );
+        const layer = serviceProviderGroup?.groupLayers.find(
+          (l) => l.serviceProviderId === provider.serviceProviderId
+        );
+
+        // 獲取服務日期
+        const serviceDate = layer?.serviceDate || selectedServiceDate.value || '未知日期';
+
+        // 獲取資料來源（filename）
+        const dataSource = getDataSourceFromLayer(layer);
+
+        return {
+          key: provider.serviceProviderId,
+          label: provider.serviceProviderId,
+          trafficTimes: provider.trafficTimes,
+          serviceDate: serviceDate,
+          servicePersonnel: provider.serviceProviderId,
+          dataSource: dataSource,
+        };
+      });
     } else if (isServiceProviderMode.value) {
-      return serviceProviderStatistics.value.map((date) => ({
-        key: date.serviceDate,
-        label: date.serviceDate,
-        trafficTimes: date.trafficTimes,
-      }));
+      return serviceProviderStatistics.value.map((date) => {
+        // 從圖層數據中獲取服務人員和資料來源信息
+        const serviceDateGroup = dataStore.layers.find(
+          (group) => group.groupName === '服務日期列表'
+        );
+        const layer = serviceDateGroup?.groupLayers.find((l) => l.serviceDate === date.serviceDate);
+
+        // 獲取服務人員
+        const servicePersonnel =
+          layer?.serviceProviderId || selectedServiceProvider.value || '未知人員';
+
+        // 獲取資料來源（filename）
+        const dataSource = getDataSourceFromLayer(layer);
+
+        return {
+          key: date.serviceDate,
+          label: date.serviceDate,
+          trafficTimes: date.trafficTimes,
+          serviceDate: date.serviceDate,
+          servicePersonnel: servicePersonnel,
+          dataSource: dataSource,
+        };
+      });
     }
     return [];
   });
@@ -349,6 +441,9 @@
           totalTime: item.totalTime,
           time: item.time,
         })),
+        serviceDate: '全部日期',
+        servicePersonnel: '全部人員',
+        dataSource: getDataSourceName().replace('資料來源 - ', ''), // 移除前綴
       },
     ];
 
