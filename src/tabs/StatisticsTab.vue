@@ -12,19 +12,19 @@
 
           <!-- 子 Tab 導航 -->
           <div class="mt-3">
-            <div class="d-flex rounded-3 border-0" role="group">
+            <div class="d-flex border border-primary" style="border-radius: 0">
               <!-- 當前結果 Tab -->
               <button
                 type="button"
-                class="d-flex rounded-3 border-0 flex-grow-1 py-2 mx-1"
+                class="flex-fill border-0 py-2 px-3 text-center"
                 :class="{
-                  'my-btn-transparent': !isCurrentTabActive(),
-                  'my-btn-blue': isCurrentTabActive(),
+                  'bg-light': isCurrentTabActive(),
+                  'bg-white': !isCurrentTabActive(),
                 }"
                 :style="{
-                  'min-height': '44px',
-                  'touch-action': 'manipulation',
-                  '-webkit-appearance': 'none !important',
+                  'border-bottom': '3px solid var(--bs-primary)',
+                  'border-radius': '0',
+                  'font-weight': isCurrentTabActive() ? 'bold' : 'normal',
                 }"
                 @click="
                   isServiceDateMode
@@ -32,23 +32,21 @@
                     : (activeServiceProviderSubTab = 'current')
                 "
               >
-                <div class="d-flex flex-column align-items-center justify-content-center w-100">
-                  <span class="my-font-size-xs">當前結果</span>
-                </div>
+                {{ selectedItem }}
               </button>
 
               <!-- 全部內容 Tab -->
               <button
                 type="button"
-                class="d-flex rounded-3 border-0 flex-grow-1 py-2 mx-1"
+                class="flex-fill border-0 py-2 px-3 text-center"
                 :class="{
-                  'my-btn-transparent': !isAllContentTabActive(),
-                  'my-btn-blue': isAllContentTabActive(),
+                  'bg-light': isAllContentTabActive(),
+                  'bg-white': !isAllContentTabActive(),
                 }"
                 :style="{
-                  'min-height': '44px',
-                  'touch-action': 'manipulation',
-                  '-webkit-appearance': 'none !important',
+                  'border-bottom': '3px solid var(--bs-primary)',
+                  'border-radius': '0',
+                  'font-weight': isAllContentTabActive() ? 'bold' : 'normal',
                 }"
                 @click="
                   isServiceDateMode
@@ -56,9 +54,7 @@
                     : (activeServiceProviderSubTab = 'all')
                 "
               >
-                <div class="d-flex flex-column align-items-center justify-content-center w-100">
-                  <span class="my-font-size-xs">全部內容</span>
-                </div>
+                全部內容
               </button>
             </div>
           </div>
