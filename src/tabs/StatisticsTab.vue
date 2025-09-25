@@ -283,7 +283,7 @@
   });
 
   const isServiceProviderMode = computed(() => {
-    return dataStore.activeLeftTab === 'server' && selectedServiceProvider.value;
+    return dataStore.activeLeftTab === 'server';
   });
 
   /**
@@ -310,90 +310,56 @@
    * 📊 全部內容統計數據（不受圖層開關影響，只看選擇的資料來源）
    */
   const allContentStatistics = computed(() => {
-    if (isServiceDateMode.value) {
-      // 服務日期模式：顯示選擇的服務日期的所有服務人員數據
-      const selectedDate = selectedServiceDate.value;
-      if (!selectedDate) return [];
+    console.log('🔄 AllContentStatistics 重新計算:', {
+      activeLeftTab: dataStore.activeLeftTab,
+      isServiceDateMode: isServiceDateMode.value,
+      isServiceProviderMode: isServiceProviderMode.value,
+      selectedServiceDate: selectedServiceDate.value,
+      selectedServiceProvider: selectedServiceProvider.value,
+      selectedFileFilter: dataStore.selectedFileFilter,
+    });
 
-      // 從所有圖層中收集該日期的數據（不受可見性影響）
-      const allData = [];
-      const serviceProviderGroup = dataStore.layers.find(
-        (group) => group.groupName === '服務人員列表'
-      );
+    // 全部內容：不管在哪個模式下，都顯示選擇的資料來源的所有數據
+    // 從所有圖層中收集所有數據（不受可見性影響）
+    const allData = [];
 
-      if (serviceProviderGroup) {
-        console.log('🔍 AllContentStatistics - 服務日期模式:');
-        console.log('  - 總圖層數:', serviceProviderGroup.groupLayers.length);
+    // 收集所有圖層群組的數據
+    dataStore.layers.forEach((group) => {
+      console.log(`🔍 AllContentStatistics - 處理圖層群組: ${group.groupName}`);
+      console.log('  - 總圖層數:', group.groupLayers.length);
+      console.log('  - 可見圖層數:', group.groupLayers.filter((layer) => layer.visible).length);
+
+      group.groupLayers.forEach((layer) => {
+        // 收集所有數據，不管圖層是否可見
+        const trafficTimes = extractTrafficTimesFromLayer(layer);
         console.log(
-          '  - 可見圖層數:',
-          serviceProviderGroup.groupLayers.filter((layer) => layer.visible).length
+          `  - 圖層 ${layer.layerName} (可見: ${layer.visible}): ${trafficTimes.length} 筆數據`
         );
-
-        serviceProviderGroup.groupLayers.forEach((layer) => {
-          // 收集所有數據，不管圖層是否可見
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          console.log(
-            `  - 圖層 ${layer.layerName} (可見: ${layer.visible}): ${trafficTimes.length} 筆數據`
-          );
-          allData.push(...trafficTimes);
-        });
-      }
-
-      // 按服務人員分組
-      const groupedByProvider = {};
-      allData.forEach((item) => {
-        if (!groupedByProvider[item.serviceProviderId]) {
-          groupedByProvider[item.serviceProviderId] = [];
-        }
-        groupedByProvider[item.serviceProviderId].push(item);
+        allData.push(...trafficTimes);
       });
+    });
 
-      return Object.keys(groupedByProvider).map((providerId) => ({
-        key: providerId,
-        label: providerId,
-        trafficTimes: groupedByProvider[providerId].map((item) => ({
+    // 將所有數據合併為一個統計項目，不分組
+    const result = [
+      {
+        key: 'all-data',
+        label: '全部數據',
+        trafficTimes: allData.map((item) => ({
           routeDescription: item.routeDescription,
           totalTime: item.totalTime,
           time: item.time,
         })),
-      }));
-    } else if (isServiceProviderMode.value) {
-      // 服務人員模式：顯示選擇的服務人員的所有服務日期數據
-      const selectedProvider = selectedServiceProvider.value;
-      if (!selectedProvider) return [];
+      },
+    ];
 
-      // 從所有圖層中收集該服務人員的數據（不受可見性影響）
-      const allData = [];
-      const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
-
-      if (serviceDateGroup) {
-        serviceDateGroup.groupLayers.forEach((layer) => {
-          // 收集所有數據，不管圖層是否可見
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          allData.push(...trafficTimes);
-        });
-      }
-
-      // 按服務日期分組
-      const groupedByDate = {};
-      allData.forEach((item) => {
-        if (!groupedByDate[item.serviceDate]) {
-          groupedByDate[item.serviceDate] = [];
-        }
-        groupedByDate[item.serviceDate].push(item);
-      });
-
-      return Object.keys(groupedByDate).map((date) => ({
-        key: date,
-        label: date,
-        trafficTimes: groupedByDate[date].map((item) => ({
-          routeDescription: item.routeDescription,
-          totalTime: item.totalTime,
-          time: item.time,
-        })),
-      }));
-    }
-    return [];
+    console.log(
+      '📊 AllContentStatistics - 全部內容結果:',
+      result.length,
+      '個統計項目，總共',
+      allData.length,
+      '筆數據'
+    );
+    return result;
   });
 
   /**
