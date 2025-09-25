@@ -339,6 +339,7 @@
         <div style="height: 40px"></div>
         <StatisticsTab
           ref="StatisticsTab"
+          :activeUpperTab="activeUpperTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"

@@ -10,33 +10,37 @@
         </div>
 
         <!-- 📊 統計圖表區塊 -->
-        <div
-          v-if="
-            serviceDateStatistics.length > 0 &&
-            (trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0)
-          "
-          class="mb-3"
-        >
+        <div v-if="serviceDateStatistics.length > 0" class="mb-3">
           <div class="row">
-            <!-- 交通時間分布圖表 -->
+            <!-- 總時間分布圖表 -->
             <div class="col-12 col-md-6 mb-3">
-              <div
-                v-if="trafficTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 pt-3 h-100"
-              >
-                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
-                <div ref="chartContainer" class="d-flex justify-content-center"></div>
+              <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
+                <div
+                  ref="totalTimeChartContainer"
+                  class="d-flex justify-content-center"
+                  style="min-height: 200px"
+                >
+                  <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
+                    暫無數據
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- 總時間分布圖表 -->
+            <!-- 交通時間分布圖表 -->
             <div class="col-12 col-md-6 mb-3">
-              <div
-                v-if="totalTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 pt-3 h-100"
-              >
-                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
-                <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
+              <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
+                <div
+                  ref="trafficTimeChartContainer"
+                  class="d-flex justify-content-center"
+                  style="min-height: 200px"
+                >
+                  <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
+                    暫無數據
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -112,33 +116,36 @@
         </div>
 
         <!-- 📊 統計圖表區塊 -->
-        <div
-          v-if="
-            serviceProviderStatistics.length > 0 &&
-            (trafficTimeDistribution.length > 0 || totalTimeDistribution.length > 0)
-          "
-          class="mb-4"
-        >
+        <div v-if="serviceProviderStatistics.length > 0" class="mb-4">
           <div class="row">
-            <!-- 交通時間分布圖表 -->
-            <div class="col-12 col-md-6 mb-3">
-              <div
-                v-if="trafficTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
-              >
-                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
-                <div ref="chartContainer" class="d-flex justify-content-center"></div>
-              </div>
-            </div>
-
             <!-- 總時間分布圖表 -->
             <div class="col-12 col-md-6 mb-3">
-              <div
-                v-if="totalTimeDistribution.length > 0"
-                class="rounded-4 my-bgcolor-gray-100 p-3 h-100"
-              >
+              <div class="rounded-4 my-bgcolor-gray-100 p-3 h-100">
                 <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
-                <div ref="totalTimeChartContainer" class="d-flex justify-content-center"></div>
+                <div
+                  ref="totalTimeChartContainer"
+                  class="d-flex justify-content-center"
+                  style="min-height: 200px"
+                >
+                  <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
+                    暫無數據
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- 交通時間分布圖表 -->
+            <div class="col-12 col-md-6 mb-3">
+              <div class="rounded-4 my-bgcolor-gray-100 p-3 h-100">
+                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
+                <div
+                  ref="trafficTimeChartContainer"
+                  class="d-flex justify-content-center"
+                  style="min-height: 200px"
+                >
+                  <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
+                    暫無數據
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -217,8 +224,28 @@
   import { useDataStore } from '@/stores/dataStore.js';
   import * as d3 from 'd3';
 
+  // 定義 props
+  const props = defineProps({
+    activeUpperTab: {
+      type: String,
+      default: 'map',
+    },
+    containerHeight: {
+      type: Number,
+      default: 500,
+    },
+    isPanelDragging: {
+      type: Boolean,
+      default: false,
+    },
+    activeMarkers: {
+      type: Number,
+      default: 0,
+    },
+  });
+
   const dataStore = useDataStore();
-  const chartContainer = ref(null);
+  const trafficTimeChartContainer = ref(null);
   const totalTimeChartContainer = ref(null);
 
   // 獲取當前選擇的服務日期和服務人員
@@ -232,83 +259,6 @@
 
   const isServiceProviderMode = computed(() => {
     return dataStore.activeLeftTab === 'server' && selectedServiceProvider.value;
-  });
-
-  /**
-   * 📊 計算交通時間分布統計
-   */
-  const trafficTimeDistribution = computed(() => {
-    let allTrafficTimes = [];
-
-    if (isServiceDateMode.value) {
-      // 服務日期模式：收集所有服務人員的交通時間
-      const serviceProviderGroup = dataStore.layers.find(
-        (group) => group.groupName === '服務人員列表'
-      );
-      if (serviceProviderGroup) {
-        const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
-        visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          allTrafficTimes.push(...trafficTimes);
-        });
-      }
-    } else if (isServiceProviderMode.value) {
-      // 服務人員模式：收集所有服務日期的交通時間
-      const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
-      if (serviceDateGroup) {
-        const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
-        visibleLayers.forEach((layer) => {
-          const trafficTimes = extractTrafficTimesFromLayer(layer);
-          allTrafficTimes.push(...trafficTimes);
-        });
-      }
-    }
-
-    // 過濾掉序號1的交通時間（略過序號1）
-    const filteredTrafficTimes = allTrafficTimes.filter((traffic) => {
-      // 略過序號1，其他都要計算
-      return traffic.sequenceNumber !== 1;
-    });
-
-    // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
-    const distribution = {};
-
-    // 初始化所有可能的區間（0-9, 10-19, ..., 110-119, >120）
-    for (let i = 0; i <= 110; i += 10) {
-      const intervalKey = `${i}-${i + 9}`;
-      distribution[intervalKey] = 0;
-    }
-    distribution['>120'] = 0;
-
-    // 統計實際數據（過濾掉小於0或NaN的值）
-    filteredTrafficTimes.forEach((traffic) => {
-      // 確保是有效的正數值
-      if (traffic.totalMinutes > 0 && !isNaN(traffic.totalMinutes)) {
-        if (traffic.totalMinutes > 120) {
-          distribution['>120'] += 1;
-        } else {
-          const interval = Math.floor(traffic.totalMinutes / 10) * 10;
-          const intervalKey = `${interval}-${interval + 9}`;
-          distribution[intervalKey] += 1;
-        }
-      }
-    });
-
-    // 轉換為數組格式供D3使用
-    return Object.entries(distribution)
-      .map(([interval, count]) => ({
-        interval,
-        count,
-      }))
-      .sort((a, b) => {
-        // 處理">"的區間，將其排在最後
-        if (a.interval.includes('>')) return 1;
-        if (b.interval.includes('>')) return -1;
-
-        const aStart = parseInt(a.interval.split('-')[0]);
-        const bStart = parseInt(b.interval.split('-')[0]);
-        return aStart - bStart;
-      });
   });
 
   /**
@@ -360,6 +310,99 @@
         } else {
           const interval = Math.floor(totalMinutes / 30) * 30;
           const intervalKey = `${interval}-${interval + 29}`;
+          distribution[intervalKey] += 1;
+        }
+      }
+    });
+
+    // 轉換為數組格式供D3使用
+    return Object.entries(distribution)
+      .map(([interval, count]) => ({
+        interval,
+        count,
+      }))
+      .sort((a, b) => {
+        // 處理">"的區間，將其排在最後
+        if (a.interval.includes('>')) return 1;
+        if (b.interval.includes('>')) return -1;
+
+        const aStart = parseInt(a.interval.split('-')[0]);
+        const bStart = parseInt(b.interval.split('-')[0]);
+        return aStart - bStart;
+      });
+  });
+
+  /**
+   * 📊 計算交通時間分布統計
+   */
+  const trafficTimeDistribution = computed(() => {
+    let allTrafficTimes = [];
+
+    // console.log('🔍 trafficTimeDistribution computed:', {
+    //   isServiceDateMode: isServiceDateMode.value,
+    //   isServiceProviderMode: isServiceProviderMode.value,
+    //   selectedServiceDate: selectedServiceDate.value,
+    //   selectedServiceProvider: selectedServiceProvider.value,
+    //   activeLeftTab: dataStore.activeLeftTab
+    // });
+
+    if (isServiceDateMode.value) {
+      // 服務日期模式：收集所有服務人員的交通時間
+      const serviceProviderGroup = dataStore.layers.find(
+        (group) => group.groupName === '服務人員列表'
+      );
+      console.log('🔍 serviceProviderGroup:', serviceProviderGroup);
+      if (serviceProviderGroup) {
+        const visibleLayers = serviceProviderGroup.groupLayers.filter((layer) => layer.visible);
+        console.log('🔍 visible service provider layers:', visibleLayers.length);
+        visibleLayers.forEach((layer) => {
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          console.log('🔍 extracted traffic times:', trafficTimes.length);
+          allTrafficTimes.push(...trafficTimes);
+        });
+      }
+    } else if (isServiceProviderMode.value) {
+      // 服務人員模式：收集所有服務日期的交通時間
+      const serviceDateGroup = dataStore.layers.find((group) => group.groupName === '服務日期列表');
+      console.log('🔍 serviceDateGroup:', serviceDateGroup);
+      if (serviceDateGroup) {
+        const visibleLayers = serviceDateGroup.groupLayers.filter((layer) => layer.visible);
+        console.log('🔍 visible service date layers:', visibleLayers.length);
+        visibleLayers.forEach((layer) => {
+          const trafficTimes = extractTrafficTimesFromLayer(layer);
+          console.log('🔍 extracted traffic times:', trafficTimes.length);
+          allTrafficTimes.push(...trafficTimes);
+        });
+      }
+    }
+
+    console.log('🔍 allTrafficTimes collected:', allTrafficTimes.length);
+
+    // 過濾掉序號1的交通時間（略過序號1）
+    const filteredTrafficTimes = allTrafficTimes.filter((traffic) => {
+      // 略過序號1，其他都要計算
+      return traffic.sequenceNumber !== 1;
+    });
+
+    // 按10分鐘區間分組，超過2小時的合併為1個bar，最小刻度是5
+    const distribution = {};
+
+    // 初始化所有可能的區間（0-9, 10-19, ..., 110-119, >120）
+    for (let i = 0; i <= 110; i += 10) {
+      const intervalKey = `${i}-${i + 9}`;
+      distribution[intervalKey] = 0;
+    }
+    distribution['>120'] = 0;
+
+    // 統計實際數據（過濾掉小於0或NaN的值）
+    filteredTrafficTimes.forEach((traffic) => {
+      // 確保是有效的正數值
+      if (traffic.totalMinutes > 0 && !isNaN(traffic.totalMinutes)) {
+        if (traffic.totalMinutes > 120) {
+          distribution['>120'] += 1;
+        } else {
+          const interval = Math.floor(traffic.totalMinutes / 10) * 10;
+          const intervalKey = `${interval}-${interval + 9}`;
           distribution[intervalKey] += 1;
         }
       }
@@ -584,22 +627,32 @@
    * 📊 繪製交通時間分布長條圖
    */
   const drawTrafficTimeChart = () => {
-    if (!chartContainer.value || trafficTimeDistribution.value.length === 0) {
+    console.log('🔍 drawTrafficTimeChart called:', {
+      container: !!trafficTimeChartContainer.value,
+      dataLength: trafficTimeDistribution.value.length,
+      data: trafficTimeDistribution.value,
+    });
+
+    if (!trafficTimeChartContainer.value || trafficTimeDistribution.value.length === 0) {
+      console.log('❌ Cannot draw chart - missing container or data');
       return;
     }
 
     // 清除之前的圖表
-    d3.select(chartContainer.value).selectAll('*').remove();
+    d3.select(trafficTimeChartContainer.value).selectAll('*').remove();
 
     const data = trafficTimeDistribution.value;
-    const containerWidth = chartContainer.value.getBoundingClientRect().width;
+    const containerRect = trafficTimeChartContainer.value.getBoundingClientRect();
+    const containerWidth = containerRect.width || 400; // 如果寬度為 0，使用默認值
     const containerHeight = 200;
     const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
 
+    console.log('🔍 Container dimensions:', { containerWidth, containerHeight, width, height });
+
     const svg = d3
-      .select(chartContainer.value)
+      .select(trafficTimeChartContainer.value)
       .append('svg')
       .attr('width', containerWidth)
       .attr('height', containerHeight);
@@ -733,7 +786,14 @@
    * 📊 繪製總時間分布長條圖
    */
   const drawTotalTimeChart = () => {
+    console.log('🔍 drawTotalTimeChart called:', {
+      container: !!totalTimeChartContainer.value,
+      dataLength: totalTimeDistribution.value.length,
+      data: totalTimeDistribution.value,
+    });
+
     if (!totalTimeChartContainer.value || totalTimeDistribution.value.length === 0) {
+      console.log('❌ Cannot draw total time chart - missing container or data');
       return;
     }
 
@@ -741,11 +801,19 @@
     d3.select(totalTimeChartContainer.value).selectAll('*').remove();
 
     const data = totalTimeDistribution.value;
-    const containerWidth = totalTimeChartContainer.value.getBoundingClientRect().width;
+    const containerRect = totalTimeChartContainer.value.getBoundingClientRect();
+    const containerWidth = containerRect.width || 400; // 如果寬度為 0，使用默認值
     const containerHeight = 200;
     const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
+
+    console.log('🔍 Total time container dimensions:', {
+      containerWidth,
+      containerHeight,
+      width,
+      height,
+    });
 
     const svg = d3
       .select(totalTimeChartContainer.value)
@@ -910,6 +978,25 @@
     { deep: true }
   );
 
+  // 監聽 activeUpperTab 變化，當切換到 StatisticsTab 時立即繪製圖表
+  watch(
+    () => props.activeUpperTab,
+    (newTab, oldTab) => {
+      console.log('🔍 activeUpperTab changed:', { newTab, oldTab });
+      if (newTab === 'statistics' && oldTab !== 'statistics') {
+        console.log('✅ Switching to statistics tab, drawing charts');
+        nextTick(() => {
+          // 延遲一點時間確保 DOM 完全渲染
+          setTimeout(() => {
+            drawTrafficTimeChart();
+            drawTotalTimeChart();
+          }, 100);
+        });
+      }
+    },
+    { immediate: false }
+  );
+
   // 防抖計時器
   let resizeTimer = null;
 
@@ -919,19 +1006,25 @@
       clearTimeout(resizeTimer);
     }
     resizeTimer = setTimeout(() => {
+      // 只有在 StatisticsTab 可見時才重繪圖表
+      if (props.activeUpperTab === 'statistics') {
+        nextTick(() => {
+          drawTrafficTimeChart();
+          drawTotalTimeChart();
+        });
+      }
+    }, 150); // 150ms防抖延遲
+  };
+
+  // 組件掛載後添加監聽器
+  onMounted(() => {
+    // 只有在 StatisticsTab 可見時才繪製圖表
+    if (props.activeUpperTab === 'statistics') {
       nextTick(() => {
         drawTrafficTimeChart();
         drawTotalTimeChart();
       });
-    }, 150); // 150ms防抖延遲
-  };
-
-  // 組件掛載後繪製圖表並添加監聽器
-  onMounted(() => {
-    nextTick(() => {
-      drawTrafficTimeChart();
-      drawTotalTimeChart();
-    });
+    }
 
     // 添加窗口大小變化監聽器
     window.addEventListener('resize', handleResize);
