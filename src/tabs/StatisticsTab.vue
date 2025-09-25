@@ -3,14 +3,21 @@
   <div class="d-flex flex-column my-bgcolor-gray-200 h-100">
     <!-- 統計內容 -->
     <div class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
-      <!-- 📊 服務日期統計：當選擇了服務日期時顯示 -->
-      <div v-if="isServiceDateMode">
+      <!-- 📊 統計分析內容：統一處理服務日期和服務人員模式 -->
+      <div v-if="isServiceDateMode || isServiceProviderMode">
         <div class="mb-4">
-          <div class="my-title-lg-black">服務日期統計 - {{ selectedServiceDate || '未選擇' }}</div>
+          <div class="my-title-lg-black">
+            {{ isServiceDateMode ? '服務日期統計' : '服務人員統計' }} -
+            {{
+              isServiceDateMode
+                ? selectedServiceDate || '未選擇'
+                : selectedServiceProvider || '未選擇'
+            }}
+          </div>
         </div>
 
         <!-- 📊 統計圖表區塊 -->
-        <div v-if="serviceDateStatistics.length > 0" class="mb-3">
+        <div v-if="currentStatistics.length > 0" class="mb-3">
           <div class="row">
             <!-- 總時間分布圖表 -->
             <div class="col-12 col-md-6 mb-3">
@@ -46,18 +53,13 @@
           </div>
         </div>
 
-        <!-- 服務人員列表表格 -->
-        <div
-          v-if="serviceDateStatistics.length > 0"
-          class="rounded-4 my-bgcolor-gray-100 p-4 h-100"
-        >
-          <div class="my-title-sm-black text-center mb-3">服務人員列表交通時間統計</div>
-          <div
-            v-for="provider in serviceDateStatistics"
-            :key="provider.serviceProviderId"
-            class="mb-4"
-          >
-            <div class="my-title-xs-gray text-center mb-2">{{ provider.serviceProviderId }}</div>
+        <!-- 統計表格 -->
+        <div v-if="currentStatistics.length > 0" class="rounded-4 my-bgcolor-gray-100 p-4 h-100">
+          <div class="my-title-sm-black text-center mb-3">
+            {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
+          </div>
+          <div v-for="item in currentStatistics" :key="item.key" class="mb-4">
+            <div class="my-title-xs-gray text-center mb-2">{{ item.label }}</div>
             <div class="table-responsive">
               <table class="table w-100 mb-0">
                 <thead class="sticky-top my-table-thead">
@@ -78,7 +80,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="(trafficTime, index) in provider.trafficTimes"
+                    v-for="(trafficTime, index) in item.trafficTimes"
                     :key="index"
                     class="text-center text-nowrap border-bottom"
                   >
@@ -103,108 +105,7 @@
           </div>
         </div>
         <div v-else class="text-center">
-          <div class="my-title-md-gray p-3">請先選擇服務日期並開啟相關圖層</div>
-        </div>
-      </div>
-
-      <!-- 📊 服務人員統計：當選擇了服務人員時顯示 -->
-      <div v-else-if="isServiceProviderMode">
-        <div class="mb-4">
-          <div class="my-title-lg-black">
-            服務人員統計 - {{ selectedServiceProvider || '未選擇' }}
-          </div>
-        </div>
-
-        <!-- 📊 統計圖表區塊 -->
-        <div v-if="serviceProviderStatistics.length > 0" class="mb-4">
-          <div class="row">
-            <!-- 總時間分布圖表 -->
-            <div class="col-12 col-md-6 mb-3">
-              <div class="rounded-4 my-bgcolor-gray-100 p-3 h-100">
-                <h6 class="my-title-sm-black text-center mb-3">總時間分布統計</h6>
-                <div
-                  ref="totalTimeChartContainer"
-                  class="d-flex justify-content-center"
-                  style="min-height: 200px"
-                >
-                  <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
-                    暫無數據
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- 交通時間分布圖表 -->
-            <div class="col-12 col-md-6 mb-3">
-              <div class="rounded-4 my-bgcolor-gray-100 p-3 h-100">
-                <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
-                <div
-                  ref="trafficTimeChartContainer"
-                  class="d-flex justify-content-center"
-                  style="min-height: 200px"
-                >
-                  <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
-                    暫無數據
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 服務日期列表表格 -->
-        <div
-          v-if="serviceProviderStatistics.length > 0"
-          class="rounded-4 my-bgcolor-gray-100 p-4 h-100"
-        >
-          <div class="my-title-sm-black text-center mb-3">服務日期列表交通時間統計</div>
-          <div v-for="date in serviceProviderStatistics" :key="date.serviceDate" class="mb-4">
-            <div class="my-title-xs-gray text-center mb-2">{{ date.serviceDate }}</div>
-            <div class="table-responsive">
-              <table class="table w-100 mb-0">
-                <thead class="sticky-top my-table-thead">
-                  <tr class="text-center text-nowrap">
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">#</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">路線說明</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">總時間</span>
-                    </th>
-                    <th class="p-1">
-                      <span class="my-title-xs-gray text-nowrap">交通時間</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(trafficTime, index) in date.trafficTimes"
-                    :key="index"
-                    class="text-center text-nowrap border-bottom"
-                  >
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ index + 1 }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 120px">
-                      <div class="my-content-xs-black px-3 py-2">
-                        {{ trafficTime.routeDescription }}
-                      </div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.totalTime }}</div>
-                    </td>
-                    <td class="border-0 text-nowrap text-truncate p-0" style="max-width: 80px">
-                      <div class="my-content-xs-black px-3 py-2">{{ trafficTime.time }}</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-5">
-          <div class="my-title-md-gray">沒有開啟的圖層</div>
+          <div class="my-title-md-gray p-3">沒有開啟的圖層</div>
         </div>
       </div>
 
@@ -259,6 +160,26 @@
 
   const isServiceProviderMode = computed(() => {
     return dataStore.activeLeftTab === 'server' && selectedServiceProvider.value;
+  });
+
+  /**
+   * 📊 統一當前統計數據（合併兩種模式的數據處理）
+   */
+  const currentStatistics = computed(() => {
+    if (isServiceDateMode.value) {
+      return serviceDateStatistics.value.map((provider) => ({
+        key: provider.serviceProviderId,
+        label: provider.serviceProviderId,
+        trafficTimes: provider.trafficTimes,
+      }));
+    } else if (isServiceProviderMode.value) {
+      return serviceProviderStatistics.value.map((date) => ({
+        key: date.serviceDate,
+        label: date.serviceDate,
+        trafficTimes: date.trafficTimes,
+      }));
+    }
+    return [];
   });
 
   /**
@@ -624,38 +545,34 @@
   });
 
   /**
-   * 📊 繪製交通時間分布長條圖
+   * 📊 通用圖表繪製函數
+   * @param {Object} container - 圖表容器元素
+   * @param {Array} data - 圖表數據
+   * @param {string} color - 圖表顏色
+   * @param {string} title - 圖表標題
    */
-  const drawTrafficTimeChart = () => {
-    console.log('🔍 drawTrafficTimeChart called:', {
-      container: !!trafficTimeChartContainer.value,
-      dataLength: trafficTimeDistribution.value.length,
-      data: trafficTimeDistribution.value,
-    });
-
-    if (!trafficTimeChartContainer.value || trafficTimeDistribution.value.length === 0) {
-      console.log('❌ Cannot draw chart - missing container or data');
+  const drawChart = (container, data, color) => {
+    if (!container || data.length === 0) {
       return;
     }
 
     // 清除之前的圖表
-    d3.select(trafficTimeChartContainer.value).selectAll('*').remove();
+    d3.select(container).selectAll('*').remove();
 
-    const data = trafficTimeDistribution.value;
-    const containerRect = trafficTimeChartContainer.value.getBoundingClientRect();
-    const containerWidth = containerRect.width || 400; // 如果寬度為 0，使用默認值
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width || 400;
     const containerHeight = 200;
     const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
 
-    console.log('🔍 Container dimensions:', { containerWidth, containerHeight, width, height });
-
     const svg = d3
-      .select(trafficTimeChartContainer.value)
+      .select(container)
       .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', containerHeight);
+      .attr('width', '100%')
+      .attr('height', containerHeight)
+      .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
+      .attr('preserveAspectRatio', 'none');
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
@@ -712,7 +629,7 @@
       .attr('width', barWidth)
       .attr('y', (d) => (d.count > 0 ? yScale(d.count) : height))
       .attr('height', (d) => (d.count > 0 ? height - yScale(d.count) : 0))
-      .attr('fill', 'var(--my-color-blue)');
+      .attr('fill', color);
 
     // 添加數值標籤
     g.selectAll('.bar-label')
@@ -733,14 +650,12 @@
 
     data.forEach((dataItem) => {
       const x = xScale(dataItem.interval);
-      // 顯示整數結尾，例如 "0-9" 顯示為 "10", "10-19" 顯示為 "20"
       const text = dataItem.interval.includes('>')
         ? dataItem.interval
         : (parseInt(dataItem.interval.split('-')[1]) + 1).toString();
 
       const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
 
-      // 橫向顯示文字
       textGroup
         .append('text')
         .text(text)
@@ -774,8 +689,8 @@
     // 在X軸左側添加"分鐘"標籤，與X軸刻度文字對齊
     g.append('text')
       .text('分鐘')
-      .attr('x', -8)
-      .attr('y', height + 15)
+      .attr('x', 0)
+      .attr('y', height + 20)
       .style('font-size', '12px')
       .style('font-family', 'Arial, sans-serif')
       .style('fill', '#333')
@@ -783,167 +698,21 @@
   };
 
   /**
+   * 📊 繪製交通時間分布長條圖
+   */
+  const drawTrafficTimeChart = () => {
+    drawChart(
+      trafficTimeChartContainer.value,
+      trafficTimeDistribution.value,
+      'var(--my-color-blue)'
+    );
+  };
+
+  /**
    * 📊 繪製總時間分布長條圖
    */
   const drawTotalTimeChart = () => {
-    console.log('🔍 drawTotalTimeChart called:', {
-      container: !!totalTimeChartContainer.value,
-      dataLength: totalTimeDistribution.value.length,
-      data: totalTimeDistribution.value,
-    });
-
-    if (!totalTimeChartContainer.value || totalTimeDistribution.value.length === 0) {
-      console.log('❌ Cannot draw total time chart - missing container or data');
-      return;
-    }
-
-    // 清除之前的圖表
-    d3.select(totalTimeChartContainer.value).selectAll('*').remove();
-
-    const data = totalTimeDistribution.value;
-    const containerRect = totalTimeChartContainer.value.getBoundingClientRect();
-    const containerWidth = containerRect.width || 400; // 如果寬度為 0，使用默認值
-    const containerHeight = 200;
-    const margin = { top: 32, right: 0, bottom: 0, left: 32 };
-    const width = containerWidth - margin.left - margin.right;
-    const height = 160 - margin.top;
-
-    console.log('🔍 Total time container dimensions:', {
-      containerWidth,
-      containerHeight,
-      width,
-      height,
-    });
-
-    const svg = d3
-      .select(totalTimeChartContainer.value)
-      .append('svg')
-      .attr('width', containerWidth)
-      .attr('height', containerHeight);
-
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // 設定比例尺 - 使用固定寬度柱子
-    const barWidth = 8;
-    const dataCount = data.length;
-    const totalBarWidth = dataCount * barWidth;
-    const availableSpaceWidth = width - totalBarWidth;
-    const spaceUnit = availableSpaceWidth / (dataCount * 2);
-
-    const xScale = (interval) => {
-      const index = data.findIndex((d) => d.interval === interval);
-      if (index === -1) return 0;
-      return spaceUnit + index * (barWidth + 2 * spaceUnit) + barWidth / 2;
-    };
-
-    const maxValue = d3.max(data, (d) => d.count) || 1;
-    const roundedMaxValue = Math.ceil(maxValue / 5) * 5;
-    const yScale = d3.scaleLinear().domain([0, roundedMaxValue]).range([height, 0]);
-
-    // 計算Y軸刻度
-    const yTicks = [0];
-    let interval = 5;
-    while (roundedMaxValue / interval > 4) {
-      interval += 5;
-    }
-    for (let i = interval; i <= roundedMaxValue; i += interval) {
-      yTicks.push(i);
-      if (yTicks.length >= 5) break;
-    }
-
-    // 繪製水平虛線網格
-    g.selectAll('.grid-line')
-      .data(yTicks)
-      .enter()
-      .append('line')
-      .attr('class', 'grid-line')
-      .attr('x1', 0)
-      .attr('x2', width)
-      .attr('y1', (d) => yScale(d))
-      .attr('y2', (d) => yScale(d))
-      .attr('stroke', '#bdbdbd')
-      .attr('stroke-width', 1)
-      .attr('stroke-dasharray', '3,3')
-      .attr('opacity', (d) => (d === 0 ? 0.8 : 0.4));
-
-    // 繪製長條
-    g.selectAll('.bar')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', (d) => xScale(d.interval) - barWidth / 2)
-      .attr('width', barWidth)
-      .attr('y', (d) => (d.count > 0 ? yScale(d.count) : height))
-      .attr('height', (d) => (d.count > 0 ? height - yScale(d.count) : 0))
-      .attr('fill', 'var(--my-color-green)');
-
-    // 添加數值標籤
-    g.selectAll('.bar-label')
-      .data(data.filter((d) => d.count > 0))
-      .enter()
-      .append('text')
-      .attr('class', 'bar-label')
-      .attr('x', (d) => xScale(d.interval))
-      .attr('y', (d) => yScale(d.count) - 5)
-      .attr('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('fill', '#333')
-      .style('font-weight', 'bold')
-      .text((d) => d3.format(',')(d.count));
-
-    // 添加 X 軸標籤
-    const xAxisGroup = g.append('g').attr('transform', `translate(0,${height})`);
-
-    data.forEach((dataItem) => {
-      const x = xScale(dataItem.interval);
-      // 顯示整數結尾，例如 "0-9" 顯示為 "10", "10-19" 顯示為 "20"
-      const text = dataItem.interval.includes('>')
-        ? dataItem.interval
-        : (parseInt(dataItem.interval.split('-')[1]) + 1).toString();
-
-      const textGroup = xAxisGroup.append('g').attr('transform', `translate(${x}, 20)`);
-
-      // 橫向顯示文字
-      textGroup
-        .append('text')
-        .text(text)
-        .attr('x', 0)
-        .attr('y', 0)
-        .style('font-size', '12px')
-        .style('font-family', 'Arial, sans-serif')
-        .style('fill', '#333')
-        .style('text-anchor', 'middle');
-    });
-
-    // 添加 Y 軸
-    g.append('g')
-      .call(
-        d3
-          .axisLeft(yScale)
-          .tickValues(yTicks)
-          .tickSize(0)
-          .tickFormat((d) => d3.format(',')(d))
-      )
-      .style('font-size', '11px')
-      .select('.domain')
-      .remove();
-
-    g.selectAll('.tick text')
-      .style('fill', '#666')
-      .style('font-weight', 'normal')
-      .style('text-anchor', 'end')
-      .attr('transform', 'rotate(0)');
-
-    // 在X軸左側添加"分鐘"標籤，與X軸刻度文字對齊
-    g.append('text')
-      .text('分鐘')
-      .attr('x', -8)
-      .attr('y', height + 15)
-      .style('font-size', '12px')
-      .style('font-family', 'Arial, sans-serif')
-      .style('fill', '#333')
-      .style('text-anchor', 'end');
+    drawChart(totalTimeChartContainer.value, totalTimeDistribution.value, 'var(--my-color-green)');
   };
 
   // 監聽交通時間分布變化，重新繪製圖表
