@@ -3,8 +3,8 @@
   import { ref, watch, nextTick } from 'vue';
   // 🧩 子組件引入
   import MapTab from '../tabs/MapTab.vue';
-  import DashboardTab from '../tabs/DashboardTab.vue';
   import StatisticsTab from '../tabs/StatisticsTab.vue';
+  import DashboardTab from '../tabs/DashboardTab.vue';
 
   export default {
     name: 'UpperView',
@@ -15,8 +15,8 @@
      */
     components: {
       MapTab,
-      DashboardTab,
       StatisticsTab,
+      DashboardTab,
     },
 
     /**
@@ -54,10 +54,10 @@
       // 📚 子組件引用 (Child Component References)
       /** 🗺️ 地圖視圖組件引用 */
       const MapTab = ref(null);
-      /** 📊 儀表板視圖組件引用 */
-      const DashboardTab = ref(null);
       /** 📊 統計分析視圖組件引用 */
       const StatisticsTab = ref(null);
+      /** 📊 儀表板視圖組件引用 */
+      const DashboardTab = ref(null);
       /** 📊 儀表板容器引用 (用於控制滑鼠事件) */
       const dashboardContainerRef = ref(null);
       /** 📊 統計分析容器引用 (用於控制滑鼠事件) */
@@ -238,8 +238,8 @@
 
       return {
         MapTab, // 地圖組件引用
-        DashboardTab, // 儀表板組件引用
         StatisticsTab, // 統計分析組件引用
+        DashboardTab, // 儀表板組件引用
         dashboardContainerRef, // 儀表板容器引用
         statisticsContainerRef, // 統計分析容器引用
         highlightFeature, // 高亮顯示功能
@@ -261,39 +261,42 @@
         <div class="d-flex align-items-center rounded-pill shadow my-blur gap-1 p-2">
           <!-- 🗺️ 地圖視圖按鈕 (Map View Button) -->
           <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            class="btn rounded-pill border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
             :class="{
               'my-btn-blue': activeUpperTab === 'map',
             }"
             @click="$emit('update:activeUpperTab', 'map')"
-            style="width: 30px; height: 30px"
+            style="height: 30px"
             title="地圖視圖"
           >
             <i class="fas fa-map"></i>
-          </button>
-          <!-- 📊 儀表板按鈕 (Dashboard Button) -->
-          <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
-            :class="{
-              'my-btn-blue': activeUpperTab === 'dashboard',
-            }"
-            @click="$emit('update:activeUpperTab', 'dashboard')"
-            style="width: 30px; height: 30px"
-            title="資料儀表板"
-          >
-            <i class="fas fa-chart-bar"></i>
+            <span class="ps-2">地圖</span>
           </button>
           <!-- 📈 統計分析按鈕 (Statistics Button) -->
           <button
-            class="btn rounded-circle border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            class="btn rounded-pill border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
             :class="{
               'my-btn-blue': activeUpperTab === 'statistics',
             }"
             @click="$emit('update:activeUpperTab', 'statistics')"
-            style="width: 30px; height: 30px"
+            style="height: 30px"
             title="統計分析"
           >
-            <i class="fas fa-chart-line"></i>
+            <i class="fa-solid fa-chart-simple"></i>
+            <span class="ps-2">時間統計</span>
+          </button>
+          <!-- 📊 儀表板按鈕 (Dashboard Button) -->
+          <button
+            class="btn rounded-pill border-0 d-flex align-items-center justify-content-center my-btn-transparent my-font-size-xs"
+            :class="{
+              'my-btn-blue': activeUpperTab === 'dashboard',
+            }"
+            @click="$emit('update:activeUpperTab', 'dashboard')"
+            style="height: 30px"
+            title="資料儀表板"
+          >
+            <i class="fa-solid fa-table-columns"></i>
+            <span class="ps-2">圖層儀表板</span>
           </button>
         </div>
       </div>
@@ -313,22 +316,6 @@
         />
       </div>
 
-      <!-- 儀表板分頁內容 -->
-      <div
-        v-show="activeUpperTab === 'dashboard'"
-        ref="dashboardContainerRef"
-        class="h-100 overflow-hidden pt-5"
-      >
-        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
-        <div style="height: 40px"></div>
-        <DashboardTab
-          ref="DashboardTab"
-          :containerHeight="contentHeight"
-          :isPanelDragging="isPanelDragging"
-          :activeMarkers="activeMarkers"
-        />
-      </div>
-
       <!-- 統計分析分頁內容 -->
       <div
         v-show="activeUpperTab === 'statistics'"
@@ -340,6 +327,22 @@
         <StatisticsTab
           ref="StatisticsTab"
           :activeUpperTab="activeUpperTab"
+          :containerHeight="contentHeight"
+          :isPanelDragging="isPanelDragging"
+          :activeMarkers="activeMarkers"
+        />
+      </div>
+
+      <!-- 儀表板分頁內容 -->
+      <div
+        v-show="activeUpperTab === 'dashboard'"
+        ref="dashboardContainerRef"
+        class="h-100 overflow-hidden pt-5"
+      >
+        <!-- 🎛️ 為導航按鈕組預留空間 (Reserve Space for Navigation Buttons) -->
+        <div style="height: 40px"></div>
+        <DashboardTab
+          ref="DashboardTab"
           :containerHeight="contentHeight"
           :isPanelDragging="isPanelDragging"
           :activeMarkers="activeMarkers"

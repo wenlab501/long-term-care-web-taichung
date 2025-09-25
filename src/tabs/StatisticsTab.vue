@@ -67,6 +67,19 @@
       </div>
     </div>
 
+    <!-- 📊 沒有開啟的圖層時顯示 -->
+    <div
+      v-if="
+        (isServiceDateMode || isServiceProviderMode) &&
+        displayStatistics.length === 0 &&
+        !(isServiceDateMode && activeServiceDateSubTab === 'all') &&
+        !(isServiceProviderMode && activeServiceProviderSubTab === 'all')
+      "
+      class="text-center py-5 my-bgcolor-white"
+    >
+      <div class="my-title-md-gray">沒有開啟的圖層</div>
+    </div>
+
     <!-- 統計內容 -->
     <div class="flex-grow-1 overflow-auto my-bgcolor-white p-3">
       <!-- 📊 統計圖表區塊 -->
@@ -74,12 +87,12 @@
         <div class="row">
           <!-- 總服務時間分布圖表 -->
           <div class="col-12 col-md-6 mb-3">
-            <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+            <div class="rounded-4 my-bgcolor-gray-100 pt-4 pb-2 h-100">
               <h6 class="my-title-sm-black text-center mb-3">總服務時間分布統計</h6>
               <div
                 ref="totalTimeChartContainer"
                 class="d-flex justify-content-center"
-                style="min-height: 200px"
+                style="min-height: 160px"
               >
                 <div v-if="totalTimeDistribution.length === 0" class="text-center text-muted">
                   暫無數據
@@ -90,12 +103,12 @@
 
           <!-- 交通時間分布圖表 -->
           <div class="col-12 col-md-6 mb-3">
-            <div class="rounded-4 my-bgcolor-gray-100 pt-3 h-100">
+            <div class="rounded-4 my-bgcolor-gray-100 pt-4 pb-2 h-100">
               <h6 class="my-title-sm-black text-center mb-3">交通時間分布統計</h6>
               <div
                 ref="trafficTimeChartContainer"
                 class="d-flex justify-content-center"
-                style="min-height: 200px"
+                style="min-height: 160px"
               >
                 <div v-if="trafficTimeDistribution.length === 0" class="text-center text-muted">
                   暫無數據
@@ -164,15 +177,6 @@
           </div>
         </div>
       </div>
-      <div
-        v-else-if="
-          !(isServiceDateMode && activeServiceDateSubTab === 'all') &&
-          !(isServiceProviderMode && activeServiceProviderSubTab === 'all')
-        "
-        class="text-center"
-      >
-        <div class="my-title-md-gray p-3">沒有開啟的圖層</div>
-      </div>
     </div>
   </div>
 </template>
@@ -235,9 +239,9 @@
    */
   const getCurrentResultTabTitle = () => {
     if (isServiceDateMode.value) {
-      return selectedServiceDate.value || '未選擇日期';
+      return `服務日期 - ${selectedServiceDate.value || '未選擇日期'}`;
     } else if (isServiceProviderMode.value) {
-      return selectedServiceProvider.value || '未選擇人員';
+      return `服務人員 - ${selectedServiceProvider.value || '未選擇人員'}`;
     }
     return '當前結果';
   };
@@ -264,8 +268,9 @@
       'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json': '臺中洪幸雪',
     };
 
-    // 直接返回對應的顯示文字
-    return fileOptions[selectedFile] || selectedFile;
+    // 返回帶有前綴的顯示文字
+    const displayName = fileOptions[selectedFile] || selectedFile;
+    return `資料來源 - ${displayName}`;
   };
 
   // 獲取當前選擇的服務日期和服務人員
@@ -806,7 +811,7 @@
       .attr('x2', width)
       .attr('y1', (d) => yScale(d))
       .attr('y2', (d) => yScale(d))
-      .attr('stroke', '#bdbdbd')
+      .attr('stroke', 'var(--my-color-gray-400)')
       .attr('stroke-width', 1)
       .attr('stroke-dasharray', '3,3')
       .attr('opacity', (d) => (d === 0 ? 0.8 : 0.4));
@@ -832,9 +837,9 @@
       .attr('x', (d) => xScale(d.interval))
       .attr('y', (d) => yScale(d.count) - 5)
       .attr('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('fill', '#333')
-      .style('font-weight', 'bold')
+      .style('font-size', 'var(--my-font-size-xs)')
+      .style('fill', 'var(--my-color-gray-800)')
+      .style('font-weight', 'var(--my-font-weight-lg)')
       .text((d) => d3.format(',')(d.count));
 
     // 添加 X 軸標籤
@@ -869,9 +874,9 @@
         .text(text)
         .attr('x', 0)
         .attr('y', 0)
-        .style('font-size', '12px')
-        .style('font-family', 'Arial, sans-serif')
-        .style('fill', '#333')
+        .style('font-size', 'var(--my-font-size-xs)')
+        .style('font-family', 'var(--my-font-family-primary)')
+        .style('fill', 'var(--my-color-gray-800)')
         .style('text-anchor', 'middle');
     });
 
@@ -884,13 +889,13 @@
           .tickSize(0)
           .tickFormat((d) => d3.format(',')(d))
       )
-      .style('font-size', '11px')
+      .style('font-size', 'var(--my-font-size-xs)')
       .select('.domain')
       .remove();
 
     g.selectAll('.tick text')
-      .style('fill', '#666')
-      .style('font-weight', 'normal')
+      .style('fill', 'var(--my-color-gray-600)')
+      .style('font-weight', 'var(--my-font-weight-md)')
       .style('text-anchor', 'end')
       .attr('transform', 'rotate(0)');
 
@@ -899,9 +904,9 @@
       .text('分鐘')
       .attr('x', 0)
       .attr('y', height + 20)
-      .style('font-size', '12px')
-      .style('font-family', 'Arial, sans-serif')
-      .style('fill', '#333')
+      .style('font-size', 'var(--my-font-size-xs)')
+      .style('font-family', 'var(--my-font-family-primary)')
+      .style('fill', 'var(--my-color-gray-800)')
       .style('text-anchor', 'end');
   };
 
