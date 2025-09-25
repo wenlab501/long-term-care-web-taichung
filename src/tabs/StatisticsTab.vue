@@ -54,7 +54,10 @@
         </div>
 
         <!-- 統計表格 -->
-        <div v-if="currentStatistics.length > 0" class="rounded-4 my-bgcolor-gray-100 p-4 h-100">
+        <div
+          v-if="currentStatistics.length > 0"
+          class="rounded-4 my-bgcolor-gray-100 p-4 mb-3 h-100"
+        >
           <div class="my-title-sm-black text-center mb-3">
             {{ isServiceDateMode ? '服務人員列表交通時間統計' : '服務日期列表交通時間統計' }}
           </div>
@@ -559,9 +562,9 @@
     // 清除之前的圖表
     d3.select(container).selectAll('*').remove();
 
+    // 獲取容器實際尺寸，確保圖表填滿容器
     const containerRect = container.getBoundingClientRect();
-    const containerWidth = containerRect.width || 400;
-    const containerHeight = 200;
+    const containerWidth = Math.max(containerRect.width || 400, 300); // 最小寬度300px
     const margin = { top: 32, right: 0, bottom: 0, left: 32 };
     const width = containerWidth - margin.left - margin.right;
     const height = 160 - margin.top;
@@ -570,8 +573,8 @@
       .select(container)
       .append('svg')
       .attr('width', '100%')
-      .attr('height', containerHeight)
-      .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`)
+      .attr('height', '200px')
+      .attr('viewBox', `0 0 ${containerWidth} 200`)
       .attr('preserveAspectRatio', 'none');
 
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -766,8 +769,39 @@
     { immediate: false }
   );
 
+  // 監聽 isPanelDragging 變化，當面板拖拽結束時重繪圖表
+  watch(
+    () => props.isPanelDragging,
+    (isDragging, wasDragging) => {
+      console.log('🔍 isPanelDragging changed:', { isDragging, wasDragging });
+      // 當拖拽結束時重繪圖表
+      if (wasDragging && !isDragging && props.activeUpperTab === 'statistics') {
+        console.log('✅ Panel drag ended, redrawing charts');
+        nextTick(() => {
+          setTimeout(() => {
+            redrawCharts();
+          }, 100);
+        });
+      }
+    },
+    { immediate: false }
+  );
+
   // 防抖計時器
   let resizeTimer = null;
+  let resizeObserver = null;
+
+  // 重繪圖表函數
+  const redrawCharts = () => {
+    console.log('🔄 redrawCharts called, activeUpperTab:', props.activeUpperTab);
+    if (props.activeUpperTab === 'statistics') {
+      nextTick(() => {
+        console.log('📊 Redrawing charts...');
+        drawTrafficTimeChart();
+        drawTotalTimeChart();
+      });
+    }
+  };
 
   // 窗口大小變化處理函數（帶防抖）
   const handleResize = () => {
@@ -775,13 +809,7 @@
       clearTimeout(resizeTimer);
     }
     resizeTimer = setTimeout(() => {
-      // 只有在 StatisticsTab 可見時才重繪圖表
-      if (props.activeUpperTab === 'statistics') {
-        nextTick(() => {
-          drawTrafficTimeChart();
-          drawTotalTimeChart();
-        });
-      }
+      redrawCharts();
     }, 150); // 150ms防抖延遲
   };
 
@@ -797,6 +825,46 @@
 
     // 添加窗口大小變化監聽器
     window.addEventListener('resize', handleResize);
+
+    // 添加 ResizeObserver 監聽容器尺寸變化
+    if (window.ResizeObserver) {
+      resizeObserver = new ResizeObserver((entries) => {
+        console.log('🔍 ResizeObserver triggered, entries:', entries.length);
+        // 檢查是否有容器尺寸變化
+        for (let entry of entries) {
+          console.log('📏 Entry target:', entry.target.className, 'size:', entry.contentRect);
+          // 任何尺寸變化都觸發重繪，因為面板拖拽可能影響到任何父級容器
+          handleResize();
+          break;
+        }
+      });
+
+      // 監聽圖表容器及其所有父級元素
+      nextTick(() => {
+        let element = trafficTimeChartContainer.value;
+        let level = 0;
+        while (element && level < 5) {
+          // 最多監聽5層父級元素
+          console.log(
+            '👀 Observing element level',
+            level,
+            ':',
+            element.className || element.tagName
+          );
+          resizeObserver.observe(element);
+          element = element.parentElement;
+          level++;
+        }
+
+        element = totalTimeChartContainer.value;
+        level = 0;
+        while (element && level < 5) {
+          resizeObserver.observe(element);
+          element = element.parentElement;
+          level++;
+        }
+      });
+    }
   });
 
   // 組件卸載時移除監聽器和清理計時器
@@ -804,6 +872,9 @@
     window.removeEventListener('resize', handleResize);
     if (resizeTimer) {
       clearTimeout(resizeTimer);
+    }
+    if (resizeObserver) {
+      resizeObserver.disconnect();
     }
   });
 </script>
