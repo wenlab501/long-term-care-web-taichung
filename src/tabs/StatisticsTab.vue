@@ -72,8 +72,8 @@
       v-if="
         (isServiceDateMode || isServiceProviderMode) &&
         displayStatistics.length === 0 &&
-        !(isServiceDateMode && activeServiceDateSubTab === 'all') &&
-        !(isServiceProviderMode && activeServiceProviderSubTab === 'all')
+        ((isServiceDateMode && activeServiceDateSubTab === 'current') ||
+          (isServiceProviderMode && activeServiceProviderSubTab === 'current'))
       "
       class="text-center py-5 my-bgcolor-white"
     >
@@ -129,7 +129,13 @@
         class="rounded-4 my-bgcolor-gray-100 p-4 mb-3"
       >
         <div class="my-title-sm-black text-center mb-3">
-          {{ isServiceDateMode ? '服務人員列表' : '服務日期列表' }}
+          {{
+            isServiceDateMode && activeServiceDateSubTab === 'current'
+              ? '服務人員列表'
+              : isServiceProviderMode && activeServiceProviderSubTab === 'current'
+                ? '服務日期列表'
+                : '全部圖層列表'
+          }}
         </div>
         <div v-for="item in displayStatistics" :key="item.key" class="mb-4">
           <div class="my-title-xs-gray text-center mb-2">
@@ -215,6 +221,10 @@
   const dataStore = useDataStore();
   const trafficTimeChartContainer = ref(null);
   const totalTimeChartContainer = ref(null);
+
+  // 存儲所有JSON檔案的原始數據
+  const allJsonData = ref([]);
+  const isAllJsonDataLoaded = ref(false);
 
   // 子 tab 狀態管理
   const activeServiceDateSubTab = ref('current'); // 'current' | 'all'
@@ -342,6 +352,64 @@
   };
 
   /**
+   * 📊 載入所有JSON檔案的原始數據
+   */
+  const loadAllJsonData = async () => {
+    if (isAllJsonDataLoaded.value) return;
+
+    try {
+      const fileNames = [
+        'filtered_基隆聯祥-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_臺北聯承-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_新北聯和-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_新北聯宜-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_新北聯承-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_桃園聯承-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_楊梅聯聚-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_新竹聯廣-20250801-20250831 全部的服務記錄_final.json',
+        'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
+      ];
+
+      const allData = [];
+      for (const fileName of fileNames) {
+        try {
+          const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
+          const response = await fetch(filePath);
+
+          if (!response.ok) {
+            console.error(`HTTP 錯誤: ${fileName}`, {
+              status: response.status,
+              statusText: response.statusText,
+              url: response.url,
+            });
+            continue;
+          }
+
+          const jsonData = await response.json();
+
+          // 為每個記錄添加filename欄位
+          const dataWithFilename = jsonData.map((record) => ({
+            ...record,
+            filename: fileName,
+          }));
+
+          allData.push(...dataWithFilename);
+        } catch (error) {
+          console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
+        }
+      }
+
+      allJsonData.value = allData;
+      isAllJsonDataLoaded.value = true;
+
+      console.log('📊 載入所有JSON數據完成:', allData.length, '筆記錄');
+    } catch (error) {
+      console.error('❌ 載入所有JSON數據失敗:', error);
+    }
+  };
+
+  /**
    * 📊 當前結果統計數據（受圖層開關影響）
    */
   const currentStatistics = computed(() => {
@@ -399,7 +467,7 @@
   });
 
   /**
-   * 📊 全部內容統計數據（不受圖層開關影響，只看選擇的資料來源）
+   * 📊 全部內容統計數據（使用載入的原始JSON數據，不受圖層限制）
    */
   const allContentStatistics = computed(() => {
     console.log('🔄 AllContentStatistics 重新計算:', {
@@ -409,50 +477,118 @@
       selectedServiceDate: selectedServiceDate.value,
       selectedServiceProvider: selectedServiceProvider.value,
       selectedFileFilter: dataStore.selectedFileFilter,
+      isAllJsonDataLoaded: isAllJsonDataLoaded.value,
+      allJsonDataLength: allJsonData.value.length,
     });
 
-    // 全部內容：不管在哪個模式下，都顯示選擇的資料來源的所有數據
-    // 從所有圖層中收集所有數據（不受可見性影響）
-    const allData = [];
+    // 如果數據還沒載入，返回空數組
+    if (!isAllJsonDataLoaded.value || allJsonData.value.length === 0) {
+      return [];
+    }
 
-    // 收集所有圖層群組的數據
-    dataStore.layers.forEach((group) => {
-      console.log(`🔍 AllContentStatistics - 處理圖層群組: ${group.groupName}`);
-      console.log('  - 總圖層數:', group.groupLayers.length);
-      console.log('  - 可見圖層數:', group.groupLayers.filter((layer) => layer.visible).length);
+    // 根據檔案篩選過濾數據
+    let filteredData = allJsonData.value;
+    if (dataStore.selectedFileFilter !== 'all') {
+      filteredData = allJsonData.value.filter(
+        (record) => record.filename === dataStore.selectedFileFilter
+      );
+    }
 
-      group.groupLayers.forEach((layer) => {
-        // 收集所有數據，不管圖層是否可見
-        const trafficTimes = extractTrafficTimesFromLayer(layer);
-        console.log(
-          `  - 圖層 ${layer.layerName} (可見: ${layer.visible}): ${trafficTimes.length} 筆數據`
-        );
-        allData.push(...trafficTimes);
+    // 按服務人員和日期分組
+    const groupedData = {};
+    filteredData.forEach((record) => {
+      const serviceProviderId = record.服務人員身分證;
+      const serviceDate = record['服務日期(請輸入7碼)'];
+      const key = `${serviceProviderId}-${serviceDate}`;
+
+      if (!groupedData[key]) {
+        groupedData[key] = {
+          serviceProviderId,
+          serviceDate,
+          filename: record.filename,
+          records: [],
+        };
+      }
+      groupedData[key].records.push(record);
+    });
+
+    // 為每個分組創建統計項目
+    const result = [];
+    Object.values(groupedData).forEach((group) => {
+      // 從記錄中提取交通時間數據
+      const trafficTimes = [];
+
+      group.records.forEach((record) => {
+        if (record.service_points && Array.isArray(record.service_points)) {
+          record.service_points.forEach((servicePoint, index) => {
+            if (servicePoint.hour_traffic !== undefined && servicePoint.min_traffic !== undefined) {
+              const totalMinutes = servicePoint.hour_traffic * 60 + servicePoint.min_traffic;
+              const hours = Math.floor(totalMinutes / 60);
+              const minutes = totalMinutes % 60;
+              const timeString = hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`;
+
+              // 計算服務時間
+              let serviceTotalTime = '-';
+              if (
+                servicePoint.hour_start !== undefined &&
+                servicePoint.min_start !== undefined &&
+                servicePoint.hour_end !== undefined &&
+                servicePoint.min_end !== undefined
+              ) {
+                const startMinutes = servicePoint.hour_start * 60 + servicePoint.min_start;
+                const endMinutes = servicePoint.hour_end * 60 + servicePoint.min_end;
+                const totalServiceMinutes = endMinutes - startMinutes;
+
+                if (totalServiceMinutes > 0 && !isNaN(totalServiceMinutes)) {
+                  const serviceHours = Math.floor(totalServiceMinutes / 60);
+                  const serviceMinutes = totalServiceMinutes % 60;
+                  serviceTotalTime =
+                    serviceHours > 0 ? `${serviceHours}h${serviceMinutes}m` : `${serviceMinutes}m`;
+                }
+              }
+
+              // 生成路線說明
+              let routeDescription = '-';
+              if (index === 0) {
+                routeDescription = `起點 → ${servicePoint.detail?.姓名 || '服務點'}`;
+              } else if (index === record.service_points.length - 1) {
+                const prevPoint = record.service_points[index - 1];
+                routeDescription = `${prevPoint.detail?.姓名 || '服務點'} → 終點`;
+              } else {
+                const prevPoint = record.service_points[index - 1];
+                routeDescription = `${prevPoint.detail?.姓名 || '服務點'} → ${servicePoint.detail?.姓名 || '服務點'}`;
+              }
+
+              trafficTimes.push({
+                routeDescription,
+                totalTime: serviceTotalTime,
+                time: timeString,
+              });
+            }
+          });
+        }
       });
-    });
 
-    // 將所有數據合併為一個統計項目，不分組
-    const result = [
-      {
-        key: 'all-data',
-        label: '全部數據',
-        trafficTimes: allData.map((item) => ({
-          routeDescription: item.routeDescription,
-          totalTime: item.totalTime,
-          time: item.time,
-        })),
-        serviceDate: '全部日期',
-        servicePersonnel: '全部人員',
-        dataSource: getDataSourceName().replace('資料來源 - ', ''), // 移除前綴
-      },
-    ];
+      if (trafficTimes.length > 0) {
+        const dataSource = getSimplifiedDataSourceName(group.filename);
+
+        result.push({
+          key: `all-${group.serviceProviderId}-${group.serviceDate}`,
+          label: `${group.serviceProviderId} (${group.serviceDate})`,
+          trafficTimes: trafficTimes,
+          serviceDate: group.serviceDate.toString(),
+          servicePersonnel: group.serviceProviderId,
+          dataSource: dataSource,
+        });
+      }
+    });
 
     console.log(
       '📊 AllContentStatistics - 全部內容結果:',
       result.length,
-      '個統計項目，總共',
-      allData.length,
-      '筆數據'
+      '個統計項目，來自',
+      filteredData.length,
+      '筆原始記錄'
     );
     return result;
   });
@@ -1035,6 +1171,22 @@
             drawTotalTimeChart();
           }, 100);
         });
+      }
+    },
+    { immediate: false }
+  );
+
+  // 監聽子tab變化，當切換到"全部內容"時載入所有JSON數據
+  watch(
+    [() => activeServiceDateSubTab.value, () => activeServiceProviderSubTab.value],
+    ([newDateTab, newProviderTab], [oldDateTab, oldProviderTab]) => {
+      const isSwitchingToAll =
+        (newDateTab === 'all' && oldDateTab !== 'all') ||
+        (newProviderTab === 'all' && oldProviderTab !== 'all');
+
+      if (isSwitchingToAll && !isAllJsonDataLoaded.value) {
+        console.log('🔄 切換到全部內容tab，開始載入所有JSON數據');
+        loadAllJsonData();
       }
     },
     { immediate: false }
