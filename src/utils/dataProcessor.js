@@ -1,61 +1,4 @@
 /**
- * dataProcessor.js
- *
- * Purpose:
- * - Load and transform data for the "新基準中央服務紀錄" feature set.
- * - Returns geojson, table data, and summary stats; color resolution is deferred to store.
- *
- * Notes:
- * - Documentation-only refactor for maintainability; logic unchanged.
- */
-// 注意：getColorForServiceProvider 函數已移除
-// 現在顏色分配統一在 dataStore.js 中處理
-
-// 注意：getUnifiedLayerColor 函數已移除
-// 現在顏色分配統一在 dataStore.js 中處理
-
-/**
- * 合併多個JSON文件並處理數據
- * @param {Array<string>} fileNames - 要載入的JSON文件名列表
- * @param {string|null} dateFilter - 日期篩選器 (格式: YYYYMMDD)
- * @returns {Promise<Array>} 合併後的數據
- */
-async function loadAndMergeJsonFiles(fileNames) {
-  const allData = [];
-
-  for (const fileName of fileNames) {
-    try {
-      const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
-      const response = await fetch(filePath);
-
-      if (!response.ok) {
-        console.error('HTTP 錯誤:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-        });
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const jsonData = await response.json();
-
-      // 為每個記錄添加filename欄位
-      const dataWithFilename = jsonData.map((record) => ({
-        ...record,
-        filename: fileName,
-      }));
-
-      allData.push(...dataWithFilename);
-    } catch (error) {
-      console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
-      throw error;
-    }
-  }
-
-  return allData;
-}
-
-/**
  * 處理新基準中央服務紀錄數據（移除不需要的欄位）
  * @param {Object} serviceProvider - 服務提供者記錄
  * @returns {Object} 處理後的記錄
@@ -138,6 +81,58 @@ function processFilteredRecord(serviceProvider) {
  * @param {string|null} dateFilter - 日期篩選器 (格式: YYYYMMDD)
  * @returns {Promise<Object>} 包含 GeoJSON 數據和表格數據的物件
  */
+const DATA_BASE_PATH = '/long-term-care-web-taichung/data';
+
+/**
+ * 依來源檔名順序展開衍生檔的內容。
+ *
+ * 衍生檔的結構是 { 來源檔名: [ 該檔原順序的記錄 ] }，照呼叫端原本的檔名
+ * 陣列順序遍歷，可重建出與逐檔 fetch 完全相同的記錄順序。順序會影響
+ * filename 欄位的取值與圖層顏色分配，必須保持一致。
+ *
+ * @param {Object} bucket - 衍生檔內容
+ * @param {Array<string>} fileNames - 來源檔名順序
+ * @returns {Array} 展開後的記錄陣列
+ */
+export function expandRecordBucket(bucket, fileNames) {
+  const allData = [];
+  for (const fileName of fileNames) {
+    const records = bucket[fileName];
+    if (!records) continue;
+    allData.push(
+      ...records.map((record) => ({
+        ...record,
+        filename: fileName,
+      }))
+    );
+  }
+  return allData;
+}
+
+/**
+ * 載入單一衍生檔（index / by-date / by-provider）。
+ *
+ * 找不到檔案時回傳空物件而非丟出例外，讓呼叫端得到空結果並結束載入流程。
+ *
+ * @param {string} relativePath - 相對於 data/ 的路徑
+ * @returns {Promise<Object>} 衍生檔內容
+ */
+export async function loadRecordBucket(relativePath) {
+  const filePath = `${DATA_BASE_PATH}/${relativePath}`;
+  const response = await fetch(filePath);
+
+  if (!response.ok) {
+    console.error(`HTTP 錯誤: ${relativePath}`, {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+    });
+    return {};
+  }
+
+  return response.json();
+}
+
 export async function loadNewStandardCentralServiceData(layer, dateFilter = null) {
   try {
     const layerId = layer.layerId;
@@ -156,7 +151,10 @@ export async function loadNewStandardCentralServiceData(layer, dateFilter = null
       'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
     ];
 
-    const jsonData = await loadAndMergeJsonFiles(fileNames);
+    // 只載入目標日期的記錄，而不是把所有來源檔整個下載下來
+    const targetDate = dateFilter ? parseInt(dateFilter) : 1140801;
+    const bucket = await loadRecordBucket(`by-date/${targetDate}.json`);
+    const jsonData = expandRecordBucket(bucket, fileNames);
 
     // 按服務人員分組的圖層數據
     const serviceProviderLayers = new Map();

@@ -25,7 +25,11 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { loadNewStandardCentralServiceData } from '../utils/dataProcessor.js';
+import {
+  loadNewStandardCentralServiceData,
+  expandRecordBucket,
+  loadRecordBucket,
+} from '../utils/dataProcessor.js';
 
 /**
  * =============================================================================
@@ -457,6 +461,13 @@ export const useDataStore = defineStore(
         }
       } catch (error) {
         console.error('📅 載入服務人員圖層失敗:', error);
+        // 移除載入指示器，否則載入失敗時畫面會一直停在轉圈狀態
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務人員列表');
+        if (serviceRecordGroup) {
+          serviceRecordGroup.groupLayers = serviceRecordGroup.groupLayers.filter(
+            (l) => l.layerId !== 'loading-indicator-date'
+          );
+        }
       }
     };
 
@@ -495,35 +506,9 @@ export const useDataStore = defineStore(
           'filtered_臺中洪幸雪-20250801-20250831 全部的服務記錄_final.json',
         ];
 
-        const allData = [];
-        for (const fileName of fileNames) {
-          try {
-            const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
-            const response = await fetch(filePath);
-
-            if (!response.ok) {
-              console.error(`HTTP 錯誤: ${fileName}`, {
-                status: response.status,
-                statusText: response.statusText,
-                url: response.url,
-              });
-              continue; // 跳過失敗的檔案，繼續處理其他檔案
-            }
-
-            const jsonData = await response.json();
-
-            // 為每個記錄添加filename欄位
-            const dataWithFilename = jsonData.map((record) => ({
-              ...record,
-              filename: fileName,
-            }));
-
-            allData.push(...dataWithFilename);
-          } catch (error) {
-            console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
-            // 繼續處理其他檔案
-          }
-        }
+        // 清單只需要身分證與服務日期，改讀索引檔而非完整記錄
+        const bucket = await loadRecordBucket('index/providers.json');
+        const allData = expandRecordBucket(bucket, fileNames);
 
         // 根據檔案篩選過濾資料
         let filteredData = allData;
@@ -634,35 +619,9 @@ export const useDataStore = defineStore(
           'filtered_三重聯恩-20250801-20250831 全部的服務記錄_final.json',
         ];
 
-        const allData = [];
-        for (const fileName of fileNames) {
-          try {
-            const filePath = `/long-term-care-web-taichung/data/json/${fileName}`;
-            const response = await fetch(filePath);
-
-            if (!response.ok) {
-              console.error(`HTTP 錯誤: ${fileName}`, {
-                status: response.status,
-                statusText: response.statusText,
-                url: response.url,
-              });
-              continue; // 跳過失敗的檔案，繼續處理其他檔案
-            }
-
-            const jsonData = await response.json();
-
-            // 為每個記錄添加filename欄位
-            const dataWithFilename = jsonData.map((record) => ({
-              ...record,
-              filename: fileName,
-            }));
-
-            allData.push(...dataWithFilename);
-          } catch (error) {
-            console.error(`❌ 載入文件 ${fileName} 失敗:`, error);
-            // 繼續處理其他檔案
-          }
-        }
+        // 只載入這位服務人員的記錄，而不是把所有來源檔整個下載下來
+        const bucket = await loadRecordBucket(`by-provider/${providerId}.json`);
+        const allData = expandRecordBucket(bucket, fileNames);
 
         // 篩選出該服務人員的所有記錄
         let providerRecords = allData.filter((record) => record.服務人員身分證 === providerId);
@@ -768,6 +727,13 @@ export const useDataStore = defineStore(
         }
       } catch (error) {
         console.error('👤 載入服務人員日期圖層失敗:', error);
+        // 移除載入指示器，否則載入失敗時畫面會一直停在轉圈狀態
+        const serviceRecordGroup = layers.value.find((g) => g.groupName === '服務日期列表');
+        if (serviceRecordGroup) {
+          serviceRecordGroup.groupLayers = serviceRecordGroup.groupLayers.filter(
+            (l) => l.layerId !== 'loading-indicator-provider'
+          );
+        }
       }
     };
 

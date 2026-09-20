@@ -25,3 +25,8 @@ pnpm-debug.log*
 *.sln
 *.sw?
 # 大檔案現在使用 Git LFS 管理
+
+# 由 scripts/generate-data-splits.js 從 public/data/json/ 產生，不納入版控
+/public/data/index
+/public/data/by-date
+/public/data/by-provider
