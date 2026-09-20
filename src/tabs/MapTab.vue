@@ -17,7 +17,7 @@
   import L from 'leaflet'; // 引入 Leaflet 地圖庫
   import 'leaflet/dist/leaflet.css'; // 引入 Leaflet 預設樣式
   import { useDataStore } from '@/stores/dataStore.js'; // 引入資料存儲
-  import { useDefineStore } from '@/stores/defineStore.js'; // 引入定義存儲
+  import { useDefineStore, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/stores/defineStore.js'; // 引入定義存儲與預設視圖常數
 
   // 🔧 修復 Leaflet 預設圖標問題 (Fix Leaflet Default Icon Issues)
   import icon from 'leaflet/dist/images/marker-icon.png'; // 引入標準標記圖標
@@ -1073,9 +1073,6 @@
         emit('update:activeMarkers', totalMarkers); // 發送標記數量更新事件
       };
 
-      // 首次載入到可見圖層時自動對準資料範圍，之後不再自動介入使用者的視圖操作
-      let hasAutoFittedToData = false;
-
       // 🔍 顯示全部要素函數 (Show All Features Function) - 顯示圖面所有資料
       const showAllFeatures = () => {
         // 檢查地圖實例、準備狀態和圖層可見性
@@ -1109,9 +1106,9 @@
         // 檢查地圖實例和準備狀態
         if (!mapInstance || !isMapReady.value) return;
 
-        // 使用固定的台中市預設範圍，不依賴當前存儲的值
-        const defaultCenter = [24.1477, 120.6736]; // 台中市政府
-        const defaultZoom = 11; // 適合台中市的縮放等級
+        // 使用與初始視圖相同的台中市預設範圍，不依賴當前存儲的值
+        const defaultCenter = [...DEFAULT_MAP_CENTER];
+        const defaultZoom = DEFAULT_MAP_ZOOM;
 
         // 回到預設的地圖中心和縮放等級
         mapInstance.setView(defaultCenter, defaultZoom);
@@ -1814,21 +1811,7 @@
       });
 
       // 👀 監聽器：監聽資料存儲中的圖層變化 (Watcher: Watch Data Store Layers)
-      watch(
-        () => dataStore.layers,
-        (...args) => {
-          syncLayers(...args); // 深度監聽圖層變化並同步
-
-          // 首次出現可見圖層時，把視圖帶到資料所在位置，避免停在看不到東西的預設範圍
-          if (!hasAutoFittedToData && isMapReady.value && isAnyLayerVisible.value) {
-            nextTick(() => {
-              showAllFeatures();
-              hasAutoFittedToData = true;
-            });
-          }
-        },
-        { deep: true }
-      );
+      watch(() => dataStore.layers, syncLayers, { deep: true }); // 深度監聽圖層變化並同步
 
       // 👀 監聽器：監聽底圖變化 (Watcher: Watch Basemap Changes)
       watch(

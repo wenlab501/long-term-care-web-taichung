@@ -25,13 +25,18 @@ const cartoKeyQuery =
     ? `?key=${CARTO_API_KEY}`
     : '';
 
+// 預設地圖視圖：台中市。開啟應用時不載入任何圖層，地圖直接停在台中，
+// MapTab 的「顯示全市」也是回到這個位置。
+export const DEFAULT_MAP_CENTER = [24.1477, 120.6736]; // 台中市政府
+export const DEFAULT_MAP_ZOOM = 11; // 涵蓋台中市的縮放等級
+
 export const useDefineStore = defineStore('define', {
   state: () => ({
     selectedBasemap: 'carto_light_labels', // 當前選中的底圖
     // 地圖視圖狀態
     mapView: {
-      center: [23.5, 121.0], // 地圖中心點 [緯度, 經度] - 台灣中心
-      zoom: 8, // 縮放等級 - 顯示全台灣
+      center: [...DEFAULT_MAP_CENTER], // 地圖中心點 [緯度, 經度] - 台中市
+      zoom: DEFAULT_MAP_ZOOM, // 縮放等級 - 涵蓋台中市
     },
     basemaps: [
       {
