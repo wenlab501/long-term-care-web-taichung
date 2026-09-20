@@ -1073,6 +1073,9 @@
         emit('update:activeMarkers', totalMarkers); // 發送標記數量更新事件
       };
 
+      // 首次載入到可見圖層時自動對準資料範圍，之後不再自動介入使用者的視圖操作
+      let hasAutoFittedToData = false;
+
       // 🔍 顯示全部要素函數 (Show All Features Function) - 顯示圖面所有資料
       const showAllFeatures = () => {
         // 檢查地圖實例、準備狀態和圖層可見性
@@ -1811,7 +1814,21 @@
       });
 
       // 👀 監聽器：監聽資料存儲中的圖層變化 (Watcher: Watch Data Store Layers)
-      watch(() => dataStore.layers, syncLayers, { deep: true }); // 深度監聽圖層變化並同步
+      watch(
+        () => dataStore.layers,
+        (...args) => {
+          syncLayers(...args); // 深度監聽圖層變化並同步
+
+          // 首次出現可見圖層時，把視圖帶到資料所在位置，避免停在看不到東西的預設範圍
+          if (!hasAutoFittedToData && isMapReady.value && isAnyLayerVisible.value) {
+            nextTick(() => {
+              showAllFeatures();
+              hasAutoFittedToData = true;
+            });
+          }
+        },
+        { deep: true }
+      );
 
       // 👀 監聽器：監聽底圖變化 (Watcher: Watch Basemap Changes)
       watch(

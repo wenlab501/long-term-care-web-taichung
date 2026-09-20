@@ -432,7 +432,8 @@ export const useDataStore = defineStore(
               const serviceLayerObj = {
                 layerId: serviceLayerId,
                 layerName: serviceLayer.serviceProviderId, // 直接使用服務人員身分證
-                visible: false, // 預設隱藏
+                // 第一個圖層預設開啟，其餘隱藏；否則載入完成後地圖會是一片空白
+                visible: index === 0,
                 isLoaded: true,
                 isLoading: false,
                 isAnalysisLayer: false,
