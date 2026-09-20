@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia';
 
+// CARTO Basemaps API 金鑰
+// CARTO 自 2026/08 起要求金鑰，未帶金鑰的圖磚會被壓上 "API KEY REQUIRED" 浮水印。
+// 金鑰放在 .env.local（已被 .gitignore 排除），請勿寫進原始碼。
+// 本機開發與 npm run deploy 前，需在專案根目錄建立 .env.local：
+//   VUE_APP_CARTO_API_KEY=你的金鑰
+// 注意：此金鑰會被打包進前端 bundle，屬公開金鑰，請於 CARTO 後台設定網域白名單。
+const CARTO_API_KEY = process.env.VUE_APP_CARTO_API_KEY || '';
+
 export const useDefineStore = defineStore('define', {
   state: () => ({
     selectedBasemap: 'carto_light_labels', // 當前選中的底圖
@@ -57,17 +65,17 @@ export const useDefineStore = defineStore('define', {
       {
         label: 'Carto Light',
         value: 'carto_light_labels',
-        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        url: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
       },
       {
         label: 'Carto Dark',
         value: 'carto_dark_labels',
-        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        url: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
       },
       {
         label: 'Carto Voyager',
         value: 'carto_voyager',
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        url: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
       },
       {
         label: '白色地圖',
